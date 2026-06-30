@@ -311,6 +311,10 @@ body {
   .nav-panel__links {
     padding: 60px 40px;
   }
+
+  .nav-panel__item {
+    font-size: clamp(2rem, 4vw, 3rem);
+  }
 }
 
 @media (max-width: 639px) {
