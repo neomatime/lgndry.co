@@ -12,6 +12,13 @@
 </head>
 <body>
 
+  <!-- Navigation trigger -->
+  <nav class="site-nav" aria-label="Site navigation">
+    <button class="site-nav__trigger" id="navTrigger" aria-expanded="false" aria-controls="navPanel">
+      Menu
+    </button>
+  </nav>
+
   <!-- Loading screen -->
   <div class="loader" id="loader" aria-hidden="true">
     <div class="loader__wordmark">
@@ -35,6 +42,50 @@
       >
     </div>
   </section>
+
+  <!-- Navigation panel -->
+  <div class="nav-panel" id="navPanel" aria-hidden="true">
+
+    <div class="nav-panel__links">
+      <button class="nav-panel__close" id="navClose">Close</button>
+      <ul class="nav-panel__list">
+        <li><a class="nav-panel__item" href="index.html"      data-nav-image="home">Home</a></li>
+        <li><a class="nav-panel__item" href="commercial.html" data-nav-image="work">Work</a></li>
+        <li><a class="nav-panel__item" href="services.html"   data-nav-image="services">Services</a></li>
+        <li><a class="nav-panel__item" href="journal.html"    data-nav-image="journal">Journal</a></li>
+        <li><a class="nav-panel__item" href="about.html"      data-nav-image="about">About</a></li>
+        <li><a class="nav-panel__item" href="contact.html"    data-nav-image="contact">Contact</a></li>
+      </ul>
+    </div>
+
+    <div class="nav-panel__preview" aria-hidden="true">
+      <img class="nav-panel__photo nav-panel__photo--active"
+           data-nav-photo="home"
+           src="assests/images/hero-image.JPG"
+           alt="">
+      <img class="nav-panel__photo"
+           data-nav-photo="work"
+           src="assests/images/commercial/vw/InShot_20250729_025522317.jpg"
+           alt="">
+      <img class="nav-panel__photo"
+           data-nav-photo="services"
+           src="assests/images/commercial/kitso/LGNDRY.CO_14 copy.jpg"
+           alt="">
+      <img class="nav-panel__photo"
+           data-nav-photo="journal"
+           src="assests/images/art/outdoor/InShot_20250718_221120888.jpg"
+           alt="">
+      <img class="nav-panel__photo"
+           data-nav-photo="about"
+           src="assests/images/art/studio art/InShot_20250826_095246113.jpg"
+           alt="">
+      <img class="nav-panel__photo"
+           data-nav-photo="contact"
+           src="assests/images/art/outdoor/border/InShot_20251211_113101465.jpg"
+           alt="">
+    </div>
+
+  </div>
 
   <script src="assests/js/main.js"></script>
 </body>
