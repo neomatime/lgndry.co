@@ -49,3 +49,71 @@
     runLoader();
   }
 }());
+
+/* ─── Navigation: open / close ───────────────────── */
+(function () {
+  var trigger  = document.getElementById('navTrigger');
+  var panel    = document.getElementById('navPanel');
+  var closeBtn = document.getElementById('navClose');
+  var items    = document.querySelectorAll('.nav-panel__item');
+  var isOpen   = false;
+  var prefersReducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+  function openNav() {
+    if (isOpen) return;
+    isOpen = true;
+
+    panel.classList.add('nav-panel--open');
+    panel.setAttribute('aria-hidden', 'false');
+    trigger.setAttribute('aria-expanded', 'true');
+    trigger.style.opacity = '0';
+    trigger.style.pointerEvents = 'none';
+    closeBtn.focus();
+
+    var staggerDelay = prefersReducedMotion ? 0 : 500;
+    var staggerStep  = prefersReducedMotion ? 0 : 80;
+
+    for (var i = 0; i < items.length; i++) {
+      (function (item, delay) {
+        setTimeout(function () {
+          item.classList.add('nav-panel__item--visible');
+        }, delay);
+      })(items[i], staggerDelay + i * staggerStep);
+    }
+  }
+
+  function closeNav() {
+    if (!isOpen) return;
+
+    for (var i = 0; i < items.length; i++) {
+      items[i].classList.remove('nav-panel__item--visible');
+    }
+
+    var closeDelay = prefersReducedMotion ? 0 : 100;
+
+    setTimeout(function () {
+      panel.classList.remove('nav-panel--open');
+      panel.setAttribute('aria-hidden', 'true');
+      trigger.setAttribute('aria-expanded', 'false');
+      trigger.style.opacity = '';
+      trigger.style.pointerEvents = '';
+      isOpen = false;
+      trigger.focus();
+    }, closeDelay);
+  }
+
+  trigger.addEventListener('click', openNav);
+  closeBtn.addEventListener('click', closeNav);
+
+  document.addEventListener('keydown', function (e) {
+    if (e.key === 'Escape' && isOpen) { closeNav(); }
+  });
+
+  document.addEventListener('click', function (e) {
+    if (isOpen && !panel.contains(e.target) && e.target !== trigger) {
+      closeNav();
+    }
+  });
+
+  window.lgndryNav = { open: openNav, close: closeNav };
+}());
