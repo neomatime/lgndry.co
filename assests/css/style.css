@@ -126,27 +126,10 @@ body {
   margin-top: 80px;
 }
 
-.hero__tagline {
-  position: absolute;
-  top: 72%;
-  left: 50%;
-  transform: translateX(-50%);
-  font-family: 'Cormorant Garamond', serif;
-  font-weight: 300;
-  font-size: clamp(0.85rem, 1.5vw, 1.1rem);
-  color: var(--secondary);
-  letter-spacing: 0.2em;
-  white-space: nowrap;
-}
-
 /* ─── Responsive ─────────────────────────────────── */
 @media (max-width: 1023px) {
   .hero__logo {
     width: 120px;
-  }
-
-  .hero__tagline {
-    font-size: 0.95rem;
   }
 }
 
@@ -158,17 +141,6 @@ body {
   .hero__logo {
     width: 100px;
     margin-top: 60px;
-  }
-
-  .hero__tagline {
-    top: 78%;
-    font-size: 0.85rem;
-    letter-spacing: 0.12em;
-    white-space: normal;
-    text-align: center;
-    width: 80%;
-    left: 10%;
-    transform: none;
   }
 }
 
