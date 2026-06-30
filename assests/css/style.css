@@ -25,6 +25,7 @@
   --primary-hover:     #121212;
   --secondary:         #FFFFFF;
   --secondary-hover:   #F7F5F2;
+  --nav-dark:          #0D0D0D;
 }
 
 /* ─── Base ───────────────────────────────────────── */
@@ -159,4 +160,90 @@ body {
   .hero__image--zoom {
     animation: none;
   }
+}
+
+/* ─── Navigation Trigger ─────────────────────────── */
+.site-nav {
+  position: fixed;
+  top: 0;
+  left: 0;
+  z-index: 600;
+}
+
+.site-nav__trigger {
+  display: block;
+  padding: 24px 32px;
+  font-family: 'Cormorant Garamond', serif;
+  font-weight: 300;
+  font-size: 0.85rem;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  color: var(--text-primary);
+  background: none;
+  border: none;
+  cursor: pointer;
+  transition: opacity 0.3s ease;
+}
+
+.site-nav__trigger:hover {
+  opacity: 0.5;
+}
+
+/* ─── Navigation Panel ───────────────────────────── */
+.nav-panel {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 92vw;
+  height: 100vh;
+  z-index: 500;
+  display: flex;
+  transform: translateX(-100%);
+  transition: transform 0.8s cubic-bezier(0.76, 0, 0.24, 1);
+  will-change: transform;
+}
+
+.nav-panel--open {
+  transform: translateX(0);
+}
+
+.nav-panel__links {
+  width: 50%;
+  height: 100%;
+  background-color: var(--bg-primary);
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  padding: 80px 60px;
+  position: relative;
+  overflow: hidden;
+}
+
+.nav-panel__preview {
+  width: 50%;
+  height: 100%;
+  background-color: var(--nav-dark);
+  position: relative;
+  overflow: hidden;
+}
+
+.nav-panel__close {
+  position: absolute;
+  top: 24px;
+  left: 32px;
+  font-family: 'Cormorant Garamond', serif;
+  font-weight: 300;
+  font-size: 0.85rem;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  color: var(--text-primary);
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 0;
+  transition: opacity 0.3s ease;
+}
+
+.nav-panel__close:hover {
+  opacity: 0.5;
 }
