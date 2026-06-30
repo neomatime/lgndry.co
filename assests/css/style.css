@@ -1,0 +1,42 @@
+/* ─── Google Fonts are loaded via <link> in HTML ─── */
+
+/* ─── Reset ─────────────────────────────────────── */
+*, *::before, *::after {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+/* ─── CSS Variables ──────────────────────────────── */
+:root {
+  --bg-primary:        #FFFFFF;
+  --bg-secondary:      #F7F5F2;
+  --surface:           #FCFBF9;
+  --surface-elevated:  #F1EEE9;
+
+  --text-primary:      #1D1D1D;
+  --text-secondary:    #7A746E;
+  --text-disabled:     #A8A097;
+
+  --border:            #E5E0D9;
+  --divider:           #D9D4CD;
+
+  --primary:           #1D1D1D;
+  --primary-hover:     #121212;
+  --secondary:         #FFFFFF;
+  --secondary-hover:   #F7F5F2;
+}
+
+/* ─── Base ───────────────────────────────────────── */
+html {
+  font-family: 'Inter', sans-serif;
+  font-weight: 300;
+  color: var(--text-primary);
+  background-color: var(--bg-primary);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+body {
+  overflow-x: hidden;
+}
