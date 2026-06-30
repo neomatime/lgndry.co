@@ -144,6 +144,10 @@ body {
   .hero__logo {
     width: 120px;
   }
+
+  .hero__tagline {
+    font-size: 0.95rem;
+  }
 }
 
 @media (max-width: 639px) {
