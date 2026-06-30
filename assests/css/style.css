@@ -138,3 +138,49 @@ body {
   letter-spacing: 0.2em;
   white-space: nowrap;
 }
+
+/* ─── Responsive ─────────────────────────────────── */
+@media (max-width: 1023px) {
+  .hero__logo {
+    width: 120px;
+  }
+}
+
+@media (max-width: 639px) {
+  .hero__image {
+    object-position: 55% center;
+  }
+
+  .hero__logo {
+    width: 100px;
+    margin-top: 60px;
+  }
+
+  .hero__tagline {
+    top: 78%;
+    font-size: 0.85rem;
+    letter-spacing: 0.12em;
+    white-space: normal;
+    text-align: center;
+    width: 80%;
+    left: 10%;
+    transform: none;
+  }
+}
+
+/* ─── Reduced Motion ─────────────────────────────── */
+@media (prefers-reduced-motion: reduce) {
+  .loader__wordmark {
+    animation: none;
+    opacity: 1;
+    letter-spacing: 0.25em;
+  }
+
+  .loader--exit {
+    transition: none;
+  }
+
+  .hero__image--zoom {
+    animation: none;
+  }
+}
