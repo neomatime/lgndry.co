@@ -40,3 +40,47 @@ html {
 body {
   overflow-x: hidden;
 }
+
+/* ─── Loader ─────────────────────────────────────── */
+.loader {
+  position: fixed;
+  inset: 0;
+  z-index: 1000;
+  background-color: var(--bg-primary);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  will-change: transform;
+}
+
+.loader--exit {
+  transform: translateY(-100%);
+  transition: transform 0.9s cubic-bezier(0.77, 0, 0.175, 1);
+}
+
+.loader--hidden {
+  display: none;
+}
+
+/* Wordmark: starts stacked (letter-spacing: -0.55em), fades in, then spreads */
+.loader__wordmark {
+  font-family: 'Cormorant Garamond', serif;
+  font-weight: 300;
+  font-size: clamp(2rem, 6vw, 4rem);
+  color: var(--text-primary);
+  letter-spacing: -0.55em;
+  opacity: 0;
+  animation:
+    loaderFadeIn 0.5s ease-out forwards,
+    loaderSpread 0.9s 0.5s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+@keyframes loaderFadeIn {
+  from { opacity: 0; }
+  to   { opacity: 1; }
+}
+
+@keyframes loaderSpread {
+  from { letter-spacing: -0.55em; }
+  to   { letter-spacing: 0.25em;  }
+}
