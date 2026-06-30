@@ -123,14 +123,14 @@ body {
 }
 
 .hero__logo {
-  width: 140px;
+  width: 200px;
   margin-top: 80px;
 }
 
 /* ─── Responsive ─────────────────────────────────── */
 @media (max-width: 1023px) {
   .hero__logo {
-    width: 120px;
+    width: 170px;
   }
 }
 
@@ -140,7 +140,7 @@ body {
   }
 
   .hero__logo {
-    width: 100px;
+    width: 140px;
     margin-top: 60px;
   }
 }
