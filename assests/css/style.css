@@ -126,26 +126,19 @@ body {
 }
 
 .hero__logo {
-  width: 200px;
-  margin-top: 80px;
-  mix-blend-mode: screen;
+  position: absolute;
+  top: 24px;
+  right: 32px;
+  height: 26px;
+  width: auto;
+  margin: 0;
+  z-index: 5;
 }
 
 /* ─── Responsive ─────────────────────────────────── */
-@media (max-width: 1023px) {
-  .hero__logo {
-    width: 170px;
-  }
-}
-
 @media (max-width: 639px) {
   .hero__image {
     object-position: 55% center;
-  }
-
-  .hero__logo {
-    width: 140px;
-    margin-top: 60px;
   }
 }
 
@@ -179,7 +172,7 @@ body {
   padding: 24px 32px;
   font-family: 'Cormorant Garamond', serif;
   font-weight: 300;
-  font-size: 0.85rem;
+  font-size: 1.35rem;
   letter-spacing: 0.2em;
   text-transform: uppercase;
   color: var(--text-primary);
@@ -581,7 +574,7 @@ body {
 .booking-cta__actions {
   display: flex;
   flex-direction: column;
-  align-items: flex-end;
+  align-items: flex-start;
   gap: 18px;
   justify-self: end;
 }
