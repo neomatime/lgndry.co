@@ -311,3 +311,52 @@
     observer.observe(revealEls[i]);
   }
 }());
+
+/* ─── Intro band: Ken Burns image slideshow ──────── */
+(function () {
+  var figure = document.querySelector('[data-intro-slideshow]');
+  if (!figure) { return; }
+
+  var slides = figure.querySelectorAll('.intro-band__slide');
+  if (slides.length < 2) { return; }
+
+  var prefersReducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+  // First slide is always shown (also the static state for reduced motion).
+  slides[0].classList.add('is-visible');
+  slides[0].style.zIndex = 2;
+
+  if (prefersReducedMotion) { return; }
+
+  slides[0].classList.add('is-zooming');
+
+  var index = 0;
+  var HOLD = 5000;      // display time per image — matches the 5s zoom
+  var FADE = 1400;      // cross-dissolve duration — matches CSS opacity transition
+
+  function advance() {
+    var current = slides[index];
+    var nextIndex = (index + 1) % slides.length;
+    var next = slides[nextIndex];
+
+    // Restart the zoom on the incoming slide from the beginning.
+    next.classList.remove('is-zooming');
+    void next.offsetWidth; // force reflow so the animation replays
+
+    // Incoming fades in on top; keep the outgoing beneath it during the fade.
+    next.style.zIndex = 3;
+    current.style.zIndex = 2;
+    next.classList.add('is-visible', 'is-zooming');
+
+    // Once the incoming image fully covers the old one, hide the old one and
+    // drop it to the back, ready for its next turn.
+    setTimeout(function () {
+      current.classList.remove('is-visible', 'is-zooming');
+      current.style.zIndex = 1;
+    }, FADE);
+
+    index = nextIndex;
+  }
+
+  setInterval(advance, HOLD);
+}());
