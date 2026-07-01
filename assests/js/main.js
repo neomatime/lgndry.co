@@ -168,3 +168,30 @@
 
   list.addEventListener('mouseleave', clearHoverState);
 }());
+
+/* ─── Homepage Body: Scroll Reveal ───────────────── */
+(function () {
+  var revealEls = document.querySelectorAll('.reveal');
+  var prefersReducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  var i;
+
+  if (prefersReducedMotion) {
+    for (i = 0; i < revealEls.length; i++) {
+      revealEls[i].classList.add('reveal--visible');
+    }
+    return;
+  }
+
+  var observer = new IntersectionObserver(function (entries) {
+    for (var j = 0; j < entries.length; j++) {
+      if (entries[j].isIntersecting) {
+        entries[j].target.classList.add('reveal--visible');
+        observer.unobserve(entries[j].target);
+      }
+    }
+  }, { threshold: 0.2 });
+
+  for (i = 0; i < revealEls.length; i++) {
+    observer.observe(revealEls[i]);
+  }
+}());
