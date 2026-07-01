@@ -36,6 +36,7 @@ html {
   background-color: var(--bg-primary);
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
+  overflow-x: hidden;
 }
 
 body {
@@ -403,7 +404,7 @@ body {
 .companies,
 .services,
 .closing {
-  margin: 120px 0;
+  margin: 96px 0;
 }
 
 /* ─── Editorial Intro ────────────────────────────── */
@@ -436,13 +437,13 @@ body {
 /* ─── Philosophy ─────────────────────────────────── */
 .philosophy {
   position: relative;
-  min-height: 70vh;
+  min-height: 52vh;
 }
 
 .philosophy__text {
   position: absolute;
   left: 8vw;
-  top: 15%;
+  top: 8%;
   max-width: 32ch;
   font-family: 'Cormorant Garamond', serif;
   font-weight: 300;
@@ -454,7 +455,7 @@ body {
 .philosophy__image {
   position: absolute;
   right: -5vw;
-  bottom: 10%;
+  bottom: 4%;
   width: 28vw;
   height: 45vh;
   object-fit: cover;
@@ -511,6 +512,7 @@ body {
   flex-direction: column;
   align-items: flex-start;
   justify-content: center;
+  min-height: 46vh;
   margin-left: 18vw;
 }
 
@@ -535,13 +537,17 @@ body {
 
 .companies__list {
   display: flex;
-  align-items: flex-start;
-  justify-content: space-between;
+  align-items: center;
+  justify-content: flex-start;
   flex-wrap: wrap;
+  gap: 10vw;
 }
 
 .companies__logo {
-  max-width: 140px;
+  height: 48px;
+  width: auto;
+  max-width: 160px;
+  object-fit: contain;
   filter: grayscale(1);
   opacity: 0.75;
   transition: filter 0.4s ease, opacity 0.4s ease;
@@ -553,11 +559,11 @@ body {
 }
 
 .companies__logo--kitso {
-  margin-top: -24px;
+  margin-top: -10px;
 }
 
 .companies__logo--capricorn {
-  margin-top: 16px;
+  margin-top: 8px;
 }
 
 /* ─── Services ───────────────────────────────────── */
@@ -582,7 +588,7 @@ body {
   font-weight: 300;
   font-size: clamp(1.75rem, 3.5vw, 2.5rem);
   color: var(--text-primary);
-  padding: 32px 0;
+  padding: 20px 0;
 }
 
 .services__item::after {
@@ -601,7 +607,7 @@ body {
 }
 
 .services__list > .services__item:nth-child(even) {
-  margin-left: 20vw;
+  margin-left: 8vw;
 }
 
 /* ─── Closing Statement ──────────────────────────── */
@@ -679,7 +685,7 @@ body {
   .companies,
   .services,
   .closing {
-    margin: 80px 0;
+    margin: 72px 0;
   }
 
   .intro__image,
@@ -690,12 +696,16 @@ body {
     width: 70vw;
   }
 
+  .companies__list {
+    gap: 6vw;
+  }
+
   .services__list > .services__item:nth-child(even) {
     margin-left: 8vw;
   }
 
   .footer {
-    margin-top: 80px;
+    margin-top: 72px;
   }
 }
 
@@ -707,7 +717,7 @@ body {
   .companies,
   .services,
   .closing {
-    margin: 64px 0;
+    margin: 56px 0;
   }
 
   .intro {
@@ -792,7 +802,7 @@ body {
     flex-direction: column;
     align-items: center;
     gap: 16px;
-    margin-top: 64px;
+    margin-top: 56px;
     text-align: center;
   }
 }
