@@ -38,6 +38,14 @@ html {
   -moz-osx-font-smoothing: grayscale;
   overflow-x: hidden;
   overflow-x: clip;
+  /* Hide the native scrollbar for a clean edge; scrolling still works. */
+  scrollbar-width: none;      /* Firefox */
+  -ms-overflow-style: none;   /* legacy Edge / IE */
+}
+
+html::-webkit-scrollbar,
+body::-webkit-scrollbar {
+  display: none;              /* Chromium, Safari */
 }
 
 body {
