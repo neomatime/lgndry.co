@@ -169,6 +169,88 @@
   list.addEventListener('mouseleave', clearHoverState);
 }());
 
+/* Homepage Body: Philosophy scroll gallery */
+(function () {
+  var galleries = document.querySelectorAll('[data-scroll-gallery]');
+  var prefersReducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  var ticking = false;
+  var galleryData = [];
+
+  if (!galleries.length || prefersReducedMotion) return;
+
+  function clamp(value, min, max) {
+    return Math.min(Math.max(value, min), max);
+  }
+
+  function smooth(value) {
+    return value * value * (3 - (2 * value));
+  }
+
+  function setCopyActive(copies, activeIndex) {
+    for (var i = 0; i < copies.length; i++) {
+      if (i === activeIndex) {
+        copies[i].classList.add('philosophy-gallery__copy--active');
+      } else {
+        copies[i].classList.remove('philosophy-gallery__copy--active');
+      }
+    }
+  }
+
+  for (var i = 0; i < galleries.length; i++) {
+    galleryData.push({
+      section: galleries[i],
+      images: galleries[i].querySelectorAll('[data-scroll-gallery-image]'),
+      copies: galleries[i].querySelectorAll('[data-scroll-gallery-copy]'),
+      progress: galleries[i].querySelector('[data-scroll-gallery-progress]')
+    });
+  }
+
+  function updateGallery() {
+    ticking = false;
+
+    for (var g = 0; g < galleryData.length; g++) {
+      var data = galleryData[g];
+      var rect = data.section.getBoundingClientRect();
+      var scrollLength = Math.max(data.section.offsetHeight - window.innerHeight, 1);
+      var progress = clamp(-rect.top / scrollLength, 0, 1);
+      var maxIndex = Math.max(data.images.length - 1, 1);
+      var exactIndex = progress * maxIndex;
+      var activeIndex = Math.round(exactIndex);
+
+      for (var j = 0; j < data.images.length; j++) {
+        var distance = clamp(Math.abs(exactIndex - j), 0, 1);
+        var opacity = smooth(1 - distance);
+        var drift = clamp((j - exactIndex) * 16, -18, 18);
+        var scale = 1 + (distance * 0.035);
+
+        data.images[j].style.opacity = opacity.toFixed(3);
+        data.images[j].style.transform = 'scale(' + scale.toFixed(4) + ') translate3d(0, ' + drift.toFixed(2) + 'px, 0)';
+
+        if (j === activeIndex) {
+          data.images[j].classList.add('philosophy-gallery__image--active');
+        } else {
+          data.images[j].classList.remove('philosophy-gallery__image--active');
+        }
+      }
+
+      setCopyActive(data.copies, activeIndex);
+
+      if (data.progress) {
+        data.progress.style.width = (progress * 100).toFixed(2) + '%';
+      }
+    }
+  }
+
+  function requestUpdate() {
+    if (ticking) return;
+    ticking = true;
+    window.requestAnimationFrame(updateGallery);
+  }
+
+  updateGallery();
+  window.addEventListener('scroll', requestUpdate, { passive: true });
+  window.addEventListener('resize', requestUpdate);
+}());
 /* ─── Homepage Body: Scroll Reveal ───────────────── */
 (function () {
   var revealEls = document.querySelectorAll('.reveal');
