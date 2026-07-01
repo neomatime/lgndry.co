@@ -125,6 +125,7 @@ body {
 .hero__logo {
   width: 200px;
   margin-top: 80px;
+  mix-blend-mode: screen;
 }
 
 /* ─── Responsive ─────────────────────────────────── */
