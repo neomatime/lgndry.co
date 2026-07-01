@@ -501,8 +501,8 @@ body {
 /* Philosophy Gallery */
 .philosophy-gallery {
   position: relative;
-  height: 620vh;
-  min-height: 3600px;
+  height: 560vh;
+  min-height: 3400px;
   background-color: var(--bg-primary);
 }
 
@@ -514,8 +514,10 @@ body {
   min-height: 620px;
   overflow: hidden;
   display: grid;
-  place-items: center;
-  padding: clamp(32px, 6vw, 88px);
+  grid-template-columns: minmax(280px, 420px) minmax(0, 1fr);
+  gap: clamp(36px, 5vw, 88px);
+  align-items: center;
+  padding: clamp(56px, 6vw, 88px) clamp(40px, 6vw, 96px);
   isolation: isolate;
 }
 
@@ -532,12 +534,56 @@ body {
   color: var(--text-secondary);
 }
 
+.philosophy-gallery__copy-stack {
+  position: relative;
+  z-index: 2;
+  width: 100%;
+  height: clamp(280px, 42vh, 430px);
+  pointer-events: none;
+}
+
+.philosophy-gallery__copy {
+  position: absolute;
+  inset: 0 auto auto 0;
+  width: 100%;
+  max-width: 420px;
+  opacity: 0;
+  transform: translate3d(0, 18px, 0);
+  transition: opacity 1s ease, transform 1.2s cubic-bezier(0.2, 0, 0.2, 1);
+  will-change: opacity, transform;
+}
+
+.philosophy-gallery__copy--active {
+  opacity: 1;
+  transform: translate3d(0, 0, 0);
+}
+
+.philosophy-gallery__copy h2 {
+  max-width: 12ch;
+  font-family: 'Cormorant Garamond', serif;
+  font-weight: 300;
+  font-size: clamp(2.45rem, 4.35vw, 4.8rem);
+  line-height: 1.02;
+  letter-spacing: 0;
+  color: var(--text-primary);
+}
+
+.philosophy-gallery__copy p {
+  max-width: 31ch;
+  margin-top: 24px;
+  font-family: 'Inter', sans-serif;
+  font-weight: 300;
+  font-size: clamp(0.98rem, 1.08vw, 1.1rem);
+  line-height: 1.7;
+  color: var(--text-secondary);
+}
+
 .philosophy-gallery__stage {
   position: relative;
   z-index: 1;
-  width: min(82vw, 1240px);
-  height: min(64vh, 720px);
-  min-height: 420px;
+  width: 100%;
+  height: min(62vh, 700px);
+  min-height: 440px;
   background-color: var(--surface-elevated);
   overflow: hidden;
 }
@@ -561,86 +607,6 @@ body {
   transform: scale(1) translate3d(0, 0, 0);
 }
 
-.philosophy-gallery__copy-stack {
-  position: absolute;
-  inset: 0;
-  z-index: 2;
-  pointer-events: none;
-}
-
-.philosophy-gallery__copy {
-  position: absolute;
-  max-width: min(34vw, 430px);
-  opacity: 0;
-  transform: translate3d(0, 18px, 0);
-  transition: opacity 1s ease, transform 1.2s cubic-bezier(0.2, 0, 0.2, 1);
-  will-change: opacity, transform;
-}
-
-.philosophy-gallery__copy--active {
-  opacity: 1;
-  transform: translate3d(0, 0, 0);
-}
-
-.philosophy-gallery__copy--upper {
-  top: 12vh;
-  left: 8vw;
-}
-
-.philosophy-gallery__copy--right {
-  top: 16vh;
-  right: 7vw;
-  text-align: right;
-}
-
-.philosophy-gallery__copy--lower {
-  right: 10vw;
-  bottom: 10vh;
-  text-align: right;
-}
-
-.philosophy-gallery__copy--left {
-  left: 9vw;
-  bottom: 13vh;
-}
-
-.philosophy-gallery__copy--final {
-  top: 13vh;
-  left: 50%;
-  max-width: min(38vw, 520px);
-  transform: translate3d(-50%, 18px, 0);
-  text-align: center;
-}
-
-.philosophy-gallery__copy--final.philosophy-gallery__copy--active {
-  transform: translate3d(-50%, 0, 0);
-}
-
-.philosophy-gallery__copy h2 {
-  font-family: 'Cormorant Garamond', serif;
-  font-weight: 300;
-  font-size: clamp(2rem, 4vw, 4.2rem);
-  line-height: 1.02;
-  letter-spacing: 0;
-  color: var(--text-primary);
-}
-
-.philosophy-gallery__copy p {
-  max-width: 36ch;
-  margin-top: 22px;
-  font-family: 'Inter', sans-serif;
-  font-weight: 300;
-  font-size: clamp(0.98rem, 1.15vw, 1.14rem);
-  line-height: 1.75;
-  color: var(--text-secondary);
-}
-
-.philosophy-gallery__copy--right p,
-.philosophy-gallery__copy--lower p,
-.philosophy-gallery__copy--final p {
-  margin-left: auto;
-}
-
 .philosophy-gallery__progress {
   position: absolute;
   left: clamp(28px, 5vw, 72px);
@@ -662,39 +628,43 @@ body {
 
 @media (max-width: 1023px) {
   .philosophy-gallery {
-    height: 580vh;
+    height: 540vh;
+    min-height: 3200px;
   }
 
   .philosophy-gallery__pin {
+    grid-template-columns: minmax(240px, 340px) minmax(0, 1fr);
+    gap: 32px;
     min-height: 600px;
     padding: 88px 32px 56px;
   }
 
-  .philosophy-gallery__stage {
-    width: min(88vw, 880px);
-    height: 56vh;
-    min-height: 360px;
-  }
-
-  .philosophy-gallery__copy {
-    max-width: 44vw;
+  .philosophy-gallery__copy-stack {
+    height: clamp(260px, 38vh, 360px);
   }
 
   .philosophy-gallery__copy h2 {
-    font-size: clamp(2rem, 5.6vw, 3.4rem);
+    font-size: clamp(2.1rem, 4.9vw, 3.5rem);
+  }
+
+  .philosophy-gallery__stage {
+    height: 56vh;
+    min-height: 360px;
   }
 }
 
 @media (max-width: 767px) {
   .philosophy-gallery {
-    height: 560vh;
+    height: 540vh;
     min-height: 3000px;
   }
 
   .philosophy-gallery__pin {
-    min-height: 560px;
+    grid-template-columns: 1fr;
+    grid-template-rows: auto auto;
     align-content: center;
-    gap: 20px;
+    gap: 24px;
+    min-height: 560px;
     padding: 96px 24px 52px;
   }
 
@@ -704,56 +674,37 @@ body {
     right: 24px;
   }
 
-  .philosophy-gallery__stage {
-    width: 100%;
-    height: 42vh;
-    min-height: 280px;
-  }
-
   .philosophy-gallery__copy-stack {
-    position: relative;
-    inset: auto;
     width: 100%;
-    height: 240px;
-    order: -1;
+    height: clamp(178px, 27vh, 235px);
   }
 
-  .philosophy-gallery__copy,
-  .philosophy-gallery__copy--upper,
-  .philosophy-gallery__copy--right,
-  .philosophy-gallery__copy--lower,
-  .philosophy-gallery__copy--left,
-  .philosophy-gallery__copy--final {
-    top: 0;
-    right: auto;
-    bottom: auto;
-    left: 0;
-    width: 100%;
+  .philosophy-gallery__copy {
     max-width: none;
-    text-align: left;
     transform: translate3d(0, 14px, 0);
   }
 
-  .philosophy-gallery__copy--active,
-  .philosophy-gallery__copy--final.philosophy-gallery__copy--active {
+  .philosophy-gallery__copy--active {
     transform: translate3d(0, 0, 0);
   }
 
   .philosophy-gallery__copy h2 {
-    max-width: 16ch;
+    max-width: 14ch;
     font-size: clamp(2rem, 9vw, 2.75rem);
     line-height: 1.06;
   }
 
-  .philosophy-gallery__copy p,
-  .philosophy-gallery__copy--right p,
-  .philosophy-gallery__copy--lower p,
-  .philosophy-gallery__copy--final p {
+  .philosophy-gallery__copy p {
     max-width: 30ch;
-    margin-left: 0;
     margin-top: 14px;
     font-size: 0.92rem;
     line-height: 1.55;
+  }
+
+  .philosophy-gallery__stage {
+    width: 100%;
+    height: 42vh;
+    min-height: 280px;
   }
 
   .philosophy-gallery__progress {
@@ -782,21 +733,16 @@ body {
     inset: auto;
     display: grid;
     gap: 36px;
+    height: auto;
     margin-bottom: 48px;
   }
 
-  .philosophy-gallery__copy,
-  .philosophy-gallery__copy--upper,
-  .philosophy-gallery__copy--right,
-  .philosophy-gallery__copy--lower,
-  .philosophy-gallery__copy--left,
-  .philosophy-gallery__copy--final {
+  .philosophy-gallery__copy {
     position: relative;
     inset: auto;
     max-width: 620px;
     opacity: 1;
     transform: none;
-    text-align: left;
   }
 
   .philosophy-gallery__stage {
