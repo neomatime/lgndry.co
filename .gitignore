@@ -10,3 +10,6 @@ desktop.ini
 # Client brief / working documents (not for deployment)
 assests/documents/
 assests/references/
+
+# Brainstorming visual companion (scratch, not for deployment)
+.superpowers/
