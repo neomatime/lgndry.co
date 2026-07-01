@@ -498,6 +498,140 @@ body {
   display: block;
 }
 
+/* Booking CTA */
+.booking-cta {
+  padding: 0 0 120px;
+  background-color: var(--bg-primary);
+}
+
+.booking-cta__inner {
+  display: grid;
+  grid-template-columns: minmax(120px, 0.34fr) minmax(320px, 0.86fr) auto;
+  gap: clamp(28px, 4.8vw, 72px);
+  align-items: end;
+  padding-top: 52px;
+  border-top: 1px solid var(--border);
+}
+
+.booking-cta__message h2 {
+  max-width: 14ch;
+  font-family: 'Cormorant Garamond', serif;
+  font-weight: 300;
+  font-size: clamp(2.4rem, 4.4vw, 4.4rem);
+  line-height: 1.04;
+  letter-spacing: 0;
+  color: var(--text-primary);
+}
+
+.booking-cta__message p {
+  max-width: 54ch;
+  margin-top: 22px;
+  font-family: 'Inter', sans-serif;
+  font-weight: 300;
+  font-size: clamp(1rem, 1.2vw, 1.08rem);
+  line-height: 1.72;
+  color: var(--text-secondary);
+}
+
+.booking-cta__actions {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 18px;
+  justify-self: end;
+}
+
+.booking-cta__button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 48px;
+  padding: 15px 28px;
+  border: 1px solid var(--text-primary);
+  background-color: var(--text-primary);
+  color: var(--secondary);
+  font-family: 'Inter', sans-serif;
+  font-size: 0.78rem;
+  font-weight: 400;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  text-decoration: none;
+  transition: background-color 0.35s ease, color 0.35s ease;
+}
+
+.booking-cta__button:hover {
+  background-color: transparent;
+  color: var(--text-primary);
+}
+
+.booking-cta__phone {
+  font-family: 'Inter', sans-serif;
+  font-size: 0.8rem;
+  font-weight: 400;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--text-secondary);
+  text-decoration: none;
+  transition: color 0.3s ease;
+}
+
+.booking-cta__phone:hover {
+  color: var(--text-primary);
+}
+
+@media (max-width: 1023px) {
+  .booking-cta {
+    padding-bottom: 96px;
+  }
+
+  .booking-cta__inner {
+    grid-template-columns: minmax(100px, 0.32fr) minmax(0, 1fr);
+    align-items: start;
+  }
+
+  .booking-cta__actions {
+    grid-column: 2;
+    flex-direction: row;
+    align-items: center;
+    justify-self: start;
+  }
+}
+
+@media (max-width: 767px) {
+  .booking-cta {
+    padding-bottom: 84px;
+  }
+
+  .booking-cta__inner {
+    grid-template-columns: 1fr;
+    gap: 24px;
+    padding-top: 36px;
+  }
+
+  .booking-cta__message h2 {
+    max-width: 12ch;
+    font-size: clamp(2.3rem, 11vw, 3.2rem);
+  }
+
+  .booking-cta__message p {
+    margin-top: 18px;
+    font-size: 0.98rem;
+    line-height: 1.65;
+  }
+
+  .booking-cta__actions {
+    grid-column: auto;
+    flex-direction: column;
+    align-items: flex-start;
+    justify-self: start;
+    gap: 16px;
+  }
+
+  .booking-cta__button {
+    min-height: 46px;
+    padding: 14px 24px;
+  }
+}
 /* Philosophy Gallery */
 .philosophy-gallery {
   position: relative;
