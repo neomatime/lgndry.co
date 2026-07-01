@@ -506,11 +506,27 @@ body {
 
 .booking-cta__inner {
   display: grid;
-  grid-template-columns: minmax(120px, 0.34fr) minmax(320px, 0.86fr) auto;
+  grid-template-columns: minmax(180px, 260px) minmax(320px, 0.86fr) auto;
   gap: clamp(28px, 4.8vw, 72px);
-  align-items: end;
+  align-items: center;
   padding-top: 52px;
   border-top: 1px solid var(--border);
+}
+
+.booking-cta__media {
+  width: 100%;
+  margin: 0;
+  aspect-ratio: 4 / 5;
+  overflow: hidden;
+  background-color: var(--surface-elevated);
+}
+
+.booking-cta__media img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  object-position: center;
+  display: block;
 }
 
 .booking-cta__message h2 {
@@ -585,8 +601,12 @@ body {
   }
 
   .booking-cta__inner {
-    grid-template-columns: minmax(100px, 0.32fr) minmax(0, 1fr);
-    align-items: start;
+    grid-template-columns: minmax(150px, 220px) minmax(0, 1fr);
+    align-items: center;
+  }
+
+  .booking-cta__media {
+    grid-row: 1 / span 2;
   }
 
   .booking-cta__actions {
@@ -606,6 +626,12 @@ body {
     grid-template-columns: 1fr;
     gap: 24px;
     padding-top: 36px;
+  }
+
+  .booking-cta__media {
+    grid-row: auto;
+    max-width: 220px;
+    aspect-ratio: 5 / 4;
   }
 
   .booking-cta__message h2 {
@@ -632,6 +658,7 @@ body {
     padding: 14px 24px;
   }
 }
+
 /* Philosophy Gallery */
 .philosophy-gallery {
   position: relative;
@@ -653,19 +680,6 @@ body {
   align-items: center;
   padding: clamp(56px, 6vw, 88px) clamp(40px, 6vw, 96px);
   isolation: isolate;
-}
-
-.philosophy-gallery__eyebrow {
-  position: absolute;
-  top: clamp(28px, 5vw, 56px);
-  left: clamp(28px, 5vw, 72px);
-  z-index: 3;
-  font-family: 'Inter', sans-serif;
-  font-weight: 400;
-  font-size: 0.7rem;
-  letter-spacing: 0.24em;
-  text-transform: uppercase;
-  color: var(--text-secondary);
 }
 
 .philosophy-gallery__copy-stack {
@@ -801,14 +815,7 @@ body {
     min-height: 560px;
     padding: 96px 24px 52px;
   }
-
-  .philosophy-gallery__eyebrow {
-    top: 28px;
-    left: 24px;
-    right: 24px;
-  }
-
-  .philosophy-gallery__copy-stack {
+.philosophy-gallery__copy-stack {
     width: 100%;
     height: clamp(178px, 27vh, 235px);
   }
