@@ -662,8 +662,8 @@ body {
 /* Philosophy Gallery */
 .philosophy-gallery {
   position: relative;
-  height: 560vh;
-  min-height: 3400px;
+  height: 440vh;
+  min-height: 2700px;
   background-color: var(--bg-primary);
 }
 
@@ -777,8 +777,8 @@ body {
 
 @media (max-width: 1023px) {
   .philosophy-gallery {
-    height: 540vh;
-    min-height: 3200px;
+    height: 430vh;
+    min-height: 2600px;
   }
 
   .philosophy-gallery__pin {
@@ -804,8 +804,8 @@ body {
 
 @media (max-width: 767px) {
   .philosophy-gallery {
-    height: 540vh;
-    min-height: 3000px;
+    height: 420vh;
+    min-height: 2400px;
   }
 
   .philosophy-gallery__pin {
