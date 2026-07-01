@@ -448,7 +448,14 @@ body {
   padding-bottom: 120px;
 }
 
-.intro-band__inner .eyebrow {
+.intro-band__grid {
+  display: grid;
+  grid-template-columns: 1fr 0.82fr;
+  gap: 72px;
+  align-items: center;
+}
+
+.intro-band__text .eyebrow {
   display: block;
   margin-bottom: 28px;
 }
@@ -457,7 +464,7 @@ body {
   max-width: 15ch;
   font-family: 'Cormorant Garamond', serif;
   font-weight: 300;
-  font-size: clamp(2.75rem, 6vw, 5rem);
+  font-size: clamp(2.75rem, 5.5vw, 4.5rem);
   line-height: 1.05;
   letter-spacing: -0.015em;
   color: var(--text-primary);
@@ -465,12 +472,28 @@ body {
 }
 
 .intro-band__lede {
-  max-width: 620px;
+  max-width: 560px;
   font-family: 'Inter', sans-serif;
   font-weight: 300;
   font-size: clamp(1.05rem, 1.3vw, 1.2rem);
   line-height: 1.75;
   color: var(--text-secondary);
+}
+
+.intro-band__figure {
+  margin: 0;
+  overflow: hidden;
+  height: 68vh;
+  min-height: 460px;
+  max-height: 660px;
+  background-color: var(--surface-elevated);
+}
+
+.intro-band__figure img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
 }
 
 /* ─── Featured Work gallery ──────────────────────── */
@@ -744,6 +767,15 @@ body {
 
   .intro-band { padding-top: 112px; padding-bottom: 96px; }
 
+  .intro-band__grid {
+    gap: 48px;
+  }
+
+  .intro-band__figure {
+    height: 56vh;
+    min-height: 380px;
+  }
+
   .services-grid {
     grid-template-columns: repeat(2, 1fr);
   }
@@ -760,6 +792,18 @@ body {
   .section { padding: 72px 0; }
 
   .intro-band { padding-top: 88px; padding-bottom: 72px; }
+
+  .intro-band__grid {
+    grid-template-columns: 1fr;
+    gap: 40px;
+  }
+
+  .intro-band__figure {
+    height: 80vw;
+    min-height: 320px;
+    max-height: 520px;
+    order: 2;
+  }
 
   .section-head { margin-bottom: 40px; }
 
