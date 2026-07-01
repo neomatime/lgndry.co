@@ -377,3 +377,85 @@ body {
     transition: none;
   }
 }
+
+/* ─── Scroll Reveal (shared by all homepage-body sections) ─── */
+.reveal {
+  opacity: 0;
+  transform: translateY(24px);
+  transition: opacity 0.9s ease-out, transform 0.9s ease-out;
+}
+
+.reveal--visible {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .reveal {
+    transition: none;
+  }
+}
+
+/* ─── Homepage Section Vertical Rhythm ───────────── */
+.intro,
+.moment,
+.philosophy,
+.companies,
+.services,
+.closing {
+  margin: 120px 0;
+}
+
+/* ─── Editorial Intro ────────────────────────────── */
+.intro {
+  position: relative;
+  min-height: 80vh;
+  display: flex;
+  align-items: center;
+}
+
+.intro__text {
+  margin-left: 8vw;
+  max-width: 14ch;
+  font-family: 'Cormorant Garamond', serif;
+  font-weight: 300;
+  font-size: clamp(2rem, 4.5vw, 3.5rem);
+  line-height: 1.3;
+  color: var(--text-primary);
+}
+
+.intro__image {
+  position: absolute;
+  right: -10vw;
+  top: 10%;
+  width: 55vw;
+  height: 70vh;
+  object-fit: cover;
+}
+
+/* ─── Philosophy ─────────────────────────────────── */
+.philosophy {
+  position: relative;
+  min-height: 70vh;
+}
+
+.philosophy__text {
+  position: absolute;
+  left: 8vw;
+  top: 15%;
+  max-width: 32ch;
+  font-family: 'Cormorant Garamond', serif;
+  font-weight: 300;
+  font-size: clamp(1.5rem, 3vw, 2.25rem);
+  line-height: 1.5;
+  color: var(--text-primary);
+}
+
+.philosophy__image {
+  position: absolute;
+  right: -5vw;
+  bottom: 10%;
+  width: 28vw;
+  height: auto;
+  object-fit: cover;
+}
