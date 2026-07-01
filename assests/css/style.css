@@ -498,48 +498,6 @@ body {
   display: block;
 }
 
-/* ─── Featured Work gallery ──────────────────────── */
-.featured {
-  padding-top: 0;
-}
-
-.gallery {
-  display: flex;
-  flex-direction: column;
-  gap: 24px;
-}
-
-.gallery__row {
-  display: grid;
-  gap: 24px;
-  height: 60vh;
-  min-height: 440px;
-  max-height: 640px;
-}
-
-.gallery__row--7-5 { grid-template-columns: 7fr 5fr; }
-.gallery__row--5-7 { grid-template-columns: 5fr 7fr; }
-.gallery__row--6-6 { grid-template-columns: 1fr 1fr; }
-
-.gallery__figure {
-  position: relative;
-  margin: 0;
-  overflow: hidden;
-  background-color: var(--surface-elevated);
-}
-
-.gallery__figure img {
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
-  display: block;
-  transition: transform 0.7s cubic-bezier(0.2, 0, 0.2, 1);
-}
-
-.gallery__figure:hover img {
-  transform: scale(1.05);
-}
-
 /* Philosophy Gallery */
 .philosophy-gallery {
   position: relative;
@@ -1083,21 +1041,6 @@ body {
   }
 
   .section-head { margin-bottom: 40px; }
-
-  .gallery__row,
-  .gallery__row--7-5,
-  .gallery__row--5-7,
-  .gallery__row--6-6 {
-    grid-template-columns: 1fr;
-    height: auto;
-    min-height: 0;
-    max-height: none;
-  }
-
-  .gallery__figure {
-    height: 64vw;
-    min-height: 240px;
-  }
 
   .companies__row {
     gap: 40px;
