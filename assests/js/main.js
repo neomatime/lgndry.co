@@ -205,6 +205,11 @@
     });
   }
 
+  // Fraction of each image's scroll "unit" spent holding on the image
+  // before it begins dissolving into the next. The remainder is the
+  // cross-dissolve. Higher = each photo lingers longer, like an exhibition.
+  var HOLD = 0.6;
+
   function updateGallery() {
     ticking = false;
 
@@ -214,26 +219,55 @@
       var scrollLength = Math.max(data.section.offsetHeight - window.innerHeight, 1);
       var progress = clamp(-rect.top / scrollLength, 0, 1);
       var maxIndex = Math.max(data.images.length - 1, 1);
-      var exactIndex = progress * maxIndex;
-      var activeIndex = Math.round(exactIndex);
+
+      // Position along the image sequence, 0 .. maxIndex.
+      var exact = progress * maxIndex;
+      var current = Math.floor(exact);
+      if (current >= maxIndex) { current = maxIndex - 1; }
+      var frac = exact - current;                // 0..1 within current -> next
+      var next = current + 1;
+
+      // Hold on the current image, then ease the dissolve to the next.
+      var raw = frac <= HOLD ? 0 : (frac - HOLD) / (1 - HOLD);
+      var blend = smooth(clamp(raw, 0, 1));      // 0 = current, 1 = next
 
       for (var j = 0; j < data.images.length; j++) {
-        var distance = clamp(Math.abs(exactIndex - j), 0, 1);
-        var opacity = smooth(1 - distance);
-        var drift = clamp((j - exactIndex) * 16, -18, 18);
-        var scale = 1 + (distance * 0.035);
+        var opacity;
+        var scale;
+        var drift;
+
+        if (j === current) {
+          // Held image: fully opaque underneath, slow Ken Burns zoom.
+          opacity = 1;
+          scale = 1 + (frac * 0.045);
+          drift = 0;
+        } else if (j === next) {
+          // Incoming image: fades in on top and settles from a touch larger.
+          opacity = blend;
+          scale = 1.06 - (blend * 0.06);
+          drift = (1 - blend) * 14;
+        } else {
+          opacity = 0;
+          scale = 1.04;
+          drift = 0;
+        }
 
         data.images[j].style.opacity = opacity.toFixed(3);
         data.images[j].style.transform = 'scale(' + scale.toFixed(4) + ') translate3d(0, ' + drift.toFixed(2) + 'px, 0)';
+      }
 
-        if (j === activeIndex) {
-          data.images[j].classList.add('philosophy-gallery__image--active');
+      var primary = blend < 0.5 ? current : next;
+      for (var k = 0; k < data.images.length; k++) {
+        if (k === primary) {
+          data.images[k].classList.add('philosophy-gallery__image--active');
         } else {
-          data.images[j].classList.remove('philosophy-gallery__image--active');
+          data.images[k].classList.remove('philosophy-gallery__image--active');
         }
       }
 
-      setCopyActive(data.copies, activeIndex);
+      // Advance the copy as soon as the dissolve begins, so the new words
+      // arrive with the new photograph.
+      setCopyActive(data.copies, frac <= HOLD ? current : next);
 
       if (data.progress) {
         data.progress.style.width = (progress * 100).toFixed(2) + '%';
