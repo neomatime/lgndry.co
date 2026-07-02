@@ -4,6 +4,9 @@
   var heroImage   = document.querySelector('.hero__image');
   var prefersReducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 
+  // Interior pages (e.g. services) have no loader/hero — skip this block there.
+  if (!loader) { return; }
+
   function hideLoader() {
     loader.classList.add('loader--hidden');
   }
