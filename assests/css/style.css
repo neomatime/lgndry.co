@@ -1199,9 +1199,9 @@ body {
 }
 
 .page-header__brand {
-  font-family: 'Inter', sans-serif;
+  font-family: 'Cormorant Garamond', serif;
   font-weight: 400;
-  font-size: 0.8rem;
+  font-size: 0.95rem;
   letter-spacing: 0.2em;
   text-transform: uppercase;
   color: var(--text-primary);
@@ -1215,8 +1215,8 @@ body {
 
 /* Override the global (hero-sized) trigger styling for the header bar. */
 .page-header .site-nav__trigger {
-  font-family: 'Inter', sans-serif;
-  font-size: 0.8rem;
+  font-family: 'Cormorant Garamond', serif;
+  font-size: 0.95rem;
   font-weight: 400;
   letter-spacing: 0.2em;
   padding: 0;
@@ -1418,13 +1418,13 @@ body {
   inset: 0;
   z-index: 2;
   display: flex;
-  align-items: center;
+  align-items: flex-start;
   pointer-events: none;
 }
 
 .hero__text {
   max-width: 560px;
-  margin-top: -3vh;
+  margin-top: 12vh;
   padding: 0 clamp(24px, 5vw, 64px);
   pointer-events: auto;
 }
