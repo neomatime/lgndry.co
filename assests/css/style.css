@@ -1424,8 +1424,8 @@ body {
 
 .hero__text {
   max-width: 560px;
-  margin-top: 22vh;
-  margin-left: clamp(24px, 7vw, 104px);
+  margin-top: 17vh;
+  margin-left: clamp(32px, 12vw, 190px);
   padding: 0 clamp(24px, 5vw, 64px);
   pointer-events: auto;
 }
@@ -1444,8 +1444,8 @@ body {
   width: 56px;
   height: 1px;
   margin: 30px 0 26px;
-  background-color: #FFFFFF;
-  opacity: 0.7;
+  background-color: var(--text-primary);
+  opacity: 1;
 }
 
 .hero__copy {
