@@ -1200,9 +1200,10 @@ body {
 
 .page-header__brand {
   font-family: 'Inter', sans-serif;
-  font-weight: 500;
-  font-size: 0.95rem;
-  letter-spacing: 0.02em;
+  font-weight: 400;
+  font-size: 0.8rem;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
   color: var(--text-primary);
   text-decoration: none;
   transition: opacity 0.3s ease;
@@ -1406,5 +1407,107 @@ body {
 
   .service__num {
     font-size: 2.1rem;
+  }
+}
+
+/* ═══════════════════════════════════════════════════
+   HERO OVERLAY (headline / copy / CTA)
+   ═══════════════════════════════════════════════════ */
+.hero__overlay {
+  position: absolute;
+  inset: 0;
+  z-index: 2;
+  display: flex;
+  align-items: center;
+  pointer-events: none;
+}
+
+.hero__text {
+  max-width: 560px;
+  margin-top: -3vh;
+  padding: 0 clamp(24px, 5vw, 64px);
+  pointer-events: auto;
+}
+
+.hero__headline {
+  font-family: 'Cormorant Garamond', serif;
+  font-weight: 400;
+  font-size: clamp(2.6rem, 5.6vw, 4.6rem);
+  line-height: 1.06;
+  letter-spacing: 0.005em;
+  color: var(--text-primary);
+}
+
+.hero__divider {
+  display: block;
+  width: 56px;
+  height: 1px;
+  margin: 30px 0 26px;
+  background-color: var(--text-primary);
+  opacity: 0.55;
+}
+
+.hero__copy {
+  max-width: 42ch;
+  font-family: 'Inter', sans-serif;
+  font-weight: 300;
+  font-size: 0.85rem;
+  letter-spacing: 0.05em;
+  line-height: 1.85;
+  color: var(--text-primary);
+}
+
+.hero__cta {
+  display: inline-flex;
+  align-items: center;
+  gap: 20px;
+  margin-top: 36px;
+  color: var(--text-primary);
+  text-decoration: none;
+}
+
+.hero__cta-label {
+  font-family: 'Inter', sans-serif;
+  font-size: 0.72rem;
+  font-weight: 400;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  border-bottom: 1px solid var(--text-primary);
+  padding-bottom: 8px;
+}
+
+.hero__cta-arrow {
+  display: inline-flex;
+  color: var(--text-primary);
+  transition: transform 0.35s ease;
+}
+
+.hero__cta:hover .hero__cta-arrow {
+  transform: translateX(10px);
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  html {
+    scroll-behavior: smooth;
+  }
+}
+
+@media (max-width: 767px) {
+  .hero__overlay {
+    align-items: flex-end;
+  }
+
+  .hero__text {
+    margin-top: 0;
+    margin-bottom: 13vh;
+    max-width: none;
+  }
+
+  .hero__headline {
+    font-size: clamp(2.4rem, 11vw, 3.4rem);
+  }
+
+  .hero__copy {
+    font-size: 0.8rem;
   }
 }
