@@ -14,12 +14,13 @@
 </head>
 <body>
 
-  <!-- Navigation trigger -->
-  <nav class="site-nav" aria-label="Site navigation">
-    <button class="site-nav__trigger" id="navTrigger" aria-expanded="false" aria-controls="navPanel">
+  <!-- Page header -->
+  <header class="page-header">
+    <button class="site-nav__trigger page-header__menu" id="navTrigger" aria-expanded="false" aria-controls="navPanel">
       Menu
     </button>
-  </nav>
+    <a class="page-header__brand" href="index.html">LGNDRY.Co</a>
+  </header>
 
   <!-- Loading screen -->
   <div class="loader" id="loader" aria-hidden="true">
@@ -35,14 +36,6 @@
       src="assests/images/hero-image.JPG"
       alt="A figure stands in a golden field beneath a hazy sky — Limpopo, South Africa"
     >
-    <div class="hero__content">
-      <img
-        class="hero__logo"
-        src="assests/logos/LGNDRY.CO Final.png"
-        alt="LGNDRY.Co"
-        width="200"
-      >
-    </div>
   </section>
 
   <!-- Navigation panel -->
@@ -52,9 +45,8 @@
       <button class="nav-panel__close" id="navClose">Close</button>
       <ul class="nav-panel__list">
         <li><a class="nav-panel__item" href="index.html"      data-nav-image="home">Home</a></li>
-        <li><a class="nav-panel__item" href="commercial.html" data-nav-image="work">Work</a></li>
-        <li><a class="nav-panel__item" href="services.html"   data-nav-image="services">Services</a></li>
-        <li><a class="nav-panel__item" href="journal.html"    data-nav-image="journal">Journal</a></li>
+        <li><a class="nav-panel__item" href="services.html"   data-nav-image="practice">Practice</a></li>
+        <li><a class="nav-panel__item" href="commercial.html" data-nav-image="collections">Collections</a></li>
         <li><a class="nav-panel__item" href="about.html"      data-nav-image="about">About</a></li>
         <li><a class="nav-panel__item" href="contact.html"    data-nav-image="contact">Contact</a></li>
       </ul>
@@ -66,16 +58,12 @@
            src="assests/images/hero-image.JPG"
            alt="">
       <img class="nav-panel__photo"
-           data-nav-photo="work"
+           data-nav-photo="practice"
+           src="assests/images/art/studio art/InShot_20250312_165932183.jpg"
+           alt="">
+      <img class="nav-panel__photo"
+           data-nav-photo="collections"
            src="assests/images/commercial/agriculture/InShot_20260202_213907197.jpg"
-           alt="">
-      <img class="nav-panel__photo"
-           data-nav-photo="services"
-           src="assests/images/commercial/kitso/LGNDRY.CO_29 copy.jpg"
-           alt="">
-      <img class="nav-panel__photo"
-           data-nav-photo="journal"
-           src="assests/images/art/outdoor/InShot_20260211_201611759.jpg"
            alt="">
       <img class="nav-panel__photo"
            data-nav-photo="about"
