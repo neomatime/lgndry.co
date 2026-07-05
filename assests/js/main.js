@@ -403,7 +403,7 @@
     if (el.hasAttribute('data-booking-modal')) return true;
     var text = (el.textContent || '').replace(/\s+/g, ' ').trim().toLowerCase();
     var href = (el.getAttribute && el.getAttribute('href') || '').toLowerCase();
-    return text === 'book a session' || href.indexOf('booking%20a%20session') !== -1;
+    return /(^|\b)book(\b|$)/.test(text) || href.indexOf('booking%20') !== -1;
   }
 
   function createModal() {
