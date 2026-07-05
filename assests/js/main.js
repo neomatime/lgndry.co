@@ -390,6 +390,400 @@
   }
 }());
 
+
+/* Collection cart and delivery journey */
+(function () {
+  var grid = document.querySelector('.collection-grid');
+  if (!grid) return;
+
+  var cart = [];
+  var drawer;
+  var cartButton;
+  var lastFocused;
+  var orderEmail = 'info@lgndry-co.co.za';
+
+  function escapeHtml(value) {
+    return String(value || '').replace(/[&<>"']/g, function (char) {
+      return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[char];
+    });
+  }
+
+  function parsePrice(value) {
+    var number = String(value || '').replace(/[^0-9.]/g, '');
+    return parseFloat(number) || 0;
+  }
+
+  function formatMoney(value) {
+    return 'R ' + Math.round(value).toString().replace(/\B(?=(\d{3})+(?!\d))/g, ',');
+  }
+
+  function getCartCount() {
+    return cart.reduce(function (sum, item) { return sum + item.quantity; }, 0);
+  }
+
+  function getCartTotal() {
+    return cart.reduce(function (sum, item) { return sum + (item.price * item.quantity); }, 0);
+  }
+
+  function getFormValue(name) {
+    var field = drawer && drawer.querySelector('[name="' + name + '"]');
+    return field ? field.value.trim() : '';
+  }
+
+  function getDeliverySummary() {
+    var method = getFormValue('delivery_method') || '-';
+    var address = getFormValue('delivery_address') || '-';
+    var city = getFormValue('delivery_city') || '-';
+    var code = getFormValue('postal_code') || '-';
+    return method + ' / ' + address + ', ' + city + ', ' + code;
+  }
+
+  function createCartButton() {
+    var filters = document.querySelector('[data-collection-filters]');
+    if (!filters) return null;
+
+    var button = document.createElement('button');
+    button.className = 'collection-cart-button';
+    button.type = 'button';
+    button.setAttribute('data-collection-cart-open', '');
+    button.innerHTML = 'Cart <span data-collection-cart-count>0</span>';
+    filters.appendChild(button);
+    button.addEventListener('click', function () { openDrawer(button); });
+    return button;
+  }
+
+  function createDrawer() {
+    var wrapper = document.createElement('div');
+    wrapper.className = 'collection-cart';
+    wrapper.setAttribute('aria-hidden', 'true');
+    wrapper.innerHTML = '' +
+      '<div class="collection-cart__backdrop" data-collection-cart-close></div>' +
+      '<aside class="collection-cart__dialog" role="dialog" aria-modal="true" aria-labelledby="collectionCartTitle" tabindex="-1">' +
+        '<div class="collection-cart__header">' +
+          '<div>' +
+            '<p class="collection-cart__eyebrow">Collection order</p>' +
+            '<h2 id="collectionCartTitle">Reserve your print.</h2>' +
+            '<p>Add works to your cart, share delivery details, and we will confirm availability. Payment is made in person.</p>' +
+          '</div>' +
+          '<button class="collection-cart__close" type="button" aria-label="Close cart" data-collection-cart-close>&times;</button>' +
+        '</div>' +
+        '<form class="collection-cart__form" novalidate>' +
+          '<div class="collection-cart__body">' +
+            '<div class="collection-cart__items" data-collection-cart-items></div>' +
+            '<section class="collection-cart__section">' +
+              '<h3>Delivery details</h3>' +
+              '<div class="collection-cart__grid">' +
+                '<label class="collection-cart__field">' +
+                  '<span>Your name</span>' +
+                  '<input type="text" name="customer_name" autocomplete="name" required>' +
+                '</label>' +
+                '<label class="collection-cart__field">' +
+                  '<span>Email address</span>' +
+                  '<input type="email" name="customer_email" autocomplete="email" required>' +
+                '</label>' +
+                '<label class="collection-cart__field">' +
+                  '<span>Phone / WhatsApp</span>' +
+                  '<input type="tel" name="customer_phone" autocomplete="tel" required>' +
+                '</label>' +
+                '<label class="collection-cart__field">' +
+                  '<span>Delivery method</span>' +
+                  '<select name="delivery_method" required>' +
+                    '<option value="">Select method</option>' +
+                    '<option>Deliver to my address</option>' +
+                    '<option>Collect in person</option>' +
+                  '</select>' +
+                '</label>' +
+                '<label class="collection-cart__field collection-cart__field--wide">' +
+                  '<span>Delivery address</span>' +
+                  '<input type="text" name="delivery_address" autocomplete="street-address" placeholder="Street address, building, or collection note" required>' +
+                '</label>' +
+                '<label class="collection-cart__field">' +
+                  '<span>City / town</span>' +
+                  '<input type="text" name="delivery_city" autocomplete="address-level2" required>' +
+                '</label>' +
+                '<label class="collection-cart__field">' +
+                  '<span>Postal code</span>' +
+                  '<input type="text" name="postal_code" autocomplete="postal-code" required>' +
+                '</label>' +
+                '<label class="collection-cart__field collection-cart__field--wide">' +
+                  '<span>Delivery notes</span>' +
+                  '<textarea name="delivery_notes" rows="4" placeholder="Framing requests, preferred delivery day, access notes, or anything we should know."></textarea>' +
+                '</label>' +
+              '</div>' +
+              '<div class="collection-cart__payment">' +
+                '<strong>Payment in person</strong>' +
+                '<p>No online payment is collected here. LGNDRY.Co will confirm print availability, delivery or collection details, and arrange in-person payment.</p>' +
+              '</div>' +
+            '</section>' +
+            '<section class="collection-cart__section">' +
+              '<h3>Review request</h3>' +
+              '<dl class="collection-cart__review" data-collection-cart-review></dl>' +
+            '</section>' +
+          '</div>' +
+          '<div class="collection-cart__footer">' +
+            '<p class="collection-cart__total"><span>Subtotal</span><strong data-collection-cart-total>R 0</strong></p>' +
+            '<button type="submit" data-collection-cart-submit>Send order request</button>' +
+          '</div>' +
+        '</form>' +
+      '</aside>';
+    document.body.appendChild(wrapper);
+    return wrapper;
+  }
+
+  function getFocusable() {
+    return drawer.querySelectorAll('a[href], button:not([disabled]), textarea, input, select, [tabindex]:not([tabindex="-1"])');
+  }
+
+  function updateButton() {
+    if (!cartButton) return;
+    var count = cartButton.querySelector('[data-collection-cart-count]');
+    if (count) count.textContent = getCartCount();
+    cartButton.setAttribute('aria-label', 'Open cart with ' + getCartCount() + ' item' + (getCartCount() === 1 ? '' : 's'));
+  }
+
+  function renderItems() {
+    var container = drawer.querySelector('[data-collection-cart-items]');
+    if (!container) return;
+
+    if (!cart.length) {
+      container.innerHTML = '' +
+        '<div class="collection-cart__empty">' +
+          '<p>Your cart is empty.</p>' +
+          '<button type="button" data-collection-cart-close>Continue browsing</button>' +
+        '</div>';
+      var close = container.querySelector('[data-collection-cart-close]');
+      if (close) close.addEventListener('click', closeDrawer);
+      return;
+    }
+
+    container.innerHTML = cart.map(function (item, index) {
+      return '' +
+        '<article class="collection-cart__item">' +
+          '<img src="' + escapeHtml(item.image) + '" alt="' + escapeHtml(item.title) + '">' +
+          '<div>' +
+            '<h3>' + escapeHtml(item.title) + '</h3>' +
+            '<p class="collection-cart__item-meta">' + escapeHtml(item.year) + ' / ' + escapeHtml(item.size) + '<br>' + escapeHtml(item.details) + '</p>' +
+            '<div class="collection-cart__item-row">' +
+              '<div class="collection-cart__qty" aria-label="Quantity for ' + escapeHtml(item.title) + '">' +
+                '<button type="button" data-collection-cart-qty="-1" data-index="' + index + '">-</button>' +
+                '<span>' + item.quantity + '</span>' +
+                '<button type="button" data-collection-cart-qty="1" data-index="' + index + '">+</button>' +
+              '</div>' +
+              '<p class="collection-cart__price">' + formatMoney(item.price * item.quantity) + '</p>' +
+            '</div>' +
+            '<button class="collection-cart__remove" type="button" data-collection-cart-remove data-index="' + index + '">Remove</button>' +
+          '</div>' +
+        '</article>';
+    }).join('');
+
+    var qtyButtons = container.querySelectorAll('[data-collection-cart-qty]');
+    for (var i = 0; i < qtyButtons.length; i++) {
+      qtyButtons[i].addEventListener('click', function () {
+        var index = parseInt(this.getAttribute('data-index'), 10);
+        var delta = parseInt(this.getAttribute('data-collection-cart-qty'), 10);
+        if (!cart[index]) return;
+        cart[index].quantity += delta;
+        if (cart[index].quantity <= 0) cart.splice(index, 1);
+        renderCart();
+      });
+    }
+
+    var removeButtons = container.querySelectorAll('[data-collection-cart-remove]');
+    for (var r = 0; r < removeButtons.length; r++) {
+      removeButtons[r].addEventListener('click', function () {
+        var index = parseInt(this.getAttribute('data-index'), 10);
+        if (!cart[index]) return;
+        cart.splice(index, 1);
+        renderCart();
+      });
+    }
+  }
+
+  function renderReview() {
+    var review = drawer.querySelector('[data-collection-cart-review]');
+    if (!review) return;
+
+    var itemText = cart.length ? cart.map(function (item) {
+      return item.quantity + ' x ' + item.title + ' (' + item.size + ')';
+    }).join(', ') : '-';
+
+    review.innerHTML = '' +
+      '<div><dt>Works</dt><dd>' + escapeHtml(itemText) + '</dd></div>' +
+      '<div><dt>Customer</dt><dd>' + escapeHtml(getFormValue('customer_name') || '-') + '<br>' + escapeHtml(getFormValue('customer_email') || '-') + '<br>' + escapeHtml(getFormValue('customer_phone') || '-') + '</dd></div>' +
+      '<div><dt>Delivery</dt><dd>' + escapeHtml(getDeliverySummary()) + '</dd></div>' +
+      '<div><dt>Notes</dt><dd>' + escapeHtml(getFormValue('delivery_notes') || 'None') + '</dd></div>' +
+      '<div><dt>Payment</dt><dd>Payment will be made in person after availability and delivery details are confirmed.</dd></div>';
+  }
+
+  function renderCart() {
+    renderItems();
+    renderReview();
+    updateButton();
+
+    var total = drawer.querySelector('[data-collection-cart-total]');
+    if (total) total.textContent = formatMoney(getCartTotal());
+
+    var submit = drawer.querySelector('[data-collection-cart-submit]');
+    if (submit) submit.disabled = cart.length === 0;
+  }
+
+  function getProductFromCard(card) {
+    var title = card.querySelector('.work__title');
+    var year = card.querySelector('.work__year');
+    var price = card.querySelector('.work__price');
+    var image = card.querySelector('.work__media img');
+    var size = card.querySelector('.work__size select');
+    var details = [];
+    var meta = card.querySelectorAll('.work__meta p');
+    for (var i = 0; i < meta.length; i++) details.push(meta[i].textContent.trim());
+
+    return {
+      title: title ? title.textContent.trim() : 'Untitled work',
+      year: year ? year.textContent.trim() : '',
+      priceText: price ? price.textContent.trim() : 'R 0',
+      price: parsePrice(price ? price.textContent : '0'),
+      image: image ? image.getAttribute('src') : '',
+      size: size ? size.value : '',
+      details: details.join(' / '),
+      quantity: 1
+    };
+  }
+
+  function addToCart(card, trigger) {
+    var product = getProductFromCard(card);
+    var id = product.title + '|' + product.size;
+    var existing = null;
+    for (var i = 0; i < cart.length; i++) {
+      if (cart[i].id === id) existing = cart[i];
+    }
+
+    if (existing) {
+      existing.quantity += 1;
+    } else {
+      product.id = id;
+      cart.push(product);
+    }
+
+    openDrawer(trigger);
+    renderCart();
+  }
+
+  function openDrawer(trigger) {
+    if (!drawer) {
+      drawer = createDrawer();
+      bindDrawer();
+    }
+    lastFocused = trigger || document.activeElement;
+    drawer.classList.add('collection-cart--open');
+    drawer.setAttribute('aria-hidden', 'false');
+    document.body.classList.add('collection-cart-lock');
+    renderCart();
+    setTimeout(function () {
+      var dialog = drawer.querySelector('.collection-cart__dialog');
+      if (dialog) dialog.focus();
+    }, 0);
+  }
+
+  function closeDrawer() {
+    if (!drawer) return;
+    drawer.classList.remove('collection-cart--open');
+    drawer.setAttribute('aria-hidden', 'true');
+    document.body.classList.remove('collection-cart-lock');
+    if (lastFocused && lastFocused.focus) lastFocused.focus();
+  }
+
+  function buildOrderBody() {
+    var lines = [
+      'LGNDRY.Co collection order request',
+      '',
+      'Items:'
+    ];
+
+    for (var i = 0; i < cart.length; i++) {
+      lines.push('- ' + cart[i].quantity + ' x ' + cart[i].title + ' / ' + cart[i].size + ' / ' + formatMoney(cart[i].price * cart[i].quantity));
+    }
+
+    lines.push('');
+    lines.push('Subtotal: ' + formatMoney(getCartTotal()));
+    lines.push('Payment: In person after availability and delivery details are confirmed.');
+    lines.push('');
+    lines.push('Customer: ' + getFormValue('customer_name'));
+    lines.push('Email: ' + getFormValue('customer_email'));
+    lines.push('Phone / WhatsApp: ' + getFormValue('customer_phone'));
+    lines.push('Delivery method: ' + getFormValue('delivery_method'));
+    lines.push('Delivery address: ' + getFormValue('delivery_address'));
+    lines.push('City / town: ' + getFormValue('delivery_city'));
+    lines.push('Postal code: ' + getFormValue('postal_code'));
+    lines.push('Delivery notes: ' + (getFormValue('delivery_notes') || 'None'));
+
+    return lines.join('\n');
+  }
+
+  function submitOrder(e) {
+    e.preventDefault();
+    if (!cart.length) {
+      openDrawer();
+      return;
+    }
+
+    var form = drawer.querySelector('.collection-cart__form');
+    if (!form.checkValidity()) {
+      form.reportValidity();
+      return;
+    }
+
+    renderReview();
+    var subject = encodeURIComponent('Collection order request - LGNDRY.Co');
+    var body = encodeURIComponent(buildOrderBody());
+    window.location.href = 'mailto:' + orderEmail + '?subject=' + subject + '&body=' + body;
+  }
+
+  function bindDrawer() {
+    var closes = drawer.querySelectorAll('[data-collection-cart-close]');
+    for (var i = 0; i < closes.length; i++) {
+      closes[i].addEventListener('click', closeDrawer);
+    }
+
+    var form = drawer.querySelector('.collection-cart__form');
+    if (form) {
+      form.addEventListener('input', renderReview);
+      form.addEventListener('change', renderReview);
+      form.addEventListener('submit', submitOrder);
+    }
+
+    drawer.addEventListener('keydown', function (e) {
+      if (e.key === 'Escape') {
+        closeDrawer();
+        return;
+      }
+      if (e.key !== 'Tab') return;
+      var focusable = getFocusable();
+      if (!focusable.length) return;
+      var first = focusable[0];
+      var last = focusable[focusable.length - 1];
+      if (e.shiftKey && document.activeElement === first) {
+        e.preventDefault();
+        last.focus();
+      } else if (!e.shiftKey && document.activeElement === last) {
+        e.preventDefault();
+        first.focus();
+      }
+    });
+  }
+
+  var acquireButtons = document.querySelectorAll('.work__acquire');
+  for (var i = 0; i < acquireButtons.length; i++) {
+    acquireButtons[i].addEventListener('click', function (e) {
+      var card = this.closest('.work');
+      if (!card) return;
+      e.preventDefault();
+      addToCart(card, this);
+    });
+  }
+
+  cartButton = createCartButton();
+  updateButton();
+}());
 /* Booking modal */
 (function () {
   var bookingTriggers = document.querySelectorAll('a, button');
