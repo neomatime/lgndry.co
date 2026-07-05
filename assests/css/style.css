@@ -1950,93 +1950,6 @@ body {
   background-color: #fbfaf7;
 }
 
-.about-header {
-  position: fixed;
-  top: 0;
-  left: 0;
-  right: 0;
-  z-index: 650;
-  display: grid;
-  grid-template-columns: 1fr auto 32px;
-  align-items: center;
-  gap: 32px;
-  padding: 34px clamp(28px, 4.5vw, 58px) 24px;
-  background: linear-gradient(to bottom, rgba(251, 250, 247, 0.96), rgba(251, 250, 247, 0));
-}
-
-.about-header__brand {
-  justify-self: start;
-  font-family: 'Inter', sans-serif;
-  font-size: 1.05rem;
-  font-weight: 400;
-  letter-spacing: 0.01em;
-  color: var(--text-primary);
-  text-decoration: none;
-}
-
-.about-header__nav {
-  display: flex;
-  align-items: center;
-  gap: clamp(28px, 3.8vw, 54px);
-}
-
-.about-header__nav a {
-  position: relative;
-  font-family: 'Inter', sans-serif;
-  font-size: 0.64rem;
-  font-weight: 500;
-  letter-spacing: 0.2em;
-  line-height: 1;
-  text-transform: uppercase;
-  color: var(--text-primary);
-  text-decoration: none;
-}
-
-.about-header__nav a::after {
-  content: '';
-  position: absolute;
-  left: 0;
-  right: 0.2em;
-  bottom: -8px;
-  height: 1px;
-  background-color: currentColor;
-  transform: scaleX(0);
-  transform-origin: left;
-  transition: transform 0.28s ease;
-}
-
-.about-header__nav a:hover::after,
-.about-header__nav .about-header__link--active::after {
-  transform: scaleX(1);
-}
-
-.about-header__menu {
-  justify-self: end;
-  width: 18px;
-  height: 18px;
-  border: 1px solid var(--text-primary);
-  border-radius: 50%;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  background: transparent;
-  color: var(--text-primary);
-  font-family: 'Inter', sans-serif;
-  font-size: 0.78rem;
-  line-height: 1;
-  cursor: pointer;
-  transition: transform 0.28s ease, opacity 0.28s ease;
-}
-
-.about-header__menu:hover {
-  transform: rotate(90deg);
-  opacity: 0.68;
-}
-
-.about-body .nav-panel {
-  z-index: 900;
-}
-
 .about-page {
   max-width: 1440px;
   margin: 0 auto;
@@ -2360,14 +2273,6 @@ body {
 }
 
 @media (max-width: 1100px) {
-  .about-header {
-    grid-template-columns: 1fr 32px;
-  }
-
-  .about-header__nav {
-    display: none;
-  }
-
   .about-hero,
   .about-founder,
   .about-manifesto,
@@ -2435,10 +2340,6 @@ body {
 }
 
 @media (max-width: 560px) {
-  .about-header {
-    padding: 26px 24px 18px;
-  }
-
   .about-page {
     padding-left: 24px;
     padding-right: 24px;
