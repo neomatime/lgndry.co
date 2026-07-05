@@ -2820,6 +2820,7 @@ body {
   position: relative;
   z-index: 1;
   width: min(1360px, 100%);
+  height: min(92vh, 980px);
   max-height: min(92vh, 980px);
   display: grid;
   grid-template-columns: minmax(340px, 0.72fr) minmax(0, 1.28fr);
@@ -2862,7 +2863,8 @@ body {
 
 .booking-modal__visual {
   position: relative;
-  min-height: 760px;
+  min-height: 0;
+  height: 100%;
   padding: 54px 60px;
   display: flex;
   flex-direction: column;
@@ -2915,8 +2917,11 @@ body {
 }
 
 .booking-modal__panel {
-  min-height: 760px;
+  min-height: 0;
+  max-height: 100%;
   overflow-y: auto;
+  overscroll-behavior: contain;
+  -webkit-overflow-scrolling: touch;
   padding: clamp(54px, 6vw, 72px) clamp(54px, 6vw, 86px) 44px;
 }
 
