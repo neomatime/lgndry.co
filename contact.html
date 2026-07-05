@@ -1,0 +1,243 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Contact - LGNDRY.Co</title>
+  <meta name="description" content="Contact LGNDRY.Co to book a photography session, start a creative project, or enquire about a brand partnership.">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@300;400;500&family=Inter:wght@300;400;500&display=swap" rel="stylesheet">
+  <link rel="icon" type="image/png" href="assests/logos/LGNDRY.CO Final.png">
+  <link rel="apple-touch-icon" href="assests/logos/LGNDRY.CO Final white.png">
+  <link rel="stylesheet" href="assests/css/style.css">
+</head>
+<body class="contact-body">
+
+  <!-- Page header -->
+  <header class="page-header">
+    <button class="site-nav__trigger page-header__menu" id="navTrigger" aria-expanded="false" aria-controls="navPanel">
+      Menu
+    </button>
+    <a class="page-header__brand" href="index.html">LGNDRY.Co</a>
+  </header>
+
+  <!-- Navigation panel -->
+  <div class="nav-panel" id="navPanel" aria-hidden="true">
+
+    <div class="nav-panel__links">
+      <button class="nav-panel__close" id="navClose">Close</button>
+      <ul class="nav-panel__list">
+        <li><a class="nav-panel__item" href="index.html"      data-nav-image="home">Home</a></li>
+        <li><a class="nav-panel__item" href="services.html"   data-nav-image="practice">Practice</a></li>
+        <li><a class="nav-panel__item" href="commercial.html" data-nav-image="collections">Collections</a></li>
+        <li><a class="nav-panel__item" href="about.html"      data-nav-image="about">About</a></li>
+        <li><a class="nav-panel__item" href="contact.html"    data-nav-image="contact">Contact</a></li>
+      </ul>
+    </div>
+
+    <div class="nav-panel__preview" aria-hidden="true">
+      <img class="nav-panel__photo nav-panel__photo--active"
+           data-nav-photo="home"
+           src="assests/images/hero-image.JPG"
+           alt="">
+      <img class="nav-panel__photo"
+           data-nav-photo="practice"
+           src="assests/images/art/studio art/InShot_20250312_165932183.jpg"
+           alt="">
+      <img class="nav-panel__photo"
+           data-nav-photo="collections"
+           src="assests/images/commercial/agriculture/InShot_20260202_213907197.jpg"
+           alt="">
+      <img class="nav-panel__photo"
+           data-nav-photo="about"
+           src="assests/images/art/studio art/InShot_20250830_214616011.jpg"
+           alt="">
+      <img class="nav-panel__photo"
+           data-nav-photo="contact"
+           src="assests/images/founder.jpeg"
+           alt="">
+    </div>
+
+  </div>
+
+  <main class="contact-page">
+    <section class="contact-hero" aria-labelledby="contact-title">
+      <div class="contact-hero__copy reveal">
+        <h1 id="contact-title" class="contact-title">Let's create<br>something<br>worth<br>remembering.</h1>
+        <span class="contact-rule" aria-hidden="true"></span>
+        <p>Whether you are planning a project, exploring a partnership, or simply want to say hello - we would love to hear from you.</p>
+      </div>
+      <figure class="contact-hero__media reveal">
+        <img src="assests/images/art/studio art/InShot_20250830_214616011.jpg" alt="A quiet studio still life with dramatic light and shadow">
+      </figure>
+    </section>
+
+    <section class="contact-grid" aria-label="Contact options and message form">
+      <aside class="contact-card contact-card--dark reveal" aria-labelledby="conversation-title">
+        <h2 id="conversation-title">Start a Conversation</h2>
+        <span class="contact-rule contact-rule--light" aria-hidden="true"></span>
+
+        <a class="contact-method" href="mailto:info@lgndry-co.co.za">
+          <span class="contact-method__icon" aria-hidden="true">
+            <svg width="30" height="30" viewBox="0 0 30 30" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <path d="M5 8.5H25V22H5V8.5Z" stroke="currentColor" stroke-width="1.2"/>
+              <path d="M5 9L15 16.5L25 9" stroke="currentColor" stroke-width="1.2"/>
+            </svg>
+          </span>
+          <span class="contact-method__body">
+            <span>Email</span>
+            <strong>info@lgndry-co.co.za</strong>
+          </span>
+          <span class="contact-method__arrow" aria-hidden="true">-></span>
+        </a>
+
+        <a class="contact-method" href="tel:+27764862725">
+          <span class="contact-method__icon" aria-hidden="true">
+            <svg width="30" height="30" viewBox="0 0 30 30" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <path d="M10.4 6.5L13 11.7L10.8 13.4C12.1 16.1 14 18 16.7 19.2L18.4 17L23.5 19.6C23.1 22 21.9 23.6 19.7 23.6C13 23.6 6.4 17 6.4 10.3C6.4 8.1 8 6.9 10.4 6.5Z" stroke="currentColor" stroke-width="1.2" stroke-linejoin="round"/>
+            </svg>
+          </span>
+          <span class="contact-method__body">
+            <span>Phone / WhatsApp</span>
+            <strong>076 486 2725</strong>
+          </span>
+          <span class="contact-method__arrow" aria-hidden="true">-></span>
+        </a>
+
+        <a class="contact-method" href="https://www.google.com/maps/search/?api=1&query=Limpopo%2C%20South%20Africa" target="_blank" rel="noopener">
+          <span class="contact-method__icon" aria-hidden="true">
+            <svg width="30" height="30" viewBox="0 0 30 30" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <path d="M15 25C15 25 23 18.2 23 11.8C23 7.4 19.4 4.5 15 4.5C10.6 4.5 7 7.4 7 11.8C7 18.2 15 25 15 25Z" stroke="currentColor" stroke-width="1.2"/>
+              <path d="M15 14.6C16.7 14.6 18 13.3 18 11.6C18 9.9 16.7 8.6 15 8.6C13.3 8.6 12 9.9 12 11.6C12 13.3 13.3 14.6 15 14.6Z" stroke="currentColor" stroke-width="1.2"/>
+            </svg>
+          </span>
+          <span class="contact-method__body">
+            <span>Studio</span>
+            <strong>Limpopo, South Africa<br>By Appointment Only</strong>
+          </span>
+          <span class="contact-method__arrow" aria-hidden="true">-></span>
+        </a>
+      </aside>
+
+      <section class="contact-card contact-card--form reveal" aria-labelledby="message-title">
+        <h2 id="message-title">Send a Message</h2>
+        <span class="contact-rule" aria-hidden="true"></span>
+        <form class="contact-form" action="mailto:info@lgndry-co.co.za" method="post" enctype="text/plain">
+          <label>
+            <span>Your name</span>
+            <input type="text" name="name" autocomplete="name" required>
+          </label>
+          <label>
+            <span>Email address</span>
+            <input type="email" name="email" autocomplete="email" required>
+          </label>
+          <label class="contact-form__wide">
+            <span>Subject</span>
+            <input type="text" name="subject" required>
+          </label>
+          <label class="contact-form__wide">
+            <span>Tell us about your project</span>
+            <textarea name="message" rows="5" required></textarea>
+          </label>
+          <button class="contact-submit" type="submit">
+            <span>Send message</span>
+            <svg width="40" height="8" viewBox="0 0 40 8" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+              <path d="M0 4H38M38 4L34 1M38 4L34 7" stroke="currentColor" stroke-width="1"/>
+            </svg>
+          </button>
+        </form>
+      </section>
+    </section>
+
+    <section class="contact-paths reveal" aria-labelledby="paths-title">
+      <div class="contact-paths__intro">
+        <p class="contact-eyebrow">Choose your path</p>
+        <span class="contact-rule" aria-hidden="true"></span>
+        <h2 id="paths-title">Two ways to work<br>together.</h2>
+        <p>Every project is unique. Choose the path that best fits what you need.</p>
+        <a class="contact-link" href="services.html">
+          <span>Compare our approach</span>
+          <svg width="40" height="8" viewBox="0 0 40 8" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+            <path d="M0 4H38M38 4L34 1M38 4L34 7" stroke="currentColor" stroke-width="1"/>
+          </svg>
+        </a>
+      </div>
+      <article class="contact-path">
+        <span class="contact-path__number">01</span>
+        <h3>Book a Session</h3>
+        <span class="contact-rule" aria-hidden="true"></span>
+        <p>For one-off projects, campaigns, or specific photography needs.</p>
+        <a class="contact-link" href="mailto:info@lgndry-co.co.za?subject=Booking%20a%20session%20with%20LGNDRY.Co">
+          <span>Book a session</span>
+          <svg width="40" height="8" viewBox="0 0 40 8" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+            <path d="M0 4H38M38 4L34 1M38 4L34 7" stroke="currentColor" stroke-width="1"/>
+          </svg>
+        </a>
+      </article>
+      <article class="contact-path">
+        <span class="contact-path__number">02</span>
+        <h3>Apply for a Partnership</h3>
+        <span class="contact-rule" aria-hidden="true"></span>
+        <p>For brands seeking ongoing creative collaboration and consistent visual storytelling.</p>
+        <a class="contact-link" href="mailto:info@lgndry-co.co.za?subject=Brand%20partnership%20with%20LGNDRY.Co">
+          <span>Apply for a partnership</span>
+          <svg width="40" height="8" viewBox="0 0 40 8" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+            <path d="M0 4H38M38 4L34 1M38 4L34 7" stroke="currentColor" stroke-width="1"/>
+          </svg>
+        </a>
+      </article>
+    </section>
+
+    <section class="contact-studio" aria-labelledby="studio-title">
+      <div class="contact-studio__note reveal">
+        <p id="studio-title" class="contact-eyebrow">The Studio</p>
+        <span class="contact-rule" aria-hidden="true"></span>
+        <p>We work with a select number of clients to ensure every project receives the attention it deserves.</p>
+        <p>Thank you for understanding.</p>
+        <p class="contact-signature">Neo Mokgwadi</p>
+        <p class="contact-role">- Neo Mokgwadi<br>Founder &amp; Creative Director</p>
+      </div>
+      <figure class="contact-studio__media reveal">
+        <img src="assests/images/hero-image.JPG" alt="A wide Limpopo landscape photographed by LGNDRY.Co">
+      </figure>
+    </section>
+  </main>
+
+  <!-- Footer -->
+  <footer class="footer">
+    <div class="container footer__top">
+      <div class="footer__brand">
+        <img class="footer__logo" src="assests/logos/LGNDRY.CO Final white.png" alt="LGNDRY.Co">
+        <p class="footer__tagline">Visual storytelling studio.<br>Limpopo, South Africa.</p>
+      </div>
+
+      <nav class="footer__nav" aria-label="Footer">
+        <p class="footer__heading">Explore</p>
+        <a href="commercial.html">Work</a>
+        <a href="services.html">Services</a>
+        <a href="about.html">About</a>
+        <a href="journal.html">Journal</a>
+      </nav>
+
+      <div class="footer__col">
+        <p class="footer__heading">Contact</p>
+        <a href="mailto:info@lgndry-co.co.za">info@lgndry-co.co.za</a>
+        <a href="tel:+27764862725">076 486 2725</a>
+      </div>
+
+      <div class="footer__col">
+        <p class="footer__heading">Follow</p>
+        <a href="https://www.instagram.com/lgndry_content/" target="_blank" rel="noopener">Instagram</a>
+      </div>
+    </div>
+
+    <div class="container footer__bottom">
+      <p>&copy; 2026 LGNDRY.Co</p>
+      <p>All rights reserved.</p>
+    </div>
+  </footer>
+
+  <script src="assests/js/main.js"></script>
+</body>
+</html>
