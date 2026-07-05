@@ -1,0 +1,190 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>About - LGNDRY.Co</title>
+  <meta name="description" content="About LGNDRY.Co, a visual storytelling studio finding beauty in ordinary moments through photography, film, and visual communication.">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@300;400;500&family=Inter:wght@300;400;500&display=swap" rel="stylesheet">
+  <link rel="icon" type="image/png" href="assests/logos/LGNDRY.CO Final.png">
+  <link rel="apple-touch-icon" href="assests/logos/LGNDRY.CO Final white.png">
+  <link rel="stylesheet" href="assests/css/style.css">
+</head>
+<body class="about-body">
+
+  <header class="about-header">
+    <a class="about-header__brand" href="index.html">LGNDRY.Co</a>
+    <nav class="about-header__nav" aria-label="Primary">
+      <a href="index.html">Home</a>
+      <a href="services.html">Practice</a>
+      <a href="commercial.html">Collection</a>
+      <a class="about-header__link--active" href="about.html">About</a>
+      <a href="contact.html">Contact</a>
+    </nav>
+    <button class="about-header__menu" id="navTrigger" type="button" aria-label="Open navigation" aria-expanded="false" aria-controls="navPanel" title="Open navigation">
+      <span aria-hidden="true">+</span>
+    </button>
+  </header>
+
+  <div class="nav-panel" id="navPanel" aria-hidden="true">
+    <div class="nav-panel__links">
+      <button class="nav-panel__close" id="navClose">Close</button>
+      <ul class="nav-panel__list">
+        <li><a class="nav-panel__item" href="index.html" data-nav-image="home">Home</a></li>
+        <li><a class="nav-panel__item" href="services.html" data-nav-image="practice">Practice</a></li>
+        <li><a class="nav-panel__item" href="commercial.html" data-nav-image="collections">Collections</a></li>
+        <li><a class="nav-panel__item" href="about.html" data-nav-image="about">About</a></li>
+        <li><a class="nav-panel__item" href="contact.html" data-nav-image="contact">Contact</a></li>
+      </ul>
+    </div>
+
+    <div class="nav-panel__preview" aria-hidden="true">
+      <img class="nav-panel__photo nav-panel__photo--active" data-nav-photo="home" src="assests/images/hero-image.JPG" alt="">
+      <img class="nav-panel__photo" data-nav-photo="practice" src="assests/images/art/studio art/InShot_20250312_165932183.jpg" alt="">
+      <img class="nav-panel__photo" data-nav-photo="collections" src="assests/images/commercial/agriculture/InShot_20260202_213907197.jpg" alt="">
+      <img class="nav-panel__photo" data-nav-photo="about" src="assests/images/art/studio art/InShot_20250830_214616011.jpg" alt="">
+      <img class="nav-panel__photo" data-nav-photo="contact" src="assests/images/founder.jpeg" alt="">
+    </div>
+  </div>
+
+  <main class="about-page">
+    <section class="about-hero" aria-labelledby="about-title">
+      <div class="about-hero__copy reveal">
+        <p class="about-eyebrow">About LGNDRY.Co</p>
+        <h1 id="about-title" class="about-title">There is beauty<br>in everything.<br>Even the ordinary.</h1>
+        <p class="about-copy">LGNDRY.Co is a creative studio built on the belief that the mundane holds meaning. We exist to find it, frame it, and turn it into something lasting.</p>
+        <a class="about-link" href="#philosophy">
+          <span>Our philosophy</span>
+          <svg width="40" height="8" viewBox="0 0 40 8" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+            <path d="M0 4H38M38 4L34 1M38 4L34 7" stroke="currentColor" stroke-width="1"/>
+          </svg>
+        </a>
+      </div>
+      <figure class="about-hero__media reveal">
+        <img src="assests/images/art/studio art/InShot_20250830_214616011.jpg" alt="A quiet fine art photograph with dramatic studio light">
+      </figure>
+    </section>
+
+    <section class="about-founder" aria-labelledby="founder-title">
+      <figure class="about-founder__portrait reveal">
+        <img src="assests/images/founder.jpeg" alt="Portrait of the LGNDRY.Co founder">
+      </figure>
+      <div class="about-founder__copy reveal">
+        <p class="about-eyebrow">Founder</p>
+        <h2 id="founder-title" class="about-section-title">Intentional by nature.<br>Obsessed with craft.</h2>
+        <span class="about-rule" aria-hidden="true"></span>
+        <p>I am drawn to what others overlook - the quiet, the overlooked, the in-between moments that tell the real story.</p>
+        <p>Photography, for me, is more than capturing what is seen. It is about revealing what is felt.</p>
+        <p class="about-signature">Lwazi Ndlovu</p>
+        <p class="about-founder__role">- Lwazi Ndlovu<br>Founder &amp; Creative Director</p>
+      </div>
+    </section>
+
+    <section class="about-principles" id="philosophy" aria-label="LGNDRY.Co philosophy">
+      <div class="about-principles__grid">
+        <article class="about-card reveal">
+          <span class="about-card__number">01</span>
+          <h2>Our Values</h2>
+          <span class="about-rule" aria-hidden="true"></span>
+          <ul>
+            <li>Intentionality</li>
+            <li>Authenticity</li>
+            <li>Excellence</li>
+            <li>Timelessness</li>
+            <li>Respect</li>
+          </ul>
+          <a class="about-link" href="#manifesto">
+            <span>What drives us</span>
+            <svg width="40" height="8" viewBox="0 0 40 8" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+              <path d="M0 4H38M38 4L34 1M38 4L34 7" stroke="currentColor" stroke-width="1"/>
+            </svg>
+          </a>
+        </article>
+
+        <article class="about-card reveal">
+          <span class="about-card__number">02</span>
+          <h2>Our Style</h2>
+          <span class="about-rule" aria-hidden="true"></span>
+          <p>Cinematic. Minimal. Honest.</p>
+          <p>We let light, composition, and story lead. Nothing is forced. Nothing is left to chance.</p>
+          <a class="about-link" href="commercial.html">
+            <span>View the work</span>
+            <svg width="40" height="8" viewBox="0 0 40 8" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+              <path d="M0 4H38M38 4L34 1M38 4L34 7" stroke="currentColor" stroke-width="1"/>
+            </svg>
+          </a>
+        </article>
+
+        <article class="about-card reveal">
+          <span class="about-card__number">03</span>
+          <h2>Our Process</h2>
+          <span class="about-rule" aria-hidden="true"></span>
+          <p>We listen. We observe. We understand.</p>
+          <p>Then we create with clarity and purpose - from concept to final delivery and beyond.</p>
+          <a class="about-link" href="services.html">
+            <span>How we work</span>
+            <svg width="40" height="8" viewBox="0 0 40 8" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+              <path d="M0 4H38M38 4L34 1M38 4L34 7" stroke="currentColor" stroke-width="1"/>
+            </svg>
+          </a>
+        </article>
+
+        <figure class="about-principles__image reveal">
+          <img src="assests/images/art/outdoor/InShot_20260211_201611759.jpg" alt="A quiet outdoor scene photographed by LGNDRY.Co">
+        </figure>
+      </div>
+    </section>
+
+    <section class="about-collabs reveal" aria-labelledby="collabs-title">
+      <p id="collabs-title" class="about-eyebrow">Selected Collaborations</p>
+      <div class="about-collabs__logos" aria-label="Selected client logos">
+        <img src="assests/images/client logos/vw.png" alt="Volkswagen">
+        <img src="assests/images/client logos/capricorn-fm.b6efb469.jpg" alt="Capricorn FM">
+        <img src="assests/images/client logos/kitso-logo.png" alt="Kitso">
+        <span>Comrades</span>
+        <span>LGNDRY.Co</span>
+      </div>
+    </section>
+
+    <section class="about-manifesto" id="manifesto" aria-labelledby="manifesto-title">
+      <div class="about-manifesto__copy reveal">
+        <p class="about-eyebrow">Our Manifesto</p>
+        <h2 id="manifesto-title" class="about-section-title">We believe in slowing down<br>to see what truly matters.</h2>
+        <span class="about-rule" aria-hidden="true"></span>
+        <p>In a world that moves too fast, we choose to look closer. To notice the details. To honor the quiet. To create work that outlives trends and speaks across time.</p>
+        <a class="about-link" href="commercial.html">
+          <span>View the collection</span>
+          <svg width="40" height="8" viewBox="0 0 40 8" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+            <path d="M0 4H38M38 4L34 1M38 4L34 7" stroke="currentColor" stroke-width="1"/>
+          </svg>
+        </a>
+      </div>
+      <figure class="about-manifesto__media reveal">
+        <img src="assests/images/hero-image.JPG" alt="A solitary figure moving through a wide Limpopo landscape">
+      </figure>
+    </section>
+
+    <section class="about-final" aria-label="Start a project">
+      <h2>Let us create<br>something meaningful.</h2>
+      <div class="about-final__links">
+        <a class="about-link" href="mailto:info@lgndry-co.co.za?subject=Booking%20a%20session%20with%20LGNDRY.Co">
+          <span>Book a session</span>
+          <svg width="40" height="8" viewBox="0 0 40 8" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+            <path d="M0 4H38M38 4L34 1M38 4L34 7" stroke="currentColor" stroke-width="1"/>
+          </svg>
+        </a>
+        <a class="about-link" href="mailto:info@lgndry-co.co.za?subject=Brand%20partnership%20with%20LGNDRY.Co">
+          <span>Apply for a brand partnership</span>
+          <svg width="40" height="8" viewBox="0 0 40 8" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+            <path d="M0 4H38M38 4L34 1M38 4L34 7" stroke="currentColor" stroke-width="1"/>
+          </svg>
+        </a>
+      </div>
+    </section>
+  </main>
+
+  <script src="assests/js/main.js"></script>
+</body>
+</html>
