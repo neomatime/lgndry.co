@@ -389,3 +389,170 @@
     })(buttons[i]);
   }
 }());
+
+/* Booking modal */
+(function () {
+  var bookingTriggers = document.querySelectorAll('a, button');
+  var modal;
+  var lastFocused;
+
+  function isBookingTrigger(el) {
+    if (!el) return false;
+    if (el.hasAttribute('data-booking-modal')) return true;
+    var text = (el.textContent || '').replace(/\s+/g, ' ').trim().toLowerCase();
+    var href = (el.getAttribute && el.getAttribute('href') || '').toLowerCase();
+    return text === 'book a session' || href.indexOf('booking%20a%20session') !== -1;
+  }
+
+  function createModal() {
+    var wrapper = document.createElement('div');
+    wrapper.className = 'booking-modal';
+    wrapper.setAttribute('aria-hidden', 'true');
+    wrapper.innerHTML = '' +
+      '<div class="booking-modal__backdrop" data-booking-close></div>' +
+      '<section class="booking-modal__dialog" role="dialog" aria-modal="true" aria-labelledby="bookingModalTitle" tabindex="-1">' +
+        '<button class="booking-modal__close" type="button" aria-label="Close booking form" data-booking-close>' +
+          '<span></span><span></span>' +
+        '</button>' +
+        '<aside class="booking-modal__visual" aria-hidden="true">' +
+          '<div class="booking-modal__brand">' +
+            '<strong>LGNDRY.CO</strong>' +
+            '<span>Visual Storytelling</span>' +
+          '</div>' +
+          '<div class="booking-modal__visual-copy">' +
+            '<p>Let\'s create<br>something<br>worth<br>remembering.</p>' +
+            '<span></span>' +
+            '<small>Step 1 of 4</small>' +
+          '</div>' +
+        '</aside>' +
+        '<div class="booking-modal__panel">' +
+          '<div class="booking-modal__intro">' +
+            '<p class="booking-modal__eyebrow">Book a Session</p>' +
+            '<h2 id="bookingModalTitle">Let\'s plan your session.</h2>' +
+            '<p>Fill in the details below and we\'ll get back to you within 24 hours.</p>' +
+            '<span class="booking-modal__rule" aria-hidden="true"></span>' +
+          '</div>' +
+          '<div class="booking-modal__content">' +
+            '<ol class="booking-modal__steps" aria-label="Booking steps">' +
+              '<li class="is-active"><span>1</span><strong>Session Type</strong></li>' +
+              '<li><span>2</span><strong>Date & Time</strong></li>' +
+              '<li><span>3</span><strong>Your Details</strong></li>' +
+              '<li><span>4</span><strong>Review & Confirm</strong></li>' +
+            '</ol>' +
+            '<form class="booking-modal__form" action="mailto:info@lgndry-co.co.za" method="post" enctype="text/plain">' +
+              '<label class="booking-modal__field booking-modal__field--wide">' +
+                '<span>What type of session are you booking?</span>' +
+                '<select name="session_type" required>' +
+                  '<option value="">Select session type</option>' +
+                  '<option>Portrait Session</option>' +
+                  '<option>Commercial Photography</option>' +
+                  '<option>Brand Campaign</option>' +
+                  '<option>Fine Art / Creative Session</option>' +
+                  '<option>Event Documentation</option>' +
+                '</select>' +
+              '</label>' +
+              '<fieldset class="booking-modal__services">' +
+                '<legend>Select services</legend>' +
+                '<p>Choose one or more</p>' +
+                '<label><input type="checkbox" name="services" value="Brand Photography"><span>Brand Photography</span></label>' +
+                '<label><input type="checkbox" name="services" value="Commercial Photography"><span>Commercial Photography</span></label>' +
+                '<label><input type="checkbox" name="services" value="Portraiture"><span>Portraiture</span></label>' +
+                '<label><input type="checkbox" name="services" value="Product Photography"><span>Product Photography</span></label>' +
+                '<label><input type="checkbox" name="services" value="Interior & Architectural Photography"><span>Interior & Architectural Photography</span></label>' +
+                '<label><input type="checkbox" name="services" value="Hospitality Photography"><span>Hospitality Photography</span></label>' +
+                '<label><input type="checkbox" name="services" value="Fine Art Photography"><span>Fine Art Photography</span></label>' +
+              '</fieldset>' +
+              '<label class="booking-modal__field booking-modal__field--wide">' +
+                '<span>Tell us about your project</span>' +
+                '<textarea name="project_details" maxlength="500" rows="5" placeholder="Share a few details about your vision..."></textarea>' +
+                '<small data-booking-count>0/500</small>' +
+              '</label>' +
+              '<div class="booking-modal__footer">' +
+                '<p><span aria-hidden="true">Cal</span><strong>Duration</strong><br>Typically 2 - 6 hours</p>' +
+                '<button type="submit">' +
+                  '<span>Next Step</span>' +
+                  '<svg width="40" height="8" viewBox="0 0 40 8" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><path d="M0 4H38M38 4L34 1M38 4L34 7" stroke="currentColor" stroke-width="1"/></svg>' +
+                '</button>' +
+              '</div>' +
+            '</form>' +
+          '</div>' +
+        '</div>' +
+      '</section>';
+    document.body.appendChild(wrapper);
+    return wrapper;
+  }
+
+  function getFocusable() {
+    return modal.querySelectorAll('a[href], button:not([disabled]), textarea, input, select, [tabindex]:not([tabindex="-1"])');
+  }
+
+  function openModal(trigger) {
+    if (!modal) {
+      modal = createModal();
+      bindModal();
+    }
+    lastFocused = trigger || document.activeElement;
+    modal.classList.add('booking-modal--open');
+    modal.setAttribute('aria-hidden', 'false');
+    document.body.classList.add('booking-modal-lock');
+    setTimeout(function () {
+      var dialog = modal.querySelector('.booking-modal__dialog');
+      if (dialog) dialog.focus();
+    }, 0);
+  }
+
+  function closeModal() {
+    if (!modal) return;
+    modal.classList.remove('booking-modal--open');
+    modal.setAttribute('aria-hidden', 'true');
+    document.body.classList.remove('booking-modal-lock');
+    if (lastFocused && lastFocused.focus) lastFocused.focus();
+  }
+
+  function bindModal() {
+    var closes = modal.querySelectorAll('[data-booking-close]');
+    for (var i = 0; i < closes.length; i++) {
+      closes[i].addEventListener('click', closeModal);
+    }
+
+    var textarea = modal.querySelector('textarea[maxlength]');
+    var count = modal.querySelector('[data-booking-count]');
+    if (textarea && count) {
+      textarea.addEventListener('input', function () {
+        count.textContent = textarea.value.length + '/500';
+      });
+    }
+
+    modal.addEventListener('keydown', function (e) {
+      if (e.key === 'Escape') {
+        closeModal();
+        return;
+      }
+      if (e.key !== 'Tab') return;
+      var focusable = getFocusable();
+      if (!focusable.length) return;
+      var first = focusable[0];
+      var last = focusable[focusable.length - 1];
+      if (e.shiftKey && document.activeElement === first) {
+        e.preventDefault();
+        last.focus();
+      } else if (!e.shiftKey && document.activeElement === last) {
+        e.preventDefault();
+        first.focus();
+      }
+    });
+  }
+
+  for (var i = 0; i < bookingTriggers.length; i++) {
+    (function (trigger) {
+      if (!isBookingTrigger(trigger)) return;
+      trigger.setAttribute('data-booking-modal', '');
+      trigger.addEventListener('click', function (e) {
+        e.preventDefault();
+        openModal(trigger);
+      });
+    })(bookingTriggers[i]);
+  }
+
+  window.lgndryBookingModal = { open: openModal, close: closeModal };
+}());
