@@ -1,0 +1,506 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>The Collection — LGNDRY.Co</title>
+  <meta name="description" content="The LGNDRY.Co collection — limited edition fine art prints from Limpopo, South Africa. Created to be collected. Made to last.">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@300;400&family=Inter:wght@300;400;500&display=swap" rel="stylesheet">
+  <link rel="icon" type="image/png" href="assests/logos/LGNDRY.CO Final.png">
+  <link rel="apple-touch-icon" href="assests/logos/LGNDRY.CO Final white.png">
+  <link rel="stylesheet" href="assests/css/style.css">
+</head>
+<body>
+
+  <!-- Page header -->
+  <header class="page-header">
+    <button class="site-nav__trigger page-header__menu" id="navTrigger" aria-expanded="false" aria-controls="navPanel">
+      Menu
+    </button>
+    <a class="page-header__brand" href="index.html">LGNDRY.Co</a>
+  </header>
+
+  <!-- Navigation panel -->
+  <div class="nav-panel" id="navPanel" aria-hidden="true">
+
+    <div class="nav-panel__links">
+      <button class="nav-panel__close" id="navClose">Close</button>
+      <ul class="nav-panel__list">
+        <li><a class="nav-panel__item" href="index.html"      data-nav-image="home">Home</a></li>
+        <li><a class="nav-panel__item" href="services.html"   data-nav-image="practice">Practice</a></li>
+        <li><a class="nav-panel__item" href="commercial.html" data-nav-image="collections">Collections</a></li>
+        <li><a class="nav-panel__item" href="about.html"      data-nav-image="about">About</a></li>
+        <li><a class="nav-panel__item" href="contact.html"    data-nav-image="contact">Contact</a></li>
+      </ul>
+    </div>
+
+    <div class="nav-panel__preview" aria-hidden="true">
+      <img class="nav-panel__photo nav-panel__photo--active"
+           data-nav-photo="home"
+           src="assests/images/hero-image.JPG"
+           alt="">
+      <img class="nav-panel__photo"
+           data-nav-photo="practice"
+           src="assests/images/art/studio art/InShot_20250312_165932183.jpg"
+           alt="">
+      <img class="nav-panel__photo"
+           data-nav-photo="collections"
+           src="assests/images/commercial/agriculture/InShot_20260202_213907197.jpg"
+           alt="">
+      <img class="nav-panel__photo"
+           data-nav-photo="about"
+           src="assests/images/art/studio art/InShot_20250830_214616011.jpg"
+           alt="">
+      <img class="nav-panel__photo"
+           data-nav-photo="contact"
+           src="assests/images/founder.jpeg"
+           alt="">
+    </div>
+
+  </div>
+
+  <!-- The Collection -->
+  <main class="collection-page">
+
+    <section class="collection-hero">
+      <div class="collection-hero__intro reveal">
+        <h1 class="collection-title">The Collection</h1>
+        <p class="collection-lede">Limited edition fine art prints.<br>Created to be collected. Made to last.</p>
+        <a class="practice-cta" href="#collection-features">
+          <span class="practice-cta__label">About the collection</span>
+          <span class="practice-cta__arrow" aria-hidden="true">
+            <svg width="40" height="8" viewBox="0 0 40 8" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <path d="M0 4H38M38 4L34 1M38 4L34 7" stroke="currentColor" stroke-width="1"/>
+            </svg>
+          </span>
+        </a>
+      </div>
+      <figure class="collection-hero__media reveal">
+        <img src="assests/images/art/studio art/STUDIO ART (FB)/Copy of InShot_20250826_100953372.jpg" alt="A ballerina stands en pointe on a stone plinth in a dark studio">
+      </figure>
+    </section>
+
+    <div class="collection-filters reveal" data-collection-filters>
+      <button class="collection-filter collection-filter--active" data-filter="all">All Works</button>
+      <button class="collection-filter" data-filter="prints">Art Prints</button>
+      <button class="collection-filter" data-filter="studio">Studio Art</button>
+    </div>
+
+    <section class="collection-grid reveal">
+
+      <article class="work" data-category="prints">
+        <figure class="work__media">
+          <img src="assests/images/art/outdoor/ART PRINT (BFITM)/GAE .jpg" alt="Gae — a thatched homestead beneath a granite koppie in Limpopo">
+        </figure>
+        <div class="work__body">
+          <h3 class="work__title">Gae</h3>
+          <p class="work__year">2025</p>
+          <div class="work__row">
+            <div class="work__meta">
+              <p>Edition of 15</p>
+              <p>Archival Pigment Print</p>
+              <label class="work__size">Size:
+                <select aria-label="Print size for Gae">
+                  <option>50 × 70 cm</option>
+                  <option>60 × 90 cm</option>
+                  <option>70 × 100 cm</option>
+                </select>
+              </label>
+            </div>
+            <p class="work__price">R 9,500</p>
+          </div>
+          <a class="work__acquire" href="mailto:info@lgndry-co.co.za?subject=Acquire%20%E2%80%94%20Gae">
+            <span>Acquire</span>
+            <svg width="40" height="8" viewBox="0 0 40 8" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+              <path d="M0 4H38M38 4L34 1M38 4L34 7" stroke="currentColor" stroke-width="1"/>
+            </svg>
+          </a>
+        </div>
+      </article>
+
+      <article class="work" data-category="prints">
+        <figure class="work__media">
+          <img src="assests/images/art/outdoor/ART PRINT (BFITM)/LETLAPA.jpg" alt="Letlapa — granite rock formations in the Limpopo landscape">
+        </figure>
+        <div class="work__body">
+          <h3 class="work__title">Letlapa</h3>
+          <p class="work__year">2025</p>
+          <div class="work__row">
+            <div class="work__meta">
+              <p>Edition of 15</p>
+              <p>Archival Pigment Print</p>
+              <label class="work__size">Size:
+                <select aria-label="Print size for Letlapa">
+                  <option>50 × 70 cm</option>
+                  <option>60 × 90 cm</option>
+                  <option>70 × 100 cm</option>
+                </select>
+              </label>
+            </div>
+            <p class="work__price">R 8,500</p>
+          </div>
+          <a class="work__acquire" href="mailto:info@lgndry-co.co.za?subject=Acquire%20%E2%80%94%20Letlapa">
+            <span>Acquire</span>
+            <svg width="40" height="8" viewBox="0 0 40 8" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+              <path d="M0 4H38M38 4L34 1M38 4L34 7" stroke="currentColor" stroke-width="1"/>
+            </svg>
+          </a>
+        </div>
+      </article>
+
+      <article class="work" data-category="prints">
+        <figure class="work__media">
+          <img src="assests/images/art/outdoor/ART PRINT (BFITM)/MODISHI WA LEBOWA .jpg" alt="Modishi wa Lebowa — a herdsman walking with his cattle in Limpopo">
+        </figure>
+        <div class="work__body">
+          <h3 class="work__title">Modishi wa Lebowa</h3>
+          <p class="work__year">2025</p>
+          <div class="work__row">
+            <div class="work__meta">
+              <p>Edition of 15</p>
+              <p>Archival Pigment Print</p>
+              <label class="work__size">Size:
+                <select aria-label="Print size for Modishi wa Lebowa">
+                  <option>50 × 70 cm</option>
+                  <option>60 × 90 cm</option>
+                  <option>70 × 100 cm</option>
+                </select>
+              </label>
+            </div>
+            <p class="work__price">R 10,200</p>
+          </div>
+          <a class="work__acquire" href="mailto:info@lgndry-co.co.za?subject=Acquire%20%E2%80%94%20Modishi%20wa%20Lebowa">
+            <span>Acquire</span>
+            <svg width="40" height="8" viewBox="0 0 40 8" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+              <path d="M0 4H38M38 4L34 1M38 4L34 7" stroke="currentColor" stroke-width="1"/>
+            </svg>
+          </a>
+        </div>
+      </article>
+
+      <article class="work" data-category="prints">
+        <figure class="work__media">
+          <img src="assests/images/art/outdoor/ART PRINT (BFITM)/MOSHOLE .jpg" alt="Moshole — a quiet rural scene from the Limpopo series">
+        </figure>
+        <div class="work__body">
+          <h3 class="work__title">Moshole</h3>
+          <p class="work__year">2025</p>
+          <div class="work__row">
+            <div class="work__meta">
+              <p>Edition of 15</p>
+              <p>Archival Pigment Print</p>
+              <label class="work__size">Size:
+                <select aria-label="Print size for Moshole">
+                  <option>50 × 70 cm</option>
+                  <option>60 × 90 cm</option>
+                  <option>70 × 100 cm</option>
+                </select>
+              </label>
+            </div>
+            <p class="work__price">R 8,800</p>
+          </div>
+          <a class="work__acquire" href="mailto:info@lgndry-co.co.za?subject=Acquire%20%E2%80%94%20Moshole">
+            <span>Acquire</span>
+            <svg width="40" height="8" viewBox="0 0 40 8" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+              <path d="M0 4H38M38 4L34 1M38 4L34 7" stroke="currentColor" stroke-width="1"/>
+            </svg>
+          </a>
+        </div>
+      </article>
+
+      <article class="work" data-category="prints">
+        <figure class="work__media">
+          <img src="assests/images/art/outdoor/ART PRINT (BFITM)/YELLOW BONE .jpg" alt="Yellow Bone — a portrait from the Beauty Found in the Mundane series">
+        </figure>
+        <div class="work__body">
+          <h3 class="work__title">Yellow Bone</h3>
+          <p class="work__year">2025</p>
+          <div class="work__row">
+            <div class="work__meta">
+              <p>Edition of 15</p>
+              <p>Archival Pigment Print</p>
+              <label class="work__size">Size:
+                <select aria-label="Print size for Yellow Bone">
+                  <option>50 × 70 cm</option>
+                  <option>60 × 90 cm</option>
+                  <option>70 × 100 cm</option>
+                </select>
+              </label>
+            </div>
+            <p class="work__price">R 9,000</p>
+          </div>
+          <a class="work__acquire" href="mailto:info@lgndry-co.co.za?subject=Acquire%20%E2%80%94%20Yellow%20Bone">
+            <span>Acquire</span>
+            <svg width="40" height="8" viewBox="0 0 40 8" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+              <path d="M0 4H38M38 4L34 1M38 4L34 7" stroke="currentColor" stroke-width="1"/>
+            </svg>
+          </a>
+        </div>
+      </article>
+
+      <article class="work" data-category="studio">
+        <figure class="work__media">
+          <img src="assests/images/art/studio art/STUDIO ART (FB)/Copy of InShot_20240410_133408962.jpg" alt="Study in Light I — a fine art studio portrait">
+        </figure>
+        <div class="work__body">
+          <h3 class="work__title">Study in Light I</h3>
+          <p class="work__year">2024</p>
+          <div class="work__row">
+            <div class="work__meta">
+              <p>Edition of 20</p>
+              <p>Archival Pigment Print</p>
+              <label class="work__size">Size:
+                <select aria-label="Print size for Study in Light I">
+                  <option>50 × 70 cm</option>
+                  <option>60 × 90 cm</option>
+                  <option>70 × 100 cm</option>
+                </select>
+              </label>
+            </div>
+            <p class="work__price">R 7,800</p>
+          </div>
+          <a class="work__acquire" href="mailto:info@lgndry-co.co.za?subject=Acquire%20%E2%80%94%20Study%20in%20Light%20I">
+            <span>Acquire</span>
+            <svg width="40" height="8" viewBox="0 0 40 8" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+              <path d="M0 4H38M38 4L34 1M38 4L34 7" stroke="currentColor" stroke-width="1"/>
+            </svg>
+          </a>
+        </div>
+      </article>
+
+      <article class="work" data-category="studio">
+        <figure class="work__media">
+          <img src="assests/images/art/studio art/STUDIO ART (FB)/Copy of InShot_20250104_091110217.jpg" alt="Study in Light II — a fine art studio portrait">
+        </figure>
+        <div class="work__body">
+          <h3 class="work__title">Study in Light II</h3>
+          <p class="work__year">2025</p>
+          <div class="work__row">
+            <div class="work__meta">
+              <p>Edition of 20</p>
+              <p>Archival Pigment Print</p>
+              <label class="work__size">Size:
+                <select aria-label="Print size for Study in Light II">
+                  <option>50 × 70 cm</option>
+                  <option>60 × 90 cm</option>
+                  <option>70 × 100 cm</option>
+                </select>
+              </label>
+            </div>
+            <p class="work__price">R 8,200</p>
+          </div>
+          <a class="work__acquire" href="mailto:info@lgndry-co.co.za?subject=Acquire%20%E2%80%94%20Study%20in%20Light%20II">
+            <span>Acquire</span>
+            <svg width="40" height="8" viewBox="0 0 40 8" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+              <path d="M0 4H38M38 4L34 1M38 4L34 7" stroke="currentColor" stroke-width="1"/>
+            </svg>
+          </a>
+        </div>
+      </article>
+
+      <article class="work" data-category="studio">
+        <figure class="work__media">
+          <img src="assests/images/art/studio art/STUDIO ART (FB)/Copy of InShot_20250315_135435859.jpg" alt="Form &amp; Shadow — a fine art studio portrait">
+        </figure>
+        <div class="work__body">
+          <h3 class="work__title">Form &amp; Shadow</h3>
+          <p class="work__year">2025</p>
+          <div class="work__row">
+            <div class="work__meta">
+              <p>Edition of 20</p>
+              <p>Archival Pigment Print</p>
+              <label class="work__size">Size:
+                <select aria-label="Print size for Form and Shadow">
+                  <option>50 × 70 cm</option>
+                  <option>60 × 90 cm</option>
+                  <option>70 × 100 cm</option>
+                </select>
+              </label>
+            </div>
+            <p class="work__price">R 7,500</p>
+          </div>
+          <a class="work__acquire" href="mailto:info@lgndry-co.co.za?subject=Acquire%20%E2%80%94%20Form%20%26%20Shadow">
+            <span>Acquire</span>
+            <svg width="40" height="8" viewBox="0 0 40 8" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+              <path d="M0 4H38M38 4L34 1M38 4L34 7" stroke="currentColor" stroke-width="1"/>
+            </svg>
+          </a>
+        </div>
+      </article>
+
+      <article class="work" data-category="studio">
+        <figure class="work__media">
+          <img src="assests/images/art/studio art/STUDIO ART (FB)/Copy of InShot_20250826_100953372.jpg" alt="Still Point — a ballerina en pointe on a stone plinth in a dark studio">
+        </figure>
+        <div class="work__body">
+          <h3 class="work__title">Still Point</h3>
+          <p class="work__year">2025</p>
+          <div class="work__row">
+            <div class="work__meta">
+              <p>Edition of 20</p>
+              <p>Archival Pigment Print</p>
+              <label class="work__size">Size:
+                <select aria-label="Print size for Still Point">
+                  <option>50 × 70 cm</option>
+                  <option>60 × 90 cm</option>
+                  <option>70 × 100 cm</option>
+                </select>
+              </label>
+            </div>
+            <p class="work__price">R 11,500</p>
+          </div>
+          <a class="work__acquire" href="mailto:info@lgndry-co.co.za?subject=Acquire%20%E2%80%94%20Still%20Point">
+            <span>Acquire</span>
+            <svg width="40" height="8" viewBox="0 0 40 8" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+              <path d="M0 4H38M38 4L34 1M38 4L34 7" stroke="currentColor" stroke-width="1"/>
+            </svg>
+          </a>
+        </div>
+      </article>
+
+      <article class="work" data-category="studio">
+        <figure class="work__media">
+          <img src="assests/images/art/studio art/STUDIO ART (FB)/Copy of InShot_20250830_214616011.jpg" alt="Presence — a fine art studio portrait">
+        </figure>
+        <div class="work__body">
+          <h3 class="work__title">Presence</h3>
+          <p class="work__year">2025</p>
+          <div class="work__row">
+            <div class="work__meta">
+              <p>Edition of 20</p>
+              <p>Archival Pigment Print</p>
+              <label class="work__size">Size:
+                <select aria-label="Print size for Presence">
+                  <option>50 × 70 cm</option>
+                  <option>60 × 90 cm</option>
+                  <option>70 × 100 cm</option>
+                </select>
+              </label>
+            </div>
+            <p class="work__price">R 8,500</p>
+          </div>
+          <a class="work__acquire" href="mailto:info@lgndry-co.co.za?subject=Acquire%20%E2%80%94%20Presence">
+            <span>Acquire</span>
+            <svg width="40" height="8" viewBox="0 0 40 8" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+              <path d="M0 4H38M38 4L34 1M38 4L34 7" stroke="currentColor" stroke-width="1"/>
+            </svg>
+          </a>
+        </div>
+      </article>
+
+    </section>
+
+    <section class="collection-features reveal" id="collection-features">
+      <div class="feature">
+        <span class="feature__icon" aria-hidden="true">
+          <svg width="28" height="28" viewBox="0 0 28 28" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <rect x="4" y="4" width="16" height="16" stroke="currentColor" stroke-width="1"/>
+            <path d="M8 24H24V8" stroke="currentColor" stroke-width="1"/>
+          </svg>
+        </span>
+        <div>
+          <h3 class="feature__title">Limited Editions</h3>
+          <p class="feature__text">Each print is part of a strictly limited release.</p>
+        </div>
+      </div>
+      <div class="feature">
+        <span class="feature__icon" aria-hidden="true">
+          <svg width="28" height="28" viewBox="0 0 28 28" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <path d="M7 3H17L22 8V25H7V3Z" stroke="currentColor" stroke-width="1"/>
+            <path d="M10 12H19M10 16H19M10 20H15" stroke="currentColor" stroke-width="1"/>
+          </svg>
+        </span>
+        <div>
+          <h3 class="feature__title">Archival Quality</h3>
+          <p class="feature__text">Museum-grade materials designed to last a lifetime.</p>
+        </div>
+      </div>
+      <div class="feature">
+        <span class="feature__icon" aria-hidden="true">
+          <svg width="28" height="28" viewBox="0 0 28 28" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <path d="M5 21L18 8L21 11L8 24L4 25L5 21Z" stroke="currentColor" stroke-width="1"/>
+            <path d="M5 25H24" stroke="currentColor" stroke-width="1"/>
+          </svg>
+        </span>
+        <div>
+          <h3 class="feature__title">Signed &amp; Numbered</h3>
+          <p class="feature__text">Every print is hand-signed and individually numbered.</p>
+        </div>
+      </div>
+      <div class="feature">
+        <span class="feature__icon" aria-hidden="true">
+          <svg width="28" height="28" viewBox="0 0 28 28" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <circle cx="14" cy="14" r="10" stroke="currentColor" stroke-width="1"/>
+            <path d="M4 14H24M14 4C10 9 10 19 14 24C18 19 18 9 14 4Z" stroke="currentColor" stroke-width="1"/>
+          </svg>
+        </span>
+        <div>
+          <h3 class="feature__title">Worldwide Delivery</h3>
+          <p class="feature__text">Secure, insured delivery to your door.</p>
+        </div>
+      </div>
+    </section>
+
+    <section class="collection-close reveal">
+      <h2 class="collection-close__title">Collect art that<br>speaks to you.</h2>
+      <div class="collection-close__links">
+        <a class="practice-cta" href="mailto:info@lgndry-co.co.za?subject=Framing%20options%20%E2%80%94%20LGNDRY.Co%20Collection">
+          <span class="practice-cta__label">View framing options</span>
+          <span class="practice-cta__arrow" aria-hidden="true">
+            <svg width="40" height="8" viewBox="0 0 40 8" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <path d="M0 4H38M38 4L34 1M38 4L34 7" stroke="currentColor" stroke-width="1"/>
+            </svg>
+          </span>
+        </a>
+        <a class="practice-cta" href="mailto:info@lgndry-co.co.za?subject=Question%20about%20a%20print%20%E2%80%94%20LGNDRY.Co%20Collection">
+          <span class="practice-cta__label">Questions about a print?</span>
+          <span class="practice-cta__arrow" aria-hidden="true">
+            <svg width="40" height="8" viewBox="0 0 40 8" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <path d="M0 4H38M38 4L34 1M38 4L34 7" stroke="currentColor" stroke-width="1"/>
+            </svg>
+          </span>
+        </a>
+      </div>
+    </section>
+
+  </main>
+
+  <!-- Footer -->
+  <footer class="footer">
+    <div class="container footer__top">
+      <div class="footer__brand">
+        <img class="footer__logo" src="assests/logos/LGNDRY.CO Final white.png" alt="LGNDRY.Co">
+        <p class="footer__tagline">Visual storytelling studio.<br>Limpopo, South Africa.</p>
+      </div>
+
+      <nav class="footer__nav" aria-label="Footer">
+        <p class="footer__heading">Explore</p>
+        <a href="services.html">Practice</a>
+        <a href="commercial.html">Collections</a>
+        <a href="about.html">About</a>
+        <a href="contact.html">Contact</a>
+      </nav>
+
+      <div class="footer__col">
+        <p class="footer__heading">Contact</p>
+        <a href="mailto:info@lgndry-co.co.za">info@lgndry-co.co.za</a>
+        <a href="tel:+27764862725">076 486 2725</a>
+      </div>
+
+      <div class="footer__col">
+        <p class="footer__heading">Follow</p>
+        <a href="https://www.instagram.com/lgndry_content/" target="_blank" rel="noopener">Instagram</a>
+      </div>
+    </div>
+
+    <div class="container footer__bottom">
+      <p>&copy; 2026 LGNDRY.Co</p>
+      <p>All rights reserved.</p>
+    </div>
+  </footer>
+
+  <script src="assests/js/main.js"></script>
+</body>
+</html>

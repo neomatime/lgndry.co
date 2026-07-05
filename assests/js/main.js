@@ -363,3 +363,29 @@
 
   setInterval(advance, HOLD);
 }());
+
+/* ─── Collection: category filters ───────────────── */
+(function () {
+  var bar = document.querySelector('[data-collection-filters]');
+  if (!bar) { return; }
+
+  var buttons = bar.querySelectorAll('[data-filter]');
+  var cards = document.querySelectorAll('.work[data-category]');
+
+  for (var i = 0; i < buttons.length; i++) {
+    (function (btn) {
+      btn.addEventListener('click', function () {
+        for (var j = 0; j < buttons.length; j++) {
+          buttons[j].classList.remove('collection-filter--active');
+        }
+        btn.classList.add('collection-filter--active');
+
+        var filter = btn.getAttribute('data-filter');
+        for (var k = 0; k < cards.length; k++) {
+          var show = filter === 'all' || cards[k].getAttribute('data-category') === filter;
+          cards[k].style.display = show ? '' : 'none';
+        }
+      });
+    })(buttons[i]);
+  }
+}());
