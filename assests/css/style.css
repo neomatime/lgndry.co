@@ -1424,8 +1424,8 @@ body {
 
 .hero__text {
   max-width: 560px;
-  margin-top: 17vh;
-  margin-left: clamp(32px, 12vw, 190px);
+  margin-top: 16vh;
+  margin-left: clamp(40px, 13.5vw, 216px);
   padding: 0 clamp(24px, 5vw, 64px);
   pointer-events: auto;
 }
