@@ -4110,3 +4110,50 @@ body {
     transform: none;
   }
 }
+
+/* ═══════════════════════════════════════════════════
+   HERO SCROLL SEQUENCE (cinematic scroll-driven exit)
+   ═══════════════════════════════════════════════════ */
+/* The runway: the hero pins for 160vh of scroll while JS scrubs the
+   text exit, zoom, and blur from progress through this wrapper. */
+.hero-scroll {
+  position: relative;
+  height: 260vh;
+}
+
+.hero-scroll .hero {
+  position: sticky;
+  top: 0;
+}
+
+.hero-scroll .hero__image {
+  will-change: transform, filter;
+}
+
+.hero-scroll .hero__text {
+  will-change: transform, opacity;
+}
+
+/* Everything after the hero rides 100vh up over the pinned image, so the
+   page appears to slide up and cover the photograph. The hero un-sticks at
+   the exact scroll position where the cover completes — no jump. */
+.page-flow {
+  position: relative;
+  z-index: 2;
+  margin-top: -100vh;
+  background-color: var(--bg-primary);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .hero-scroll {
+    height: auto;
+  }
+
+  .hero-scroll .hero {
+    position: relative;
+  }
+
+  .page-flow {
+    margin-top: 0;
+  }
+}

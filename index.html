@@ -29,7 +29,8 @@
     </div>
   </div>
 
-  <!-- Hero section -->
+  <!-- Hero section (sticky inside a scroll runway that drives the cinematic exit) -->
+  <div class="hero-scroll" data-hero-scroll>
   <section class="hero" role="banner">
     <img
       class="hero__image"
@@ -52,6 +53,7 @@
       </div>
     </div>
   </section>
+  </div>
 
   <!-- Navigation panel -->
   <div class="nav-panel" id="navPanel" aria-hidden="true">
@@ -91,6 +93,9 @@
     </div>
 
   </div>
+
+  <!-- Page flow: slides up over the pinned hero as the scroll sequence completes -->
+  <div class="page-flow">
 
   <!-- Introduction -->
   <section class="section intro-band" id="intro">
@@ -223,6 +228,8 @@
       <p>All rights reserved.</p>
     </div>
   </footer>
+
+  </div>
 
   <script src="assests/js/main.js"></script>
 </body>

@@ -12,6 +12,9 @@
   }
 
   function startHeroZoom() {
+    // When the scroll-driven hero sequence is present, scroll owns the
+    // image transform — the load-time zoom animation would override it.
+    if (document.querySelector('[data-hero-scroll]')) { return; }
     if (heroImage && !prefersReducedMotion) {
       heroImage.classList.add('hero__image--zoom');
     }
@@ -1800,4 +1803,80 @@
   }
 
   window.lgndryLightbox = { open: open, close: close };
+}());
+
+
+/* ─── Hero: cinematic scroll sequence ────────────── */
+(function () {
+  var wrapper = document.querySelector('[data-hero-scroll]');
+  if (!wrapper) { return; }
+
+  var heroText = wrapper.querySelector('.hero__text');
+  var heroImage = wrapper.querySelector('.hero__image');
+  var prefersReducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+  // Reduced motion: the CSS fallback removes the runway; nothing to scrub.
+  if (prefersReducedMotion || !heroImage) { return; }
+
+  var ticking = false;
+  var lastFade = -1;
+  var lastScale = '';
+  var lastBlur = '';
+
+  function clamp(value, min, max) {
+    return Math.min(Math.max(value, min), max);
+  }
+
+  function smooth(t) {
+    return t * t * (3 - (2 * t));
+  }
+
+  function update() {
+    ticking = false;
+
+    var runway = wrapper.offsetHeight - window.innerHeight;
+    if (runway <= 0) { return; }
+    var progress = clamp(-wrapper.getBoundingClientRect().top / runway, 0, 1);
+
+    // Phase 1 — content exit: fade + drift upward over the first quarter.
+    var fade = smooth(clamp(progress / 0.25, 0, 1));
+
+    // Phase 2 — slow zoom: begins as the text departs, runs to the end.
+    var zoom = smooth(clamp((progress - 0.2) / 0.8, 0, 1));
+    var scale = 1 + (zoom * 0.22);
+
+    // Phase 3 — cinematic blur: builds through the final stretch of the zoom.
+    var blur = smooth(clamp((progress - 0.55) / 0.45, 0, 1)) * 12;
+
+    if (heroText && fade !== lastFade) {
+      heroText.style.opacity = (1 - fade).toFixed(3);
+      heroText.style.transform = 'translate3d(0, ' + (-fade * 64).toFixed(1) + 'px, 0)';
+      heroText.style.pointerEvents = fade > 0.5 ? 'none' : '';
+      lastFade = fade;
+    }
+
+    var scaleValue = scale.toFixed(4);
+    if (scaleValue !== lastScale) {
+      heroImage.style.transform = 'scale(' + scaleValue + ')';
+      lastScale = scaleValue;
+    }
+
+    // Quantise blur to quarter-pixel steps so we only re-rasterise when
+    // the value meaningfully changes.
+    var blurValue = (Math.round(blur * 4) / 4).toFixed(2);
+    if (blurValue !== lastBlur) {
+      heroImage.style.filter = parseFloat(blurValue) > 0 ? 'blur(' + blurValue + 'px)' : 'none';
+      lastBlur = blurValue;
+    }
+  }
+
+  function requestUpdate() {
+    if (ticking) { return; }
+    ticking = true;
+    window.requestAnimationFrame(update);
+  }
+
+  update();
+  window.addEventListener('scroll', requestUpdate, { passive: true });
+  window.addEventListener('resize', requestUpdate);
 }());
