@@ -1675,7 +1675,7 @@
     var year = card.querySelector('.work__year');
     var edition = card.querySelector('.work__meta p');
     return {
-      src: img ? img.getAttribute('src') : '',
+      src: img ? (img.getAttribute('data-full-src') || img.getAttribute('src')) : '',
       alt: img ? (img.getAttribute('alt') || '') : '',
       title: title ? title.textContent.trim() : '',
       year: year ? year.textContent.trim() : '',

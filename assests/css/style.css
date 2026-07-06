@@ -1970,6 +1970,11 @@ body {
     grid-template-columns: 1fr;
   }
 
+  .collection-grid.reveal {
+    opacity: 1;
+    transform: none;
+  }
+
   .collection-features {
     grid-template-columns: 1fr;
   }
