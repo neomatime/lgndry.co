@@ -1700,6 +1700,11 @@
     for (var i = 0; i < closers.length; i++) {
       closers[i].addEventListener('click', close);
     }
+    wrapper.addEventListener('click', function (e) {
+      if (e.target === wrapper || (e.target && e.target.hasAttribute('data-lightbox-close'))) {
+        close();
+      }
+    });
     prevBtn.addEventListener('click', function () { step(-1); });
     nextBtn.addEventListener('click', function () { step(1); });
 
