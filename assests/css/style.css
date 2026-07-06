@@ -1342,7 +1342,7 @@ body {
   }
 
   .hero__text {
-    margin-top: clamp(176px, 30vh, 252px);
+    margin-top: clamp(132px, 24vh, 188px);
     margin-bottom: 0;
     margin-left: 0;
     max-width: none;
@@ -1354,7 +1354,7 @@ body {
   }
 
   .hero__divider {
-    margin: 22px 0 20px;
+    margin: clamp(66px, 8vh, 86px) 0 20px;
   }
 
   .hero__copy {
