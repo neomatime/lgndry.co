@@ -2157,11 +2157,11 @@ body {
 }
 
 .about-signature {
-  margin-top: 36px;
-  font-family: 'Cormorant Garamond', serif !important;
-  font-size: 2rem !important;
-  font-style: italic;
-  line-height: 1 !important;
+  display: block;
+  width: clamp(150px, 14vw, 230px);
+  height: auto;
+  margin-top: 34px;
+  object-fit: contain;
 }
 
 .about-founder__role {
@@ -2779,11 +2779,11 @@ body {
 }
 
 .contact-signature {
-  margin-top: 32px !important;
-  font-family: 'Cormorant Garamond', serif !important;
-  font-size: 2rem !important;
-  font-style: italic;
-  line-height: 1 !important;
+  display: block;
+  width: clamp(150px, 14vw, 230px);
+  height: auto;
+  margin-top: 32px;
+  object-fit: contain;
 }
 
 .contact-role {
