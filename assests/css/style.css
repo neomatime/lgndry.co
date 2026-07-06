@@ -2158,10 +2158,13 @@ body {
 
 .about-signature {
   display: block;
-  width: clamp(150px, 14vw, 230px);
+  width: clamp(112px, 10vw, 160px);
   height: auto;
-  margin-top: 34px;
+  margin-top: 32px;
   object-fit: contain;
+  opacity: 0.72;
+  mix-blend-mode: multiply;
+  transform: translateX(-18px);
 }
 
 .about-founder__role {
@@ -2780,10 +2783,13 @@ body {
 
 .contact-signature {
   display: block;
-  width: clamp(150px, 14vw, 230px);
+  width: clamp(112px, 10vw, 160px);
   height: auto;
-  margin-top: 32px;
+  margin-top: 30px;
   object-fit: contain;
+  opacity: 0.72;
+  mix-blend-mode: multiply;
+  transform: translateX(-18px);
 }
 
 .contact-role {
