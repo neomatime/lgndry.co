@@ -1203,3 +1203,430 @@
 
   window.lgndryBookingModal = { open: openModal, close: closeModal };
 }());
+
+/* Brand partnership application modal */
+(function () {
+  var triggers = document.querySelectorAll('a, button');
+  var modal;
+  var lastFocused;
+  var currentStep = 0;
+  var stepLabels = ['Partnership', 'Your Brand', 'Your Details', 'Review & Confirm'];
+
+  function isPartnerTrigger(el) {
+    if (!el) return false;
+    if (el.hasAttribute('data-partnership-modal')) return true;
+    var text = (el.textContent || '').replace(/\s+/g, ' ').trim().toLowerCase();
+    var href = (el.getAttribute && el.getAttribute('href') || '').toLowerCase();
+    return text.indexOf('apply to partner') !== -1 || href.indexOf('brand%20partnership') !== -1;
+  }
+
+  function createModal() {
+    var wrapper = document.createElement('div');
+    wrapper.className = 'booking-modal booking-modal--partnership';
+    wrapper.setAttribute('aria-hidden', 'true');
+    wrapper.innerHTML = '' +
+      '<div class="booking-modal__backdrop" data-booking-close></div>' +
+      '<section class="booking-modal__dialog" role="dialog" aria-modal="true" aria-labelledby="partnershipModalTitle" tabindex="-1">' +
+        '<button class="booking-modal__close" type="button" aria-label="Close partnership form" data-booking-close>' +
+          '<span></span><span></span>' +
+        '</button>' +
+        '<aside class="booking-modal__visual" aria-hidden="true">' +
+          '<div class="booking-modal__brand">' +
+            '<strong>LGNDRY.CO</strong>' +
+            '<span>Brand Partnerships</span>' +
+          '</div>' +
+          '<div class="booking-modal__visual-copy">' +
+            '<p>Let\'s build<br>something<br>that<br>lasts.</p>' +
+            '<span></span>' +
+            '<small data-booking-step-count>Step 1 of 4</small>' +
+          '</div>' +
+        '</aside>' +
+        '<div class="booking-modal__panel">' +
+          '<div class="booking-modal__intro">' +
+            '<p class="booking-modal__eyebrow">Brand Partnership</p>' +
+            '<h2 id="partnershipModalTitle">Let\'s build a partnership.</h2>' +
+            '<p>Tell us about your brand and we\'ll be in touch within 48 hours.</p>' +
+            '<span class="booking-modal__rule" aria-hidden="true"></span>' +
+          '</div>' +
+          '<div class="booking-modal__content">' +
+            '<ol class="booking-modal__steps" aria-label="Application steps">' +
+              '<li class="is-active"><button type="button" data-booking-step="0"><span>1</span><strong>Partnership</strong></button></li>' +
+              '<li><button type="button" data-booking-step="1"><span>2</span><strong>Your Brand</strong></button></li>' +
+              '<li><button type="button" data-booking-step="2"><span>3</span><strong>Your Details</strong></button></li>' +
+              '<li><button type="button" data-booking-step="3"><span>4</span><strong>Review & Confirm</strong></button></li>' +
+            '</ol>' +
+            '<form class="booking-modal__form" action="mailto:info@lgndry-co.co.za" method="post" enctype="text/plain" novalidate>' +
+              '<div class="booking-modal__panels">' +
+                '<fieldset class="booking-modal__screen is-active" data-booking-panel="0">' +
+                  '<label class="booking-modal__field booking-modal__field--wide">' +
+                    '<span>What kind of partnership are you exploring?</span>' +
+                    '<select name="partnership_type" required>' +
+                      '<option value="">Select partnership type</option>' +
+                      '<option>Creative Partnership</option>' +
+                      '<option>Visual Content Partnership</option>' +
+                      '<option>Campaign Production</option>' +
+                      '<option>Dedicated Visual Partner</option>' +
+                      '<option>Not sure yet</option>' +
+                    '</select>' +
+                  '</label>' +
+                  '<fieldset class="booking-modal__services" data-booking-services>' +
+                    '<legend>What do you need?</legend>' +
+                    '<p>Choose one or more</p>' +
+                    '<label><input type="checkbox" name="focus" value="Ongoing Photography"><span>Ongoing Photography</span></label>' +
+                    '<label><input type="checkbox" name="focus" value="Social & Content Creation"><span>Social & Content Creation</span></label>' +
+                    '<label><input type="checkbox" name="focus" value="Campaign Production"><span>Campaign Production</span></label>' +
+                    '<label><input type="checkbox" name="focus" value="Creative Direction"><span>Creative Direction</span></label>' +
+                    '<label><input type="checkbox" name="focus" value="Brand Storytelling"><span>Brand Storytelling</span></label>' +
+                    '<label><input type="checkbox" name="focus" value="Product & Lifestyle"><span>Product & Lifestyle</span></label>' +
+                    '<small class="booking-modal__error" data-booking-service-error>Select at least one focus area.</small>' +
+                  '</fieldset>' +
+                  '<label class="booking-modal__field booking-modal__field--wide">' +
+                    '<span>Tell us about your brand and goals</span>' +
+                    '<textarea name="brand_goals" maxlength="500" rows="5" placeholder="Who you are, what you make, and what you\'re hoping to build together..." required></textarea>' +
+                    '<small data-booking-count>0/500</small>' +
+                  '</label>' +
+                '</fieldset>' +
+                '<fieldset class="booking-modal__screen" data-booking-panel="1">' +
+                  '<div class="booking-modal__grid">' +
+                    '<label class="booking-modal__field">' +
+                      '<span>Company / brand name</span>' +
+                      '<input type="text" name="company" autocomplete="organization" required>' +
+                    '</label>' +
+                    '<label class="booking-modal__field">' +
+                      '<span>Industry</span>' +
+                      '<input type="text" name="industry" placeholder="e.g. Hospitality, Fashion, Property" required>' +
+                    '</label>' +
+                    '<label class="booking-modal__field">' +
+                      '<span>Website or Instagram</span>' +
+                      '<input type="text" name="brand_link" placeholder="Optional">' +
+                    '</label>' +
+                    '<label class="booking-modal__field">' +
+                      '<span>Location</span>' +
+                      '<input type="text" name="brand_location" placeholder="City / country" required>' +
+                    '</label>' +
+                    '<label class="booking-modal__field booking-modal__field--wide">' +
+                      '<span>How often do you need content?</span>' +
+                      '<select name="content_frequency" required>' +
+                        '<option value="">Select frequency</option>' +
+                        '<option>Monthly</option>' +
+                        '<option>Quarterly</option>' +
+                        '<option>Per campaign</option>' +
+                        '<option>One-off to start</option>' +
+                      '</select>' +
+                    '</label>' +
+                  '</div>' +
+                '</fieldset>' +
+                '<fieldset class="booking-modal__screen" data-booking-panel="2">' +
+                  '<div class="booking-modal__grid">' +
+                    '<label class="booking-modal__field">' +
+                      '<span>Your name</span>' +
+                      '<input type="text" name="contact_name" autocomplete="name" required>' +
+                    '</label>' +
+                    '<label class="booking-modal__field">' +
+                      '<span>Your role</span>' +
+                      '<input type="text" name="contact_role" placeholder="Optional">' +
+                    '</label>' +
+                    '<label class="booking-modal__field">' +
+                      '<span>Email address</span>' +
+                      '<input type="email" name="contact_email" autocomplete="email" required>' +
+                    '</label>' +
+                    '<label class="booking-modal__field">' +
+                      '<span>Phone / WhatsApp</span>' +
+                      '<input type="tel" name="contact_phone" autocomplete="tel" required>' +
+                    '</label>' +
+                    '<label class="booking-modal__field booking-modal__field--wide">' +
+                      '<span>Estimated monthly budget</span>' +
+                      '<select name="partner_budget" required>' +
+                        '<option value="">Select budget range</option>' +
+                        '<option>Under R10,000 / month</option>' +
+                        '<option>R10,000 - R25,000 / month</option>' +
+                        '<option>R25,000 - R50,000 / month</option>' +
+                        '<option>R50,000+ / month</option>' +
+                        '<option>To be discussed</option>' +
+                      '</select>' +
+                    '</label>' +
+                  '</div>' +
+                '</fieldset>' +
+                '<fieldset class="booking-modal__screen" data-booking-panel="3">' +
+                  '<div class="booking-modal__review" data-booking-review></div>' +
+                  '<label class="booking-modal__confirm">' +
+                    '<input type="checkbox" name="confirm_details" required>' +
+                    '<span>I confirm these details are accurate and LGNDRY.Co may contact me about this partnership.</span>' +
+                  '</label>' +
+                '</fieldset>' +
+              '</div>' +
+              '<div class="booking-modal__footer">' +
+                '<p><span aria-hidden="true">Cal</span><strong data-booking-footer-title>Partnership</strong><br><em data-booking-footer-copy>Ongoing visual content partnerships</em></p>' +
+                '<div class="booking-modal__actions">' +
+                  '<button class="booking-modal__back" type="button" data-booking-back>Back</button>' +
+                  '<button class="booking-modal__next" type="button" data-booking-next>' +
+                    '<span>Next Step</span>' +
+                    '<svg width="40" height="8" viewBox="0 0 40 8" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><path d="M0 4H38M38 4L34 1M38 4L34 7" stroke="currentColor" stroke-width="1"/></svg>' +
+                  '</button>' +
+                '</div>' +
+              '</div>' +
+            '</form>' +
+          '</div>' +
+        '</div>' +
+      '</section>';
+    document.body.appendChild(wrapper);
+    return wrapper;
+  }
+
+  function getFocusable() {
+    return modal.querySelectorAll('a[href], button:not([disabled]), textarea, input, select, [tabindex]:not([tabindex="-1"])');
+  }
+
+  function getPanels() {
+    return modal.querySelectorAll('[data-booking-panel]');
+  }
+
+  function getStepItems() {
+    return modal.querySelectorAll('.booking-modal__steps li');
+  }
+
+  function getCheckedValues(name) {
+    var values = [];
+    var checked = modal.querySelectorAll('input[name="' + name + '"]:checked');
+    for (var i = 0; i < checked.length; i++) {
+      values.push(checked[i].value);
+    }
+    return values;
+  }
+
+  function getValue(name) {
+    var field = modal.querySelector('[name="' + name + '"]');
+    return field ? field.value : '';
+  }
+
+  function escapeHtml(value) {
+    return String(value || '').replace(/[&<>"]/g, function (char) {
+      return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[char];
+    });
+  }
+
+  function setStep(step) {
+    currentStep = Math.max(0, Math.min(step, stepLabels.length - 1));
+    var panels = getPanels();
+    var steps = getStepItems();
+
+    for (var i = 0; i < panels.length; i++) {
+      panels[i].classList.toggle('is-active', i === currentStep);
+    }
+
+    for (var j = 0; j < steps.length; j++) {
+      steps[j].classList.toggle('is-active', j === currentStep);
+      steps[j].classList.toggle('is-complete', j < currentStep);
+    }
+
+    var visualStep = modal.querySelector('[data-booking-step-count]');
+    if (visualStep) visualStep.textContent = 'Step ' + (currentStep + 1) + ' of 4';
+
+    var back = modal.querySelector('[data-booking-back]');
+    var next = modal.querySelector('[data-booking-next]');
+    if (back) back.disabled = currentStep === 0;
+    if (next) {
+      next.setAttribute('type', currentStep === stepLabels.length - 1 ? 'submit' : 'button');
+      next.querySelector('span').textContent = currentStep === stepLabels.length - 1 ? 'Send Application' : 'Next Step';
+    }
+
+    var footerTitle = modal.querySelector('[data-booking-footer-title]');
+    var footerCopy = modal.querySelector('[data-booking-footer-copy]');
+    if (footerTitle && footerCopy) {
+      footerTitle.textContent = currentStep === 1 ? 'Your brand' : currentStep === 2 ? 'Contact' : currentStep === 3 ? 'Ready' : 'Partnership';
+      footerCopy.textContent = currentStep === 1 ? 'Tell us who you are' : currentStep === 2 ? 'How we\'ll reach you' : currentStep === 3 ? 'Review before sending' : 'Ongoing visual content partnerships';
+    }
+
+    if (currentStep === 3) updateReview();
+
+    var panel = modal.querySelector('.booking-modal__panel');
+    if (panel) panel.scrollTop = 0;
+  }
+
+  function validateFocus() {
+    var services = modal.querySelector('[data-booking-services]');
+    var error = modal.querySelector('[data-booking-service-error]');
+    var isValid = getCheckedValues('focus').length > 0;
+    if (services) services.classList.toggle('has-error', !isValid);
+    if (error) error.classList.toggle('is-visible', !isValid);
+    return isValid;
+  }
+
+  function validateStep(step) {
+    var panel = modal.querySelector('[data-booking-panel="' + step + '"]');
+    if (!panel) return true;
+
+    var fields = panel.querySelectorAll('input, select, textarea');
+    for (var i = 0; i < fields.length; i++) {
+      if (!fields[i].checkValidity()) {
+        fields[i].reportValidity();
+        return false;
+      }
+    }
+
+    if (step === 0 && !validateFocus()) {
+      var firstFocus = panel.querySelector('input[name="focus"]');
+      if (firstFocus) firstFocus.focus();
+      return false;
+    }
+
+    return true;
+  }
+
+  function validateUpTo(targetStep) {
+    for (var i = 0; i < targetStep; i++) {
+      if (!validateStep(i)) {
+        setStep(i);
+        return false;
+      }
+    }
+    return true;
+  }
+
+  function updateReview() {
+    var review = modal.querySelector('[data-booking-review]');
+    if (!review) return;
+
+    var focus = getCheckedValues('focus');
+    review.innerHTML = '' +
+      '<h3>Review your application</h3>' +
+      '<dl>' +
+        '<div><dt>Partnership type</dt><dd>' + escapeHtml(getValue('partnership_type') || '-') + '</dd></div>' +
+        '<div><dt>Focus areas</dt><dd>' + escapeHtml(focus.length ? focus.join(', ') : '-') + '</dd></div>' +
+        '<div><dt>Goals</dt><dd>' + escapeHtml(getValue('brand_goals') || '-') + '</dd></div>' +
+        '<div><dt>Company</dt><dd>' + escapeHtml(getValue('company') || '-') + '</dd></div>' +
+        '<div><dt>Industry</dt><dd>' + escapeHtml(getValue('industry') || '-') + '</dd></div>' +
+        '<div><dt>Website</dt><dd>' + escapeHtml(getValue('brand_link') || 'Not provided') + '</dd></div>' +
+        '<div><dt>Location</dt><dd>' + escapeHtml(getValue('brand_location') || '-') + '</dd></div>' +
+        '<div><dt>Frequency</dt><dd>' + escapeHtml(getValue('content_frequency') || '-') + '</dd></div>' +
+        '<div><dt>Name</dt><dd>' + escapeHtml(getValue('contact_name') || '-') + '</dd></div>' +
+        '<div><dt>Role</dt><dd>' + escapeHtml(getValue('contact_role') || 'Not provided') + '</dd></div>' +
+        '<div><dt>Email</dt><dd>' + escapeHtml(getValue('contact_email') || '-') + '</dd></div>' +
+        '<div><dt>Phone</dt><dd>' + escapeHtml(getValue('contact_phone') || '-') + '</dd></div>' +
+        '<div><dt>Budget</dt><dd>' + escapeHtml(getValue('partner_budget') || '-') + '</dd></div>' +
+      '</dl>';
+  }
+
+  function resetModal() {
+    currentStep = 0;
+    var form = modal && modal.querySelector('.booking-modal__form');
+    if (form) form.reset();
+    var count = modal && modal.querySelector('[data-booking-count]');
+    if (count) count.textContent = '0/500';
+    var serviceError = modal && modal.querySelector('[data-booking-service-error]');
+    if (serviceError) serviceError.classList.remove('is-visible');
+    var services = modal && modal.querySelector('[data-booking-services]');
+    if (services) services.classList.remove('has-error');
+    if (modal) setStep(0);
+  }
+
+  function openModal(trigger) {
+    if (!modal) {
+      modal = createModal();
+      bindModal();
+    }
+    lastFocused = trigger || document.activeElement;
+    resetModal();
+    modal.classList.add('booking-modal--open');
+    modal.setAttribute('aria-hidden', 'false');
+    document.body.classList.add('booking-modal-lock');
+    setTimeout(function () {
+      var dialog = modal.querySelector('.booking-modal__dialog');
+      if (dialog) dialog.focus();
+    }, 0);
+  }
+
+  function closeModal() {
+    if (!modal) return;
+    modal.classList.remove('booking-modal--open');
+    modal.setAttribute('aria-hidden', 'true');
+    document.body.classList.remove('booking-modal-lock');
+    if (lastFocused && lastFocused.focus) lastFocused.focus();
+  }
+
+  function bindModal() {
+    var closes = modal.querySelectorAll('[data-booking-close]');
+    for (var i = 0; i < closes.length; i++) {
+      closes[i].addEventListener('click', closeModal);
+    }
+
+    var textarea = modal.querySelector('textarea[maxlength]');
+    var count = modal.querySelector('[data-booking-count]');
+    if (textarea && count) {
+      textarea.addEventListener('input', function () {
+        count.textContent = textarea.value.length + '/500';
+      });
+    }
+
+    var focusInputs = modal.querySelectorAll('input[name="focus"]');
+    for (var s = 0; s < focusInputs.length; s++) {
+      focusInputs[s].addEventListener('change', validateFocus);
+    }
+
+    var stepButtons = modal.querySelectorAll('[data-booking-step]');
+    for (var b = 0; b < stepButtons.length; b++) {
+      stepButtons[b].addEventListener('click', function () {
+        var target = parseInt(this.getAttribute('data-booking-step'), 10);
+        if (target <= currentStep || validateUpTo(target)) setStep(target);
+      });
+    }
+
+    var back = modal.querySelector('[data-booking-back]');
+    if (back) {
+      back.addEventListener('click', function () {
+        setStep(currentStep - 1);
+      });
+    }
+
+    var next = modal.querySelector('[data-booking-next]');
+    if (next) {
+      next.addEventListener('click', function (e) {
+        if (currentStep < stepLabels.length - 1) {
+          e.preventDefault();
+          if (validateStep(currentStep)) setStep(currentStep + 1);
+        }
+      });
+    }
+
+    var form = modal.querySelector('.booking-modal__form');
+    if (form) {
+      form.addEventListener('submit', function (e) {
+        if (!validateUpTo(stepLabels.length - 1) || !validateStep(stepLabels.length - 1)) {
+          e.preventDefault();
+        }
+      });
+    }
+
+    modal.addEventListener('keydown', function (e) {
+      if (e.key === 'Escape') {
+        closeModal();
+        return;
+      }
+      if (e.key !== 'Tab') return;
+      var focusable = getFocusable();
+      if (!focusable.length) return;
+      var first = focusable[0];
+      var last = focusable[focusable.length - 1];
+      if (e.shiftKey && document.activeElement === first) {
+        e.preventDefault();
+        last.focus();
+      } else if (!e.shiftKey && document.activeElement === last) {
+        e.preventDefault();
+        first.focus();
+      }
+    });
+  }
+
+  for (var i = 0; i < triggers.length; i++) {
+    (function (trigger) {
+      if (!isPartnerTrigger(trigger)) return;
+      trigger.setAttribute('data-partnership-modal', '');
+      trigger.addEventListener('click', function (e) {
+        e.preventDefault();
+        openModal(trigger);
+      });
+    })(triggers[i]);
+  }
+
+  window.lgndryPartnershipModal = { open: openModal, close: closeModal };
+}());
