@@ -333,31 +333,61 @@ body {
   .nav-panel__links {
     width: 100%;
     height: 100%;
-    padding: 80px 32px;
+    justify-content: flex-start;
+    padding: clamp(92px, 16vh, 124px) 30px 44px;
+    background-color: var(--bg-primary);
     background-size: cover;
     background-position: center;
     background-repeat: no-repeat;
   }
 
-  /* White wash overlay so background image reads at ~12% opacity */
   .nav-panel__links::before {
     content: '';
     position: absolute;
     inset: 0;
-    background-color: rgba(255, 255, 255, 0.88);
+    background: linear-gradient(90deg, rgba(255, 255, 255, 0.94) 0%, rgba(255, 255, 255, 0.82) 56%, rgba(255, 255, 255, 0.55) 100%);
     z-index: 0;
     pointer-events: none;
   }
 
-  /* Keep close button and list above the overlay */
-  .nav-panel__close,
+  .nav-panel__links::after {
+    content: 'Menu';
+    position: absolute;
+    left: 30px;
+    bottom: 28px;
+    z-index: 1;
+    font-family: 'Inter', sans-serif;
+    font-size: 0.68rem;
+    font-weight: 400;
+    letter-spacing: 0.24em;
+    text-transform: uppercase;
+    color: rgba(29, 29, 29, 0.56);
+  }
+
+  .nav-panel__close {
+    position: absolute;
+    top: 28px;
+    left: 30px;
+    z-index: 2;
+    font-size: 0.78rem;
+  }
+
   .nav-panel__list {
     position: relative;
     z-index: 1;
+    display: grid;
+    gap: clamp(12px, 2vh, 18px);
+    width: min(100%, 360px);
   }
 
   .nav-panel__item {
-    font-size: clamp(2.2rem, 8vw, 3rem);
+    font-size: clamp(2.65rem, 14vw, 4.2rem);
+    line-height: 1.02;
+    letter-spacing: 0;
+  }
+
+  .nav-panel__list--hovering .nav-panel__item--hovered {
+    transform: translateX(0);
   }
 
   .nav-panel__preview {
@@ -1309,22 +1339,33 @@ body {
 
 @media (max-width: 767px) {
   .hero__overlay {
-    align-items: flex-end;
+    align-items: flex-start;
   }
 
   .hero__text {
-    margin-top: 0;
-    margin-bottom: 13vh;
+    margin-top: clamp(132px, 24vh, 188px);
+    margin-bottom: 0;
     margin-left: 0;
     max-width: none;
+    padding-right: clamp(28px, 8vw, 44px);
   }
 
   .hero__headline {
-    font-size: clamp(2.4rem, 11vw, 3.4rem);
+    font-size: clamp(2.35rem, 10vw, 3.35rem);
+  }
+
+  .hero__divider {
+    margin: 22px 0 20px;
   }
 
   .hero__copy {
-    font-size: 0.8rem;
+    max-width: 34ch;
+    font-size: 0.78rem;
+    line-height: 1.7;
+  }
+
+  .hero__cta {
+    margin-top: 26px;
   }
 }
 

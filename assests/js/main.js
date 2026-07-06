@@ -151,25 +151,39 @@
       items[i].classList.remove('nav-panel__item--hovered');
     }
     setActivePhoto('home');
+    if (!isMobile()) {
+      linksColumn.style.backgroundImage = '';
+    }
+  }
+
+  function activateItem(item) {
+    list.classList.add('nav-panel__list--hovering');
+    for (var j = 0; j < items.length; j++) {
+      items[j].classList.remove('nav-panel__item--hovered');
+    }
+    item.classList.add('nav-panel__item--hovered');
+    setActivePhoto(item.getAttribute('data-nav-image'));
+  }
+
+  function syncMobilePhoto() {
     if (isMobile()) {
+      setActivePhoto('home');
+    } else {
       linksColumn.style.backgroundImage = '';
     }
   }
 
   for (var i = 0; i < items.length; i++) {
     (function (item) {
-      item.addEventListener('mouseenter', function () {
-        list.classList.add('nav-panel__list--hovering');
-        for (var j = 0; j < items.length; j++) {
-          items[j].classList.remove('nav-panel__item--hovered');
-        }
-        item.classList.add('nav-panel__item--hovered');
-        setActivePhoto(item.getAttribute('data-nav-image'));
-      });
+      item.addEventListener('mouseenter', function () { activateItem(item); });
+      item.addEventListener('focus', function () { activateItem(item); });
+      item.addEventListener('pointerdown', function () { activateItem(item); });
     })(items[i]);
   }
 
   list.addEventListener('mouseleave', clearHoverState);
+  window.addEventListener('resize', syncMobilePhoto);
+  syncMobilePhoto();
 }());
 
 /* Homepage Body: Philosophy scroll gallery */
