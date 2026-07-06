@@ -129,7 +129,7 @@
   var linksColumn = document.querySelector('.nav-panel__links');
 
   function isMobile() {
-    return window.matchMedia('(max-width: 639px)').matches;
+    return window.matchMedia('(max-width: 767px)').matches;
   }
 
   function setActivePhoto(key) {

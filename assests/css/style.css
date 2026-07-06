@@ -234,8 +234,8 @@ body {
 
 .nav-panel__close {
   position: absolute;
-  top: 24px;
-  left: 32px;
+  top: 28px;
+  left: clamp(24px, 5vw, 64px);
   font-family: 'Cormorant Garamond', serif;
   font-weight: 300;
   font-size: 0.85rem;
@@ -264,8 +264,8 @@ body {
   display: block;
   font-family: 'Cormorant Garamond', serif;
   font-weight: 300;
-  font-size: clamp(2.8rem, 5vw, 5rem);
-  line-height: 1.6;
+  font-size: clamp(2.35rem, 4vw, 4rem);
+  line-height: 1.42;
   letter-spacing: -0.01em;
   color: var(--text-primary);
   text-decoration: none;
@@ -320,11 +320,11 @@ body {
   }
 
   .nav-panel__item {
-    font-size: clamp(2rem, 4vw, 3rem);
+    font-size: clamp(2rem, 3.4vw, 2.75rem);
   }
 }
 
-@media (max-width: 639px) {
+@media (max-width: 767px) {
   .nav-panel {
     width: 100vw;
     flex-direction: column;
@@ -334,7 +334,7 @@ body {
     width: 100%;
     height: 100%;
     justify-content: flex-start;
-    padding: clamp(92px, 16vh, 124px) 30px 44px;
+    padding: clamp(96px, 14vh, 124px) 30px 44px;
     background-color: var(--bg-primary);
     background-size: cover;
     background-position: center;
@@ -367,7 +367,7 @@ body {
   .nav-panel__close {
     position: absolute;
     top: 28px;
-    left: 30px;
+    left: clamp(24px, 5vw, 64px);
     z-index: 2;
     font-size: 0.78rem;
   }
@@ -381,8 +381,8 @@ body {
   }
 
   .nav-panel__item {
-    font-size: clamp(2.65rem, 14vw, 4.2rem);
-    line-height: 1.02;
+    font-size: clamp(2.3rem, 9.5vw, 3.45rem);
+    line-height: 1.08;
     letter-spacing: 0;
   }
 
@@ -394,7 +394,6 @@ body {
     display: none;
   }
 }
-
 /* ─── Nav Reduced Motion ─────────────────────────── */
 @media (prefers-reduced-motion: reduce) {
   .nav-panel {
