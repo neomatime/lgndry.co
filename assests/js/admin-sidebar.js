@@ -12,6 +12,8 @@
       ".ops-app-shell .sidebar-toggle{width:40px;height:40px;margin:0 0 24px 10px;border:1px solid var(--line);border-radius:var(--radius);background:transparent;color:var(--text);display:grid;place-items:center;transition:background .2s ease,color .2s ease}",
       ".ops-app-shell .sidebar-toggle:hover{background:var(--panel-soft)}",
       ".ops-app-shell .sidebar-toggle svg{width:18px;height:18px;stroke-width:1.5;transition:transform .2s ease}",
+      ".ops-app-shell .profile{border:0!important;border-left:0!important;background:transparent!important;box-shadow:none!important;padding:0!important}",
+      ".ops-app-shell .profile img{border:0!important}",
       ".ops-app-shell .ops-shell{transition:grid-template-columns .24s ease}",
       ".ops-app-shell .ops-sidebar{transition:padding .24s ease}",
       "@media (min-width:981px){",
