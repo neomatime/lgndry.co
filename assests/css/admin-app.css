@@ -1,6 +1,42 @@
 .ops-app-shell .topbar {
   grid-template-columns: minmax(220px, 1fr) minmax(220px, 340px) auto auto minmax(220px, auto);
 }
+.ops-app-shell .side-nav {
+  grid-template-columns: 1fr;
+  gap: 18px;
+  padding: 4px 10px;
+  overflow: visible;
+}
+
+.ops-app-shell .nav-item {
+  display: block;
+  min-height: auto;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: var(--muted);
+  text-align: left;
+}
+
+.ops-app-shell .nav-item svg {
+  display: none;
+}
+
+.ops-app-shell .nav-item--active,
+.ops-app-shell .nav-item:hover {
+  border-color: transparent;
+  background: transparent;
+  color: var(--text);
+}
+
+.ops-app-shell .nav-item--active {
+  text-decoration: underline;
+  text-underline-offset: 8px;
+}
+
+.ops-app-shell .nav-item--active::before {
+  display: none;
+}
 
 .ops-app-shell .profile-row {
   display: flex;
