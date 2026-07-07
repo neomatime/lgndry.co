@@ -801,6 +801,56 @@
   cartButton = createCartButton();
   updateButton();
 }());
+/* Contact form: two-phase lead qualification */
+(function () {
+  var forms = document.querySelectorAll('[data-contact-form]');
+  if (!forms.length) return;
+
+  function validatePhase(phase) {
+    var fields = phase.querySelectorAll('input, select, textarea');
+    for (var i = 0; i < fields.length; i++) {
+      if (!fields[i].checkValidity()) {
+        fields[i].reportValidity();
+        return false;
+      }
+    }
+    return true;
+  }
+
+  function setPhase(form, index) {
+    var phases = form.querySelectorAll('[data-contact-phase]');
+    var steps = form.querySelectorAll('[data-contact-step]');
+    for (var i = 0; i < phases.length; i++) {
+      var active = i === index;
+      phases[i].hidden = !active;
+      phases[i].classList.toggle('contact-form__phase--active', active);
+      if (steps[i]) steps[i].classList.toggle('contact-form__step--active', active);
+    }
+
+    var target = phases[index] && phases[index].querySelector('input, select, textarea, button');
+    if (target && target.focus) target.focus();
+  }
+
+  for (var i = 0; i < forms.length; i++) {
+    (function (form) {
+      var next = form.querySelector('[data-contact-next]');
+      var back = form.querySelector('[data-contact-back]');
+      var firstPhase = form.querySelector('[data-contact-phase="0"]');
+
+      if (next && firstPhase) {
+        next.addEventListener('click', function () {
+          if (validatePhase(firstPhase)) setPhase(form, 1);
+        });
+      }
+
+      if (back) {
+        back.addEventListener('click', function () {
+          setPhase(form, 0);
+        });
+      }
+    })(forms[i]);
+  }
+}());
 /* Booking modal */
 (function () {
   var bookingTriggers = document.querySelectorAll('a, button');
