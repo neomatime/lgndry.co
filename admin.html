@@ -25,7 +25,6 @@
       --warn: #caa66d;
       --shadow: 0 24px 80px rgba(0, 0, 0, 0.42);
       --radius: 4px;
-      --hero: url("assests/images/art/studio art/InShot_20250830_214616011.jpg");
     }
 
     :root[data-theme="light"] {
@@ -108,7 +107,6 @@
     .nav-item,
     .metric__label,
     .panel__label,
-    .cta-button,
     .theme-toggle,
     .project__status,
     .activity__time {
@@ -278,56 +276,10 @@
     .profile strong { display: block; font-size: 0.88rem; font-weight: 500; }
     .profile span { display: block; margin-top: 5px; color: var(--muted); font-size: 0.76rem; }
 
-    .hero {
-      position: relative;
-      min-height: 350px;
-      display: flex;
-      align-items: center;
-      padding: clamp(34px, 5vw, 56px);
-      border: 1px solid var(--line);
-      border-radius: var(--radius);
-      overflow: hidden;
-      background:
-        linear-gradient(90deg, rgba(0,0,0,0.9) 0%, rgba(0,0,0,0.56) 42%, rgba(0,0,0,0.15) 100%),
-        var(--hero) center / cover;
-      box-shadow: var(--shadow);
-    }
-
-    :root[data-theme="light"] .hero {
-      background:
-        linear-gradient(90deg, rgba(255,253,248,0.9) 0%, rgba(255,253,248,0.58) 42%, rgba(255,253,248,0.18) 100%),
-        var(--hero) center / cover;
-    }
-
-    .hero__content { max-width: 520px; }
-    .hero h2 {
-      margin: 0;
-      font-family: "Cormorant Garamond", Georgia, serif;
-      font-weight: 400;
-      font-size: clamp(3rem, 5.4vw, 5.1rem);
-      line-height: 0.96;
-      letter-spacing: 0;
-    }
-    .hero .eyebrow { margin: 28px 0 0; color: var(--muted); }
-
-    .cta-button {
-      display: inline-flex;
-      align-items: center;
-      gap: 28px;
-      margin-top: 32px;
-      min-height: 46px;
-      padding: 0 18px;
-      border: 1px solid var(--line-strong);
-      background: rgba(0, 0, 0, 0.22);
-      color: var(--text);
-    }
-
-    :root[data-theme="light"] .cta-button { background: rgba(255, 255, 255, 0.38); }
-
     .dashboard-grid {
       display: grid;
       gap: 14px;
-      margin-top: 18px;
+      margin-top: 0;
     }
 
     .metrics {
@@ -545,8 +497,6 @@
       .side-nav { grid-template-columns: repeat(10, 148px); }
       .topbar { gap: 14px; }
       .theme-toggle span { display: none; }
-      .hero { min-height: 310px; padding: 26px; align-items: flex-end; }
-      .hero h2 { font-size: 2.9rem; }
       .metrics { grid-template-columns: 1fr; }
       .metric { min-height: 118px; }
       .panel { padding: 22px 18px; }
@@ -610,14 +560,6 @@
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M7 9l5 5 5-5"/></svg>
         </div>
       </header>
-
-      <section class="hero" aria-labelledby="hero-title">
-        <div class="hero__content">
-          <h2 id="hero-title">Create intentionally.<br>Lead creatively.</h2>
-          <p class="eyebrow">Manage. Create. Deliver. Elevate.</p>
-          <a class="cta-button" href="#overview"><span>View today's overview</span><span aria-hidden="true">-></span></a>
-        </div>
-      </section>
 
       <div class="dashboard-grid" id="overview">
         <section class="metrics" aria-label="Key metrics">
