@@ -1,0 +1,702 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>LGNDRY.Co Command Center</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@300;400;500&family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      color-scheme: dark;
+      --bg: #090908;
+      --panel: rgba(22, 21, 19, 0.92);
+      --panel-strong: rgba(13, 13, 12, 0.96);
+      --panel-soft: rgba(255, 255, 255, 0.045);
+      --line: rgba(255, 255, 255, 0.12);
+      --line-strong: rgba(255, 255, 255, 0.2);
+      --text: #f7f3ec;
+      --muted: rgba(247, 243, 236, 0.66);
+      --faint: rgba(247, 243, 236, 0.42);
+      --inverse: #12110f;
+      --accent: #d8c7ad;
+      --good: #8aa883;
+      --warn: #caa66d;
+      --shadow: 0 24px 80px rgba(0, 0, 0, 0.42);
+      --radius: 4px;
+      --hero: url("assests/images/art/studio art/InShot_20250830_214616011.jpg");
+    }
+
+    :root[data-theme="light"] {
+      color-scheme: light;
+      --bg: #f5f2ec;
+      --panel: rgba(255, 253, 248, 0.92);
+      --panel-strong: rgba(255, 255, 255, 0.98);
+      --panel-soft: rgba(29, 29, 27, 0.045);
+      --line: rgba(29, 29, 27, 0.12);
+      --line-strong: rgba(29, 29, 27, 0.2);
+      --text: #171614;
+      --muted: rgba(23, 22, 20, 0.66);
+      --faint: rgba(23, 22, 20, 0.42);
+      --inverse: #ffffff;
+      --accent: #7a6044;
+      --good: #59734f;
+      --warn: #9a7133;
+      --shadow: 0 24px 80px rgba(54, 45, 31, 0.14);
+    }
+
+    * { box-sizing: border-box; }
+
+    html {
+      min-height: 100%;
+      background: var(--bg);
+      font-family: Inter, Arial, sans-serif;
+      color: var(--text);
+      -webkit-font-smoothing: antialiased;
+      scrollbar-width: thin;
+    }
+
+    body {
+      min-height: 100vh;
+      margin: 0;
+      background:
+        radial-gradient(circle at 78% 8%, rgba(216, 199, 173, 0.12), transparent 28%),
+        radial-gradient(circle at 12% 12%, rgba(255, 255, 255, 0.06), transparent 22%),
+        var(--bg);
+      transition: background-color 0.25s ease, color 0.25s ease;
+    }
+
+    button, input { font: inherit; }
+    .sr-only { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0, 0, 0, 0); white-space: nowrap; border: 0; }
+    button { cursor: pointer; }
+    a { color: inherit; text-decoration: none; }
+
+    .ops-shell {
+      min-height: 100vh;
+      display: grid;
+      grid-template-columns: 288px minmax(0, 1fr);
+    }
+
+    .ops-sidebar {
+      position: sticky;
+      top: 0;
+      height: 100vh;
+      padding: 36px 24px 24px;
+      border-right: 1px solid var(--line);
+      background: linear-gradient(180deg, var(--panel-strong), rgba(10, 10, 9, 0.86));
+      overflow-y: auto;
+    }
+
+    :root[data-theme="light"] .ops-sidebar {
+      background: linear-gradient(180deg, rgba(255,255,255,0.96), rgba(245,242,236,0.9));
+    }
+
+    .brand {
+      padding: 0 10px 34px;
+    }
+
+    .brand__name {
+      display: block;
+      font-size: 1.45rem;
+      font-weight: 500;
+      letter-spacing: -0.03em;
+    }
+
+    .brand__label,
+    .eyebrow,
+    .nav-item,
+    .metric__label,
+    .panel__label,
+    .cta-button,
+    .theme-toggle,
+    .project__status,
+    .activity__time {
+      font-size: 0.68rem;
+      font-weight: 600;
+      letter-spacing: 0.16em;
+      text-transform: uppercase;
+    }
+
+    .brand__label {
+      display: block;
+      margin-top: 9px;
+      color: var(--muted);
+    }
+
+    .side-nav {
+      display: grid;
+      gap: 8px;
+    }
+
+    .nav-item {
+      position: relative;
+      display: grid;
+      grid-template-columns: 24px 1fr;
+      align-items: center;
+      gap: 16px;
+      min-height: 50px;
+      padding: 0 14px;
+      border: 1px solid transparent;
+      border-radius: var(--radius);
+      color: var(--muted);
+    }
+
+    .nav-item svg,
+    .icon-button svg,
+    .theme-toggle svg,
+    .profile > svg,
+    .metric__icon svg,
+    .activity__icon svg {
+      width: 20px;
+      height: 20px;
+      stroke-width: 1.45;
+    }
+
+    .nav-item--active,
+    .nav-item:hover {
+      background: var(--panel-soft);
+      border-color: var(--line);
+      color: var(--text);
+    }
+
+    .nav-item--active::before {
+      content: "";
+      position: absolute;
+      left: -24px;
+      top: 10px;
+      bottom: 10px;
+      width: 3px;
+      background: var(--text);
+    }
+
+    .sidebar-card {
+      margin-top: 72px;
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      overflow: hidden;
+      background: var(--panel);
+    }
+
+    .sidebar-card img {
+      display: block;
+      width: 100%;
+      aspect-ratio: 1.18 / 1;
+      object-fit: cover;
+      filter: grayscale(0.8) contrast(1.06);
+    }
+
+    .sidebar-card__body { padding: 22px 22px 24px; }
+    .sidebar-card__body h3 {
+      margin: 0;
+      font-family: "Cormorant Garamond", Georgia, serif;
+      font-size: 1.5rem;
+      font-weight: 400;
+      line-height: 1.03;
+    }
+    .sidebar-card__body p { margin: 14px 0 0; color: var(--muted); font-size: 0.78rem; }
+
+    .ops-main {
+      min-width: 0;
+      padding: 30px clamp(22px, 3vw, 46px) 40px;
+    }
+
+    .topbar {
+      display: grid;
+      grid-template-columns: minmax(240px, 1fr) minmax(240px, 340px) auto auto;
+      align-items: center;
+      gap: 28px;
+      margin-bottom: 28px;
+    }
+
+    .welcome h1 {
+      margin: 0;
+      font-size: 1rem;
+      font-weight: 500;
+      letter-spacing: 0.01em;
+    }
+    .welcome p { margin: 8px 0 0; color: var(--muted); font-size: 0.84rem; }
+
+    .search {
+      position: relative;
+    }
+
+    .search input {
+      width: 100%;
+      height: 48px;
+      padding: 0 48px 0 18px;
+      border: 1px solid var(--line-strong);
+      border-radius: var(--radius);
+      background: transparent;
+      color: var(--text);
+      outline: none;
+    }
+
+    .search svg {
+      position: absolute;
+      right: 16px;
+      top: 50%;
+      width: 20px;
+      height: 20px;
+      transform: translateY(-50%);
+      color: var(--muted);
+    }
+
+    .icon-button,
+    .theme-toggle {
+      height: 48px;
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      background: var(--panel);
+      color: var(--text);
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .icon-button { width: 48px; }
+    .theme-toggle { gap: 10px; padding: 0 16px; }
+
+    .profile {
+      display: grid;
+      grid-template-columns: 56px auto 18px;
+      align-items: center;
+      gap: 14px;
+      padding-left: 12px;
+      border-left: 1px solid var(--line);
+    }
+
+    .profile img {
+      width: 56px;
+      height: 56px;
+      border-radius: 50%;
+      object-fit: cover;
+      filter: grayscale(0.75);
+      border: 1px solid var(--line-strong);
+    }
+
+    .profile strong { display: block; font-size: 0.88rem; font-weight: 500; }
+    .profile span { display: block; margin-top: 5px; color: var(--muted); font-size: 0.76rem; }
+
+    .hero {
+      position: relative;
+      min-height: 350px;
+      display: flex;
+      align-items: center;
+      padding: clamp(34px, 5vw, 56px);
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      overflow: hidden;
+      background:
+        linear-gradient(90deg, rgba(0,0,0,0.9) 0%, rgba(0,0,0,0.56) 42%, rgba(0,0,0,0.15) 100%),
+        var(--hero) center / cover;
+      box-shadow: var(--shadow);
+    }
+
+    :root[data-theme="light"] .hero {
+      background:
+        linear-gradient(90deg, rgba(255,253,248,0.9) 0%, rgba(255,253,248,0.58) 42%, rgba(255,253,248,0.18) 100%),
+        var(--hero) center / cover;
+    }
+
+    .hero__content { max-width: 520px; }
+    .hero h2 {
+      margin: 0;
+      font-family: "Cormorant Garamond", Georgia, serif;
+      font-weight: 400;
+      font-size: clamp(3rem, 5.4vw, 5.1rem);
+      line-height: 0.96;
+      letter-spacing: 0;
+    }
+    .hero .eyebrow { margin: 28px 0 0; color: var(--muted); }
+
+    .cta-button {
+      display: inline-flex;
+      align-items: center;
+      gap: 28px;
+      margin-top: 32px;
+      min-height: 46px;
+      padding: 0 18px;
+      border: 1px solid var(--line-strong);
+      background: rgba(0, 0, 0, 0.22);
+      color: var(--text);
+    }
+
+    :root[data-theme="light"] .cta-button { background: rgba(255, 255, 255, 0.38); }
+
+    .dashboard-grid {
+      display: grid;
+      gap: 14px;
+      margin-top: 18px;
+    }
+
+    .metrics {
+      display: grid;
+      grid-template-columns: repeat(5, minmax(160px, 1fr));
+      gap: 12px;
+    }
+
+    .metric,
+    .panel,
+    .focus-strip {
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      background: linear-gradient(135deg, var(--panel), rgba(255,255,255,0.025));
+      box-shadow: 0 10px 32px rgba(0, 0, 0, 0.08);
+    }
+
+    .metric {
+      min-height: 142px;
+      padding: 22px;
+      display: grid;
+      align-content: space-between;
+      gap: 18px;
+    }
+
+    .metric__top {
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+      gap: 16px;
+    }
+
+    .metric__label,
+    .panel__label { color: var(--text); }
+
+    .metric__icon,
+    .activity__icon {
+      width: 44px;
+      height: 44px;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      border: 1px solid var(--line-strong);
+      border-radius: 50%;
+      color: var(--muted);
+      flex: 0 0 auto;
+    }
+
+    .metric__value {
+      display: block;
+      font-family: "Cormorant Garamond", Georgia, serif;
+      font-size: clamp(2.35rem, 3vw, 3.2rem);
+      line-height: 0.9;
+      font-weight: 400;
+    }
+
+    .metric__link,
+    .panel__link {
+      display: flex;
+      justify-content: space-between;
+      gap: 14px;
+      color: var(--muted);
+      font-size: 0.78rem;
+    }
+
+    .panels {
+      display: grid;
+      grid-template-columns: 1.25fr 0.8fr 1.05fr;
+      gap: 14px;
+    }
+
+    .panel { padding: 24px 28px; min-width: 0; }
+    .panel__header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 22px;
+    }
+
+    .project-list,
+    .booking-list,
+    .activity-list { display: grid; gap: 0; }
+
+    .project {
+      display: grid;
+      grid-template-columns: 108px minmax(130px, 1fr) 100px 46px 78px;
+      gap: 20px;
+      align-items: center;
+      min-height: 72px;
+      padding: 11px 0;
+      border-bottom: 1px solid var(--line);
+    }
+
+    .project img {
+      width: 108px;
+      height: 60px;
+      object-fit: cover;
+      filter: grayscale(0.75) contrast(1.05);
+    }
+
+    .project h3,
+    .booking h3,
+    .activity p { margin: 0; font-size: 0.88rem; font-weight: 500; }
+    .project p,
+    .booking p { margin: 6px 0 0; color: var(--muted); font-size: 0.74rem; }
+    .project__status { color: var(--muted); letter-spacing: 0.04em; text-transform: none; font-size: 0.72rem; }
+    .dot { display: inline-block; width: 5px; height: 5px; border-radius: 50%; margin-right: 8px; background: var(--good); vertical-align: middle; }
+    .dot--warn { background: var(--warn); }
+    .project__progress { color: var(--text); font-size: 0.75rem; }
+    .bar { height: 1px; background: var(--line); position: relative; }
+    .bar span { position: absolute; left: 0; top: 0; bottom: 0; width: var(--value); background: var(--text); }
+
+    .booking {
+      display: grid;
+      grid-template-columns: 54px 1fr;
+      gap: 22px;
+      padding: 14px 0;
+      border-bottom: 1px solid var(--line);
+    }
+
+    .booking__date {
+      font-family: "Cormorant Garamond", Georgia, serif;
+      font-size: 2rem;
+      line-height: 0.9;
+      text-align: center;
+    }
+    .booking__date span {
+      display: block;
+      margin-top: 8px;
+      font-family: Inter, Arial, sans-serif;
+      font-size: 0.62rem;
+      font-weight: 600;
+      letter-spacing: 0.16em;
+      color: var(--muted);
+    }
+
+    .activity {
+      display: grid;
+      grid-template-columns: 44px 1fr auto;
+      gap: 18px;
+      align-items: center;
+      padding: 14px 0;
+      border-bottom: 1px solid var(--line);
+    }
+    .activity__time { color: var(--muted); letter-spacing: 0.04em; text-transform: none; font-size: 0.72rem; }
+
+    .panel__footer { margin-top: 22px; }
+
+    .focus-strip {
+      min-height: 164px;
+      display: grid;
+      grid-template-columns: 0.72fr 1.12fr 0.45fr;
+      overflow: hidden;
+    }
+
+    .focus-strip img {
+      width: 100%;
+      height: 100%;
+      min-height: 164px;
+      object-fit: cover;
+      filter: grayscale(0.86) contrast(1.04);
+    }
+
+    .focus-strip__quote {
+      display: flex;
+      align-items: center;
+      padding: 30px clamp(26px, 4vw, 62px);
+    }
+
+    .focus-strip__quote p {
+      margin: 0;
+      font-family: "Cormorant Garamond", Georgia, serif;
+      font-size: clamp(2rem, 3vw, 3.3rem);
+      line-height: 0.98;
+    }
+
+    .focus-strip__action {
+      display: grid;
+      align-content: center;
+      gap: 14px;
+      padding: 28px;
+    }
+    .focus-strip__action p { margin: 0; color: var(--muted); font-size: 0.8rem; line-height: 1.6; }
+
+    @media (max-width: 1280px) {
+      .ops-shell { grid-template-columns: 236px minmax(0, 1fr); }
+      .metrics { grid-template-columns: repeat(3, minmax(160px, 1fr)); }
+      .panels { grid-template-columns: 1fr; }
+      .project { grid-template-columns: 98px minmax(120px, 1fr) 90px 42px 68px; }
+    }
+
+    @media (max-width: 980px) {
+      .ops-shell { grid-template-columns: 1fr; }
+      .ops-sidebar {
+        position: static;
+        height: auto;
+        padding: 24px;
+        border-right: 0;
+        border-bottom: 1px solid var(--line);
+      }
+      .side-nav { grid-template-columns: repeat(5, minmax(130px, 1fr)); overflow-x: auto; }
+      .sidebar-card { display: none; }
+      .topbar { grid-template-columns: 1fr auto; }
+      .search, .profile { grid-column: 1 / -1; }
+      .profile { border-left: 0; padding-left: 0; }
+      .metrics { grid-template-columns: repeat(2, minmax(150px, 1fr)); }
+      .focus-strip { grid-template-columns: 1fr; }
+      .focus-strip img { height: 210px; }
+    }
+
+    @media (max-width: 640px) {
+      .ops-main { padding: 20px 14px 28px; }
+      .ops-sidebar { padding: 22px 14px; }
+      .brand { padding-inline: 4px; }
+      .side-nav { grid-template-columns: repeat(10, 148px); }
+      .topbar { gap: 14px; }
+      .theme-toggle span { display: none; }
+      .hero { min-height: 310px; padding: 26px; align-items: flex-end; }
+      .hero h2 { font-size: 2.9rem; }
+      .metrics { grid-template-columns: 1fr; }
+      .metric { min-height: 118px; }
+      .panel { padding: 22px 18px; }
+      .project { grid-template-columns: 82px 1fr; gap: 14px; }
+      .project__status, .project__progress, .bar { display: none; }
+      .activity { grid-template-columns: 38px 1fr; }
+      .activity__time { grid-column: 2; }
+      .focus-strip__quote, .focus-strip__action { padding: 24px; }
+    }
+  </style>
+</head>
+<body>
+  <div class="ops-shell">
+    <aside class="ops-sidebar" aria-label="Command center navigation">
+      <a class="brand" href="index.html" aria-label="LGNDRY.Co home">
+        <span class="brand__name">LGNDRY.Co</span>
+        <span class="brand__label">Command Center</span>
+      </a>
+
+      <nav class="side-nav" aria-label="Admin sections">
+        <a class="nav-item nav-item--active" href="#dashboard"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/></svg><span>Dashboard</span></a>
+        <a class="nav-item" href="#projects"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M9 6V4h6v2"/><rect x="3" y="6" width="18" height="14" rx="1"/><path d="M3 11h18"/></svg><span>Projects</span></a>
+        <a class="nav-item" href="#clients"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><circle cx="12" cy="8" r="4"/><path d="M4 21c1.5-4 4.2-6 8-6s6.5 2 8 6"/></svg><span>Clients</span></a>
+        <a class="nav-item" href="#bookings"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><rect x="4" y="5" width="16" height="15" rx="1"/><path d="M8 3v4M16 3v4M4 10h16"/></svg><span>Bookings</span></a>
+        <a class="nav-item" href="#invoices"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M7 3h7l4 4v14H7z"/><path d="M14 3v5h5M9 13h6M9 17h6"/></svg><span>Invoices</span></a>
+        <a class="nav-item" href="#proposals"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M7 3h7l4 4v14H7z"/><path d="M14 3v5h5M10 13h4M10 17h6"/></svg><span>Proposals</span></a>
+        <a class="nav-item" href="#gallery"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><rect x="3" y="5" width="18" height="14" rx="1"/><path d="M7 15l3-3 3 3 2-2 3 4"/><circle cx="8" cy="9" r="1.4"/></svg><span>Gallery</span></a>
+        <a class="nav-item" href="#collection"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M6 8h12l1 13H5z"/><path d="M9 8a3 3 0 0 1 6 0"/></svg><span>Collection</span></a>
+        <a class="nav-item" href="#content"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M4 20l4.5-1 10-10-3.5-3.5-10 10z"/><path d="M13.5 7.5l3 3M4 20h16"/></svg><span>Content</span></a>
+        <a class="nav-item" href="#analytics"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M5 20V9M12 20V4M19 20v-7"/><path d="M3 20h18"/></svg><span>Analytics</span></a>
+        <a class="nav-item" href="#settings"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><circle cx="12" cy="12" r="3"/><path d="M19 12a7 7 0 0 0-.1-1l2-1.5-2-3.4-2.4 1a8 8 0 0 0-1.7-1L14.5 3h-5l-.3 3.1a8 8 0 0 0-1.7 1l-2.4-1-2 3.4 2 1.5a7 7 0 0 0 0 2l-2 1.5 2 3.4 2.4-1a8 8 0 0 0 1.7 1l.3 3.1h5l.3-3.1a8 8 0 0 0 1.7-1l2.4 1 2-3.4-2-1.5c.1-.3.1-.7.1-1z"/></svg><span>Settings</span></a>
+      </nav>
+
+      <article class="sidebar-card">
+        <img src="assests/images/hero-image.JPG" alt="LGNDRY.Co field artwork">
+        <div class="sidebar-card__body">
+          <h3>Found Beauty<br>in the Mundane.</h3>
+          <p>LGNDRY.Co</p>
+        </div>
+      </article>
+    </aside>
+
+    <main class="ops-main" id="dashboard">
+      <header class="topbar">
+        <div class="welcome">
+          <h1>Welcome back, Neo.</h1>
+          <p>Here is what is happening with LGNDRY.Co today.</p>
+        </div>
+        <label class="search">
+          <span class="sr-only">Search</span>
+          <input type="search" placeholder="Search anything...">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><circle cx="11" cy="11" r="7"/><path d="M16.5 16.5L21 21"/></svg>
+        </label>
+        <button class="theme-toggle" type="button" data-theme-toggle aria-label="Switch to light mode">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><circle cx="12" cy="12" r="4"/><path d="M12 2v3M12 19v3M2 12h3M19 12h3M4.9 4.9 7 7M17 17l2.1 2.1M19.1 4.9 17 7M7 17l-2.1 2.1"/></svg><span data-theme-label>Light mode</span>
+        </button>
+        <button class="icon-button" type="button" aria-label="Notifications"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M6 10a6 6 0 0 1 12 0v4l2 3H4l2-3z"/><path d="M10 20a2 2 0 0 0 4 0"/></svg></button>
+        <div class="profile" aria-label="Signed in profile">
+          <img src="assests/images/founder.jpeg" alt="Neo Mokgwadi">
+          <div><strong>Neo Mokgwadi</strong><span>Founder &amp; Creative Director</span></div>
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M7 9l5 5 5-5"/></svg>
+        </div>
+      </header>
+
+      <section class="hero" aria-labelledby="hero-title">
+        <div class="hero__content">
+          <h2 id="hero-title">Create intentionally.<br>Lead creatively.</h2>
+          <p class="eyebrow">Manage. Create. Deliver. Elevate.</p>
+          <a class="cta-button" href="#overview"><span>View today's overview</span><span aria-hidden="true">-></span></a>
+        </div>
+      </section>
+
+      <div class="dashboard-grid" id="overview">
+        <section class="metrics" aria-label="Key metrics">
+          <article class="metric"><div class="metric__top"><span class="metric__label">Active Projects</span><span class="metric__icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M9 6V4h6v2"/><rect x="3" y="6" width="18" height="14" rx="1"/><path d="M3 11h18"/></svg></span></div><strong class="metric__value">7</strong><a class="metric__link" href="#projects"><span>View all projects</span><span>-></span></a></article>
+          <article class="metric"><div class="metric__top"><span class="metric__label">Upcoming Bookings</span><span class="metric__icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><rect x="4" y="5" width="16" height="15" rx="1"/><path d="M8 3v4M16 3v4M4 10h16"/></svg></span></div><strong class="metric__value">4</strong><a class="metric__link" href="#bookings"><span>View calendar</span><span>-></span></a></article>
+          <article class="metric"><div class="metric__top"><span class="metric__label">Unpaid Invoices</span><span class="metric__icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M7 3h7l4 4v14H7z"/><path d="M14 3v5h5M9 13h6M9 17h6"/></svg></span></div><strong class="metric__value">3</strong><a class="metric__link" href="#invoices"><span>View invoices</span><span>-></span></a></article>
+          <article class="metric"><div class="metric__top"><span class="metric__label">Gallery Assets</span><span class="metric__icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><rect x="3" y="5" width="18" height="14" rx="1"/><path d="M7 15l3-3 3 3 2-2 3 4"/><circle cx="8" cy="9" r="1.4"/></svg></span></div><strong class="metric__value">248</strong><a class="metric__link" href="#gallery"><span>View gallery</span><span>-></span></a></article>
+          <article class="metric"><div class="metric__top"><span class="metric__label">Collection Sales</span><span class="metric__icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M6 8h12l1 13H5z"/><path d="M9 8a3 3 0 0 1 6 0"/></svg></span></div><strong class="metric__value">R27,450</strong><a class="metric__link" href="#collection"><span>View collection</span><span>-></span></a></article>
+        </section>
+
+        <section class="panels">
+          <article class="panel" id="projects">
+            <div class="panel__header"><span class="panel__label">Recent Projects</span></div>
+            <div class="project-list">
+              <div class="project"><img src="assests/images/founder.jpeg" alt="Rituals campaign"><div><h3>Rituals Campaign</h3><p>Brand Campaign</p></div><span class="project__status"><span class="dot"></span>In Progress</span><span class="project__progress">60%</span><span class="bar" style="--value:60%"><span></span></span></div>
+              <div class="project"><img src="assests/images/founder-2.jpeg" alt="Hennessy SA"><div><h3>Hennessy SA</h3><p>Content Production</p></div><span class="project__status"><span class="dot dot--warn"></span>Review</span><span class="project__progress">80%</span><span class="bar" style="--value:80%"><span></span></span></div>
+              <div class="project"><img src="assests/images/collection/thumbs/still-point.jpg" alt="Mercedes-Benz"><div><h3>Mercedes-Benz</h3><p>Brand Partnership</p></div><span class="project__status"><span class="dot dot--warn"></span>In Progress</span><span class="project__progress">40%</span><span class="bar" style="--value:40%"><span></span></span></div>
+              <div class="project"><img src="assests/images/collection/thumbs/presence.jpg" alt="LELO Studio"><div><h3>LELO Studio</h3><p>Product Photography</p></div><span class="project__status"><span class="dot"></span>Completed</span><span class="project__progress">100%</span><span class="bar" style="--value:100%"><span></span></span></div>
+            </div>
+            <div class="panel__footer"><a class="panel__link" href="#projects"><span>View all projects</span><span>-></span></a></div>
+          </article>
+
+          <article class="panel" id="bookings">
+            <div class="panel__header"><span class="panel__label">Upcoming Bookings</span></div>
+            <div class="booking-list">
+              <div class="booking"><div class="booking__date">24<span>May</span></div><div><h3>Brand Shoot</h3><p>Rituals<br>09:00 - 13:00</p></div></div>
+              <div class="booking"><div class="booking__date">25<span>May</span></div><div><h3>Portrait Session</h3><p>Executive Portrait<br>14:00 - 16:00</p></div></div>
+              <div class="booking"><div class="booking__date">27<span>May</span></div><div><h3>Product Shoot</h3><p>LELO<br>10:00 - 14:00</p></div></div>
+              <div class="booking"><div class="booking__date">30<span>May</span></div><div><h3>Creative Direction Call</h3><p>Hennessy SA<br>11:00 - 12:00</p></div></div>
+            </div>
+            <div class="panel__footer"><a class="panel__link" href="#bookings"><span>View calendar</span><span>-></span></a></div>
+          </article>
+
+          <article class="panel" id="activity">
+            <div class="panel__header"><span class="panel__label">Recent Activity</span></div>
+            <div class="activity-list">
+              <div class="activity"><span class="activity__icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M7 3h7l4 4v14H7z"/><path d="M14 3v5h5M9 13h6M9 17h6"/></svg></span><p>Invoice #INV-032 sent to Rituals</p><span class="activity__time">2h ago</span></div>
+              <div class="activity"><span class="activity__icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><rect x="4" y="5" width="16" height="15" rx="1"/><path d="M8 3v4M16 3v4M4 10h16"/></svg></span><p>New booking confirmed for May 24</p><span class="activity__time">3h ago</span></div>
+              <div class="activity"><span class="activity__icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><rect x="3" y="5" width="18" height="14" rx="1"/><path d="M7 15l3-3 3 3 2-2 3 4"/><circle cx="8" cy="9" r="1.4"/></svg></span><p>Gallery "Rituals Campaign" published</p><span class="activity__time">5h ago</span></div>
+              <div class="activity"><span class="activity__icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M7 3h7l4 4v14H7z"/><path d="M14 3v5h5M9 13h6M9 17h6"/></svg></span><p>Payment received from Hennessy SA</p><span class="activity__time">1d ago</span></div>
+              <div class="activity"><span class="activity__icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M6 8h12l1 13H5z"/><path d="M9 8a3 3 0 0 1 6 0"/></svg></span><p>Project "LELO Studio" completed</p><span class="activity__time">2d ago</span></div>
+            </div>
+            <div class="panel__footer"><a class="panel__link" href="#activity"><span>View all activity</span><span>-></span></a></div>
+          </article>
+        </section>
+
+        <section class="focus-strip" aria-label="Daily focus">
+          <img src="assests/images/founder-2.jpeg" alt="Portrait in quiet light">
+          <div class="focus-strip__quote"><p>Discipline is the bridge<br>between vision and legacy.</p></div>
+          <div class="focus-strip__action"><span class="panel__label">Stay focused</span><p>Your next level is built on what you do today.</p><a class="panel__link" href="#goals"><span>View goals</span><span>-></span></a></div>
+        </section>
+      </div>
+    </main>
+  </div>
+
+  <script>
+    (function () {
+      var root = document.documentElement;
+      var toggle = document.querySelector('[data-theme-toggle]');
+      var label = document.querySelector('[data-theme-label]');
+      var stored = localStorage.getItem('lgndry_admin_theme');
+      if (stored === 'light' || stored === 'dark') root.setAttribute('data-theme', stored);
+
+      function syncThemeLabel() {
+        var isLight = root.getAttribute('data-theme') === 'light';
+        if (label) label.textContent = isLight ? 'Dark mode' : 'Light mode';
+        if (toggle) toggle.setAttribute('aria-label', isLight ? 'Switch to dark mode' : 'Switch to light mode');
+      }
+
+      syncThemeLabel();
+      if (toggle) {
+        toggle.addEventListener('click', function () {
+          var next = root.getAttribute('data-theme') === 'light' ? 'dark' : 'light';
+          root.setAttribute('data-theme', next);
+          localStorage.setItem('lgndry_admin_theme', next);
+          syncThemeLabel();
+        });
+      }
+    }());
+  </script>
+</body>
+</html>
