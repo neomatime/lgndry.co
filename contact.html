@@ -124,6 +124,61 @@
         <h2 id="message-title">Send a Message</h2>
         <span class="contact-rule" aria-hidden="true"></span>
         <form class="contact-form" action="mailto:info@lgndry-co.co.za" method="post" enctype="text/plain">
+          <div class="contact-form__section">
+            <span>Project fit</span>
+            <p>Help us understand what kind of support you need before we ask for your details.</p>
+          </div>
+          <label class="contact-form__wide">
+            <span>What do you need assistance with?</span>
+            <select name="assistance_needed" required>
+              <option value="">Select one</option>
+              <option>Book a photography session</option>
+              <option>Plan a brand or campaign shoot</option>
+              <option>Build an ongoing creative partnership</option>
+              <option>Purchase or enquire about a fine art print</option>
+              <option>Discuss creative direction or visual storytelling</option>
+              <option>General enquiry</option>
+            </select>
+          </label>
+          <label>
+            <span>How ready is the project?</span>
+            <select name="project_readiness" required>
+              <option value="">Select readiness</option>
+              <option>Ready to book now</option>
+              <option>Need a proposal or estimate</option>
+              <option>Still comparing options</option>
+              <option>Early idea / exploring</option>
+            </select>
+          </label>
+          <label>
+            <span>Ideal timeline</span>
+            <select name="timeline" required>
+              <option value="">Select timeline</option>
+              <option>Within 2 weeks</option>
+              <option>This month</option>
+              <option>Next 1-3 months</option>
+              <option>Flexible / no fixed date</option>
+            </select>
+          </label>
+          <label class="contact-form__wide">
+            <span>Estimated budget</span>
+            <select name="budget_range" required>
+              <option value="">Select range</option>
+              <option>Under R5,000</option>
+              <option>R5,000 - R15,000</option>
+              <option>R15,000 - R35,000</option>
+              <option>R35,000+</option>
+              <option>Not sure yet</option>
+            </select>
+          </label>
+          <label class="contact-form__wide">
+            <span>Tell us what success looks like</span>
+            <textarea name="message" rows="5" required></textarea>
+          </label>
+          <div class="contact-form__section contact-form__section--details">
+            <span>Your details</span>
+            <p>Share where we should send the next step if the project is a fit.</p>
+          </div>
           <label>
             <span>Your name</span>
             <input type="text" name="name" autocomplete="name" required>
@@ -132,13 +187,13 @@
             <span>Email address</span>
             <input type="email" name="email" autocomplete="email" required>
           </label>
-          <label class="contact-form__wide">
-            <span>Subject</span>
-            <input type="text" name="subject" required>
+          <label>
+            <span>Phone / WhatsApp</span>
+            <input type="tel" name="phone" autocomplete="tel" required>
           </label>
-          <label class="contact-form__wide">
-            <span>Tell us about your project</span>
-            <textarea name="message" rows="5" required></textarea>
+          <label>
+            <span>Company / brand</span>
+            <input type="text" name="company" autocomplete="organization" placeholder="Optional">
           </label>
           <button class="contact-submit" type="submit">
             <span>Send message</span>
