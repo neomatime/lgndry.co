@@ -2179,7 +2179,7 @@
   if (!wrapper) { return; }
 
   var heroText = wrapper.querySelector('.hero__text');
-  var heroShortCopy = wrapper.querySelector('.hero__short-copy');
+  var heroShortCopy = wrapper.querySelector('.hero__short-copy-group');
   var heroImage = wrapper.querySelector('.hero__image');
   var prefersReducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 
