@@ -16,7 +16,9 @@
 
   function fetchCollection() {
     return fetchTable("collection").then(function (items) {
-      return items.filter(function (item) { return item.availability !== "Hidden"; });
+      return items.filter(function (item) {
+        return item.availability !== "Hidden" && String(item.title || "").toLowerCase() !== "presence";
+      });
     });
   }
 
