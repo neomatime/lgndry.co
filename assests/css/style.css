@@ -1292,11 +1292,11 @@ body {
 
 .hero__short-copy-group {
   position: absolute;
-  right: clamp(72px, 8vw, 140px);
-  bottom: clamp(76px, 10vh, 120px);
+  right: clamp(100px, 12vw, 220px);
+  bottom: clamp(100px, 13vh, 160px);
   display: flex;
   flex-direction: column;
-  align-items: flex-end;
+  align-items: flex-start;
   max-width: 42ch;
   pointer-events: auto;
 }
@@ -1309,12 +1309,12 @@ body {
   font-size: 0.85rem;
   letter-spacing: 0.05em;
   line-height: 1.85;
-  text-align: right;
+  text-align: left;
   color: #FFFFFF;
 }
 
 .hero__short-copy-group .hero__cta {
-  align-self: flex-end;
+  align-self: flex-start;
   margin-top: 24px;
 }
 .hero__cta {
@@ -1374,8 +1374,8 @@ body {
   }
 
   .hero__short-copy-group {
-    right: clamp(32px, 9vw, 48px);
-    bottom: clamp(52px, 8vh, 76px);
+    right: clamp(40px, 11vw, 60px);
+    bottom: clamp(72px, 11vh, 96px);
     left: clamp(24px, 7vw, 36px);
     max-width: 34ch;
     margin-left: auto;
