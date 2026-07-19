@@ -1,6 +1,27 @@
 (function () {
   "use strict";
 
+  var COLLECTION_CATALOG = [
+    { aliases: ["modishi wa lebowa"], title: "Modishi Wa Lebowa", price: 75000, remaining: 1 },
+    { aliases: ["yellow bone"], title: "Yellow Bone", price: 25000, remaining: 8 },
+    { aliases: ["moshole", "mashole"], title: "Mashole", price: 100000, remaining: 3 },
+    { aliases: ["letlapa"], title: "Letlapa", price: 18000, remaining: 13 },
+    { aliases: ["gae"], title: "Gae", price: 35000, remaining: 6 },
+    { aliases: ["composure"], title: "Composure", price: 35000, remaining: 8 },
+    { aliases: ["mmago poi"], title: "Mmago Poi", price: 55000, remaining: 6 },
+    { aliases: ["tsakani"], title: "Tsakani", price: 65000, remaining: 5, seriesLabel: "A series of 3 images" },
+    { aliases: ["dineo"], title: "Dineo", price: 60000, remaining: 6, seriesLabel: "A series of 3 images" }
+  ];
+
+  function catalogEntry(title) {
+    var normalized = String(title || "").trim().toLowerCase();
+    return COLLECTION_CATALOG.find(function (entry) {
+      return entry.aliases.indexOf(normalized) !== -1;
+    });
+  }
+
+  window.LgndryCollectionCatalog = COLLECTION_CATALOG;
+
   if (!window.supabase) return;
 
   var SUPABASE_URL = "https://tscaluhtfrvwlwjybfsg.supabase.co";
@@ -16,12 +37,23 @@
 
   function fetchCollection() {
     return fetchTable("collection").then(function (items) {
-      return items.filter(function (item) {
-        return item.availability !== "Hidden" && String(item.title || "").toLowerCase() !== "presence";
-      });
+      return COLLECTION_CATALOG.map(function (entry) {
+        var item = items.find(function (candidate) {
+          return catalogEntry(candidate.title) === entry;
+        });
+        if (!item) return null;
+
+        var normalized = {};
+        Object.keys(item).forEach(function (key) { normalized[key] = item[key]; });
+        normalized.title = entry.title;
+        normalized.price = entry.price;
+        normalized.remaining = entry.remaining;
+        normalized.availability = entry.remaining > 0 ? "Available" : "Sold Out";
+        normalized.seriesLabel = entry.seriesLabel || "";
+        return normalized;
+      }).filter(Boolean);
     });
   }
-
   function fetchCmsBySection(section) {
     return fetchTable("cms").then(function (items) {
       return items.filter(function (item) { return item.section === section && item.status === "Published"; });
@@ -180,7 +212,7 @@
           "<h3 class=\"work__title\">" + escapeHtml(item.title) + "</h3>" +
           '<p class="work__year">' + escapeHtml(item.year || "") + "</p>" +
           '<div class="work__row">' +
-            '<div class="work__meta"><p>Edition of ' + escapeHtml(item.editionSize || 0) + "</p><p>Archival Pigment Print</p>" +
+            '<div class="work__meta"><p>' + escapeHtml(item.remaining || 0) + " available</p><p>" + escapeHtml(item.seriesLabel || "Archival Pigment Print") + "</p>" +
             '<label class="work__size">Size:<select aria-label="Print size for ' + escapeHtml(item.title) + '"><option>50 &times; 70 cm</option><option>60 &times; 90 cm</option><option>70 &times; 100 cm</option></select></label></div>' +
             '<p class="work__price">' + formatPrice(item.price) + "</p>" +
           "</div>" +
