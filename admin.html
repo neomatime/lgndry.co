@@ -3,6 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="robots" content="noindex, nofollow, noarchive">
   <title>LGNDRY.Co Command Center</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -276,6 +277,11 @@
       gap: 14px;
       padding-left: 12px;
       border-left: 1px solid var(--line);
+      background: none;
+      font: inherit;
+      color: inherit;
+      cursor: pointer;
+      text-align: left;
     }
 
     .profile img {
@@ -289,6 +295,96 @@
 
     .profile strong { display: block; font-size: 0.88rem; font-weight: 500; }
     .profile span { display: block; margin-top: 5px; color: var(--muted); font-size: 0.76rem; }
+
+    .popover-anchor { position: relative; }
+
+    .popover {
+      position: absolute;
+      top: calc(100% + 12px);
+      right: 0;
+      min-width: 260px;
+      max-width: 320px;
+      background: var(--panel);
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      box-shadow: 0 18px 40px rgba(0, 0, 0, 0.18);
+      padding: 8px;
+      z-index: 40;
+      display: none;
+    }
+
+    .popover.is-open { display: block; }
+
+    .popover .activity-list { max-height: 280px; overflow-y: auto; }
+    .popover .activity:first-child { padding-top: 0; }
+    .popover .activity:last-child { border-bottom: 0; }
+
+    .popover-title {
+      display: block;
+      padding: 8px 10px 10px;
+      font-size: 0.72rem;
+      font-weight: 600;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      color: var(--muted);
+    }
+
+    .popover-item {
+      display: block;
+      width: 100%;
+      text-align: left;
+      background: none;
+      border: none;
+      padding: 10px;
+      border-radius: 8px;
+      color: var(--text);
+      font: inherit;
+      font-size: 0.86rem;
+      cursor: pointer;
+    }
+
+    .popover-item:hover { background: var(--line); }
+
+    .auth-gate {
+      min-height: 100vh;
+      display: grid;
+      place-items: center;
+      padding: 24px;
+    }
+
+    .auth-card {
+      width: 100%;
+      max-width: 360px;
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      background: linear-gradient(135deg, var(--panel), rgba(255,255,255,0.025));
+      box-shadow: var(--shadow);
+      padding: 40px 34px;
+      display: grid;
+      gap: 16px;
+    }
+
+    .auth-card__brand { font-size: 1.3rem; font-weight: 500; letter-spacing: -0.03em; }
+    .auth-card__label {
+      margin-top: -10px;
+      font-size: 0.68rem;
+      font-weight: 600;
+      letter-spacing: 0.16em;
+      text-transform: uppercase;
+      color: var(--muted);
+    }
+    .auth-card h1 {
+      margin: 6px 0 4px;
+      font-family: "Cormorant Garamond", Georgia, serif;
+      font-size: 1.7rem;
+      font-weight: 400;
+    }
+    .auth-card__error {
+      min-height: 16px;
+      margin: 0;
+      color: #c07870;
+      font-size: 0.78rem;
+    }
 
     .dashboard-grid {
       display: grid;
@@ -496,7 +592,7 @@
       }
       .side-nav { grid-template-columns: repeat(5, minmax(130px, 1fr)); overflow-x: auto; }
       .sidebar-card { display: none; }
-      .topbar { grid-template-columns: 1fr auto auto auto; }
+      .topbar { grid-template-columns: 1fr auto auto auto auto; }
       .search { grid-column: 1 / -1; }
       .profile {
         justify-self: end;
@@ -528,7 +624,18 @@
   <link rel="stylesheet" href="assests/css/admin-app.css">
 </head>
 <body class="ops-app-shell">
-  <div class="ops-shell">
+  <div class="auth-gate" data-auth-gate>
+    <form class="auth-card" data-auth-form>
+      <span class="auth-card__brand">LGNDRY.Co</span>
+      <span class="auth-card__label">Command Center</span>
+      <h1>Sign in to continue</h1>
+      <label class="form-field"><span class="form-label">Email</span><input type="email" name="email" required autocomplete="username"></label>
+      <label class="form-field"><span class="form-label">Password</span><input type="password" name="password" required autocomplete="current-password"></label>
+      <button class="primary-btn" type="submit" data-auth-submit>Sign In</button>
+      <p class="auth-card__error" data-auth-error></p>
+    </form>
+  </div>
+  <div class="ops-shell" data-ops-shell style="display:none">
     <aside class="ops-sidebar" aria-label="Command center navigation">
       <a class="brand" href="index.html" aria-label="LGNDRY.Co home">
         <span class="brand__name">LGNDRY.Co</span>
@@ -542,11 +649,21 @@
     </aside>
     <main class="ops-main" id="app">
       <header class="topbar">
-        <div class="welcome"><h1 data-view-title>Welcome back, Neo.</h1><p data-view-subtitle>Here is what is happening with LGNDRY.Co today.</p></div>
+        <div class="welcome"><h1 data-view-title>Welcome back, Dan.</h1><p data-view-subtitle>Here is what is happening with LGNDRY.Co today.</p></div>
         <label class="search"><span class="sr-only">Search</span><input type="search" placeholder="Search anything..." data-global-search><svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><circle cx="11" cy="11" r="7"/><path d="M16.5 16.5L21 21"/></svg></label>
         <button class="theme-toggle" type="button" data-theme-toggle aria-label="Switch to light mode"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><circle cx="12" cy="12" r="4"/><path d="M12 2v3M12 19v3M2 12h3M19 12h3M4.9 4.9 7 7M17 17l2.1 2.1M19.1 4.9 17 7M7 17l-2.1 2.1"/></svg><span data-theme-label>Light mode</span></button>
-        <button class="icon-button" type="button" aria-label="Notifications"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M6 10a6 6 0 0 1 12 0v4l2 3H4l2-3z"/><path d="M10 20a2 2 0 0 0 4 0"/></svg></button>
-        <div class="profile" aria-label="Signed in profile"><img src="assests/images/founder.jpeg" alt="Neo Mokgwadi"><div><strong>Neo Mokgwadi</strong><span>Founder &amp; Creative Director</span></div><svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M7 9l5 5 5-5"/></svg></div>
+        <div class="popover-anchor">
+          <button class="icon-button" type="button" aria-label="Notifications" data-bell-toggle><svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M6 10a6 6 0 0 1 12 0v4l2 3H4l2-3z"/><path d="M10 20a2 2 0 0 0 4 0"/></svg></button>
+          <div class="popover" data-bell-popover></div>
+        </div>
+        <div class="popover-anchor">
+          <button class="profile" type="button" aria-label="Signed in profile" data-profile-toggle><img src="assests/images/founder.jpeg" alt="Dan Mokgwadi"><div><strong>Dan Mokgwadi</strong><span>Founder &amp; Creative Director</span></div><svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M7 9l5 5 5-5"/></svg></button>
+          <div class="popover" data-profile-popover>
+            <span class="popover-title">Account</span>
+            <button class="popover-item" type="button" data-popover-route="settings">Settings</button>
+            <button class="popover-item" type="button" data-sign-out>Sign Out</button>
+          </div>
+        </div>
       </header>
       <section class="view-stack" data-view></section>
     </main>
@@ -558,7 +675,15 @@
       <div class="modal__foot"><button class="ghost-btn" type="button" data-close-modal>Cancel</button><button class="primary-btn" type="submit">Save</button></div>
     </form>
   </div>
+  <div class="modal modal--confirm" data-confirm-modal aria-hidden="true">
+    <div class="modal__panel">
+      <div class="modal__head"><h2 data-confirm-title>Are you sure?</h2></div>
+      <div class="modal__body"><p data-confirm-message></p></div>
+      <div class="modal__foot"><button class="ghost-btn" type="button" data-confirm-cancel>Cancel</button><button class="danger-btn" type="button" data-confirm-ok>Confirm</button></div>
+    </div>
+  </div>
   <div class="toast" data-toast></div>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
   <script src="assests/js/admin-app.js"></script>
   <script src="assests/js/admin-sidebar.js"></script>
   <script src="assests/js/admin-dashboard-graphs.js"></script>

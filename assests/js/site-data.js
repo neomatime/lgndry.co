@@ -1,0 +1,255 @@
+(function () {
+  "use strict";
+
+  if (!window.supabase) return;
+
+  var SUPABASE_URL = "https://tscaluhtfrvwlwjybfsg.supabase.co";
+  var SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InRzY2FsdWh0ZnJ2d2x3anliZnNnIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODM0MjIwNTUsImV4cCI6MjA5ODk5ODA1NX0.dk7oFywIWf1xRTlYtfxHHe96VaQ6iFSPKMsCExy4e5A";
+  var client = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+  function fetchTable(table) {
+    return client.from(table).select("*").then(function (result) {
+      if (result.error) throw result.error;
+      return result.data.filter(function (record) { return !record.archived; });
+    });
+  }
+
+  function fetchCollection() {
+    return fetchTable("collection").then(function (items) {
+      return items.filter(function (item) { return item.availability !== "Hidden"; });
+    });
+  }
+
+  function fetchCmsBySection(section) {
+    return fetchTable("cms").then(function (items) {
+      return items.filter(function (item) { return item.section === section && item.status === "Published"; });
+    });
+  }
+
+  function fetchPractice() {
+    return fetchTable("practice").then(function (items) {
+      return items.filter(function (item) { return item.visibility === "Visible"; }).sort(function (a, b) {
+        return Number(a.position || 0) - Number(b.position || 0);
+      });
+    });
+  }
+
+  function createLeadClient(fields) {
+    var payload = {
+      name: fields.name || "",
+      type: fields.company ? "Company" : "Individual",
+      contact: fields.name || "",
+      email: fields.email || "",
+      phone: fields.phone || "",
+      status: "Lead",
+      notes: fields.notes || ""
+    };
+    return client.from("clients").insert(payload).select().single().then(function (result) {
+      if (result.error) throw result.error;
+      return result.data;
+    });
+  }
+
+  function submitBooking(fields) {
+    return createLeadClient({
+      name: fields.client_name,
+      email: fields.client_email,
+      phone: fields.client_phone,
+      company: fields.company,
+      notes: "Company: " + (fields.company || "-")
+    }).then(function (clientRow) {
+      var notes = [
+        "Services: " + (fields.services || "-"),
+        "Project details: " + (fields.project_details || "-"),
+        "Date flexibility: " + (fields.date_flexibility || "-"),
+        "Budget: " + (fields.budget || "-")
+      ].join(" / ");
+      return client.from("bookings").insert({
+        client: clientRow.id,
+        service: fields.session_type || "Enquiry",
+        date: fields.preferred_date || null,
+        start: fields.preferred_time || "",
+        location: fields.session_location || "",
+        type: "Enquiry",
+        status: "Enquiry",
+        deposit: "Not Requested",
+        notes: notes
+      });
+    }).then(function (result) {
+      if (result.error) throw result.error;
+      logActivity('New booking enquiry from ' + (fields.client_name || "website visitor"));
+    });
+  }
+
+  function logActivity(message) {
+    client.from("ops_activity_log").insert({ message: message }).then(function (result) {
+      if (result.error) console.error(result.error);
+    });
+  }
+
+  function submitPartnership(fields) {
+    return createLeadClient({
+      name: fields.contact_name,
+      email: fields.contact_email,
+      phone: fields.contact_phone,
+      company: fields.company,
+      notes: "Industry: " + (fields.industry || "-")
+    }).then(function (clientRow) {
+      var application = [
+        "Partnership type: " + (fields.partnership_type || "-"),
+        "Focus areas: " + (fields.focus || "-"),
+        "Brand goals: " + (fields.brand_goals || "-"),
+        "Industry: " + (fields.industry || "-"),
+        "Website/Instagram: " + (fields.brand_link || "-"),
+        "Location: " + (fields.brand_location || "-"),
+        "Content frequency: " + (fields.content_frequency || "-"),
+        "Budget: " + (fields.partner_budget || "-")
+      ].join(" / ");
+      return client.from("partnerships").insert({
+        client: clientRow.id,
+        company: fields.company || "",
+        contact: fields.contact_name || "",
+        application: application,
+        status: "Applied"
+      });
+    }).then(function (result) {
+      if (result.error) throw result.error;
+      logActivity('New partnership application from ' + (fields.company || fields.contact_name || "website visitor"));
+    });
+  }
+
+  function submitContactLead(fields) {
+    var notes = [
+      "Assistance needed: " + (fields.assistance_needed || "-"),
+      "Project readiness: " + (fields.project_readiness || "-"),
+      "Timeline: " + (fields.timeline || "-"),
+      "Budget range: " + (fields.budget_range || "-"),
+      "Message: " + (fields.message || "-")
+    ].join(" / ");
+    return createLeadClient({
+      name: fields.name,
+      email: fields.email,
+      phone: fields.phone,
+      company: fields.company,
+      notes: notes
+    }).then(function (clientRow) {
+      logActivity('New contact enquiry from ' + (fields.name || "website visitor"));
+      return clientRow;
+    });
+  }
+
+  window.LgndrySiteData = {
+    fetchCollection: fetchCollection,
+    fetchCmsBySection: fetchCmsBySection,
+    fetchPractice: fetchPractice,
+    submitBooking: submitBooking,
+    submitPartnership: submitPartnership,
+    submitContactLead: submitContactLead
+  };
+
+  function escapeHtml(value) {
+    return String(value == null ? "" : value).replace(/[&<>"']/g, function (char) {
+      return { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[char];
+    });
+  }
+
+  /* Collection page: render live artwork grid */
+  (function () {
+    var grid = document.querySelector(".collection-grid");
+    if (!grid) return;
+
+    function categoryToFilter(category) {
+      if (category === "Studio Art" || category === "Limited Edition") return "studio";
+      return "prints";
+    }
+
+    function formatPrice(value) {
+      return "R " + Math.round(Number(value) || 0).toString().replace(/\B(?=(\d{3})+(?!\d))/g, ",");
+    }
+
+    function renderWork(item) {
+      var unavailable = item.availability && item.availability !== "Available";
+      var acquire = unavailable
+        ? '<span class="work__unavailable">' + escapeHtml(item.availability) + "</span>"
+        : '<a class="work__acquire" href="mailto:info@lgndry-co.co.za?subject=Acquire%20%E2%80%94%20' + encodeURIComponent(item.title || "") + '"><span>Add to cart</span><svg width="40" height="8" viewBox="0 0 40 8" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><path d="M0 4H38M38 4L34 1M38 4L34 7" stroke="currentColor" stroke-width="1"/></svg></a>';
+      return '<article class="work" data-category="' + categoryToFilter(item.category) + '">' +
+        '<figure class="work__media"><img src="' + escapeHtml(item.image) + '" data-full-src="' + escapeHtml(item.image) + '" loading="lazy" decoding="async" alt="' + escapeHtml(item.title) + '"></figure>' +
+        '<div class="work__body">' +
+          "<h3 class=\"work__title\">" + escapeHtml(item.title) + "</h3>" +
+          '<p class="work__year">' + escapeHtml(item.year || "") + "</p>" +
+          '<div class="work__row">' +
+            '<div class="work__meta"><p>Edition of ' + escapeHtml(item.editionSize || 0) + "</p><p>Archival Pigment Print</p>" +
+            '<label class="work__size">Size:<select aria-label="Print size for ' + escapeHtml(item.title) + '"><option>50 &times; 70 cm</option><option>60 &times; 90 cm</option><option>70 &times; 100 cm</option></select></label></div>' +
+            '<p class="work__price">' + formatPrice(item.price) + "</p>" +
+          "</div>" +
+          acquire +
+        "</div>" +
+      "</article>";
+    }
+
+    window.LgndrySiteData.fetchCollection().then(function (items) {
+      if (!items.length) return;
+      grid.innerHTML = items.map(renderWork).join("");
+    }).catch(function (error) {
+      console.error("Failed to load live collection data, showing static fallback.", error);
+    });
+  }());
+
+  /* Homepage: render live hero copy */
+  (function () {
+    var headline = document.querySelector(".hero__headline");
+    if (!headline) return;
+
+    window.LgndrySiteData.fetchCmsBySection("Homepage").then(function (records) {
+      var byArea = {};
+      records.forEach(function (record) { byArea[record.area] = record; });
+      var hero = byArea["Hero copy"];
+      var subcopy = byArea["Hero subcopy"];
+
+      if (hero) {
+        if (hero.copy) headline.textContent = hero.copy;
+        if (hero.image) {
+          var heroImage = document.querySelector(".hero__image");
+          if (heroImage) heroImage.src = hero.image;
+        }
+        if (hero.cta) {
+          var ctaLabel = document.querySelector(".hero__cta-label");
+          if (ctaLabel) ctaLabel.textContent = hero.cta;
+        }
+      }
+      if (subcopy && subcopy.copy) {
+        var copyEl = document.querySelector(".hero__copy");
+        if (copyEl) copyEl.textContent = subcopy.copy;
+      }
+    }).catch(function (error) {
+      console.error("Failed to load homepage CMS content, showing static fallback.", error);
+    });
+  }());
+
+  /* Practice page: render live service lists */
+  (function () {
+    var lists = document.querySelectorAll(".practice-service__list");
+    if (!lists.length) return;
+
+    window.LgndrySiteData.fetchPractice().then(function (items) {
+      if (!items.length) return;
+      var byCategory = {};
+      items.forEach(function (item) {
+        byCategory[item.category] = byCategory[item.category] || [];
+        byCategory[item.category].push(item);
+      });
+      lists.forEach(function (list) {
+        var article = list.closest(".practice-service");
+        var nameEl = article && article.querySelector(".practice-service__name");
+        var category = nameEl ? nameEl.textContent.trim() : "";
+        var services = byCategory[category];
+        if (!services || !services.length) return;
+        list.innerHTML = services.map(function (service) {
+          return "<li>" + escapeHtml(service.title) + "</li>";
+        }).join("");
+      });
+    }).catch(function (error) {
+      console.error("Failed to load practice list, showing static fallback.", error);
+    });
+  }());
+}());

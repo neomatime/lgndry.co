@@ -1849,6 +1849,20 @@ body {
   transform: translateX(8px);
 }
 
+.work__unavailable {
+  display: block;
+  margin-top: 20px;
+  padding-top: 16px;
+  border-top: 1px solid var(--border);
+  font-family: 'Inter', sans-serif;
+  font-size: 0.7rem;
+  font-weight: 400;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: var(--text-secondary, var(--text-primary));
+  opacity: 0.6;
+}
+
 /* ─── Features band ──────────────────────────────── */
 .collection-features {
   max-width: 1320px;
@@ -2719,6 +2733,18 @@ body {
   font-weight: 300;
   line-height: 1.7;
   color: var(--text-secondary);
+}
+
+.contact-form__error {
+  grid-column: 1 / -1;
+  margin: 4px 0 0;
+  padding: 14px 18px;
+  border: 1px solid var(--text-primary);
+  font-family: 'Inter', sans-serif;
+  font-size: 0.78rem;
+  font-weight: 300;
+  line-height: 1.6;
+  color: var(--text-primary);
 }
 
 .contact-form input,

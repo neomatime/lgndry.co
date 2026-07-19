@@ -3,8 +3,13 @@
 
   var STORAGE_KEY = "lgndry_ops_command_center_v2";
   var THEME_KEY = "lgndry_admin_theme";
+  var SUPABASE_URL = "https://tscaluhtfrvwlwjybfsg.supabase.co";
+  var SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InRzY2FsdWh0ZnJ2d2x3anliZnNnIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODM0MjIwNTUsImV4cCI6MjA5ODk5ODA1NX0.dk7oFywIWf1xRTlYtfxHHe96VaQ6iFSPKMsCExy4e5A";
+  var supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+  var chromeInitialized = false;
+  var TABLES = ["clients", "practice", "bookings", "projects", "partnerships", "collection", "galleries", "content", "journal", "cms", "invoices", "documents"];
   var state = { route: "dashboard", query: "", filter: "all", editing: null };
-  var data = loadData();
+  var data = { activity: [] };
 
   var icons = {
     dashboard: svg('<rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/>'),
@@ -21,8 +26,11 @@
     invoices: svg('<path d="M7 3h7l4 4v14H7z"/><path d="M14 3v5h5M9 13h6M9 17h6"/>'),
     analytics: svg('<path d="M4 20V9M10 20V4M16 20v-7M22 20H2"/>'),
     documents: svg('<path d="M7 3h7l4 4v14H7z"/><path d="M14 3v5h5"/>'),
-    settings: svg('<circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.8l.1.1-2 2-.1-.1a1.7 1.7 0 0 0-1.8-.3 1.7 1.7 0 0 0-1 1.5v.2h-3V20a1.7 1.7 0 0 0-1-1.5 1.7 1.7 0 0 0-1.8.3l-.1.1-2-2 .1-.1A1.7 1.7 0 0 0 7.4 15a1.7 1.7 0 0 0-1.5-1H5.7v-3H6a1.7 1.7 0 0 0 1.5-1 1.7 1.7 0 0 0-.3-1.8l-.1-.1 2-2 .1.1a1.7 1.7 0 0 0 1.8.3 1.7 1.7 0 0 0 1-1.5V4.8h3V5a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.8-.3l.1-.1 2 2-.1.1a1.7 1.7 0 0 0-.3 1.8 1.7 1.7 0 0 0 1.5 1h.2v3H21a1.7 1.7 0 0 0-1.6 1z"/>')
+    settings: svg('<circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.8l.1.1-2 2-.1-.1a1.7 1.7 0 0 0-1.8-.3 1.7 1.7 0 0 0-1 1.5v.2h-3V20a1.7 1.7 0 0 0-1-1.5 1.7 1.7 0 0 0-1.8.3l-.1.1-2-2 .1-.1A1.7 1.7 0 0 0 7.4 15a1.7 1.7 0 0 0-1.5-1H5.7v-3H6a1.7 1.7 0 0 0 1.5-1 1.7 1.7 0 0 0-.3-1.8l-.1-.1 2-2 .1.1a1.7 1.7 0 0 0 1.8.3 1.7 1.7 0 0 0 1-1.5V4.8h3V5a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.8-.3l.1-.1 2 2-.1.1a1.7 1.7 0 0 0-.3 1.8 1.7 1.7 0 0 0 1.5 1h.2v3H21a1.7 1.7 0 0 0-1.6 1z"/>'),
+    activity: svg('<circle cx="12" cy="12" r="1.6"/><path d="M12 3v5M12 16v5M3 12h5M16 12h5"/>')
   };
+
+  var PROJECT_PROGRESS = { Planning: 10, "Shoot Scheduled": 35, Editing: 65, "Client Review": 85, Delivered: 100, Archived: 100 };
 
   var modules = [
     ["dashboard", "Dashboard"], ["clients", "Clients"], ["bookings", "Bookings"],
@@ -61,7 +69,7 @@
       subtitle: "Track briefs, timelines, tasks, files, comments and deliverables from planning to archive.",
       collection: "projects", display: "name", status: "status",
       columns: ["name", "client", "type", "status", "timeline"],
-      fields: [f("name", "Project name", "text", true), rel("client", "Client", "clients", true), rel("booking", "Booking", "bookings"), f("type", "Project type", "text", true), f("brief", "Brief", "textarea"), f("moodboard", "Moodboard links / uploads", "textarea"), f("shotList", "Shot list", "textarea"), f("deliverables", "Deliverables", "textarea"), f("timeline", "Timeline"), f("tasks", "Tasks", "textarea"), f("files", "Files", "textarea"), f("comments", "Comments", "textarea"), f("status", "Workflow status", "select", true, ["Planning", "Shoot Scheduled", "Editing", "Client Review", "Delivered", "Archived"])]
+      fields: [f("name", "Project name", "text", true), f("image", "Cover image URL"), rel("client", "Client", "clients", true), rel("booking", "Booking", "bookings"), f("type", "Project type", "text", true), f("brief", "Brief", "textarea"), f("moodboard", "Moodboard links / uploads", "textarea"), f("shotList", "Shot list", "textarea"), f("deliverables", "Deliverables", "textarea"), f("timeline", "Timeline"), f("tasks", "Tasks", "textarea"), f("files", "Files", "textarea"), f("comments", "Comments", "textarea"), f("status", "Workflow status", "select", true, ["Planning", "Shoot Scheduled", "Editing", "Client Review", "Delivered", "Archived"])]
     },
     partnerships: {
       title: "Brand Partnerships",
@@ -75,7 +83,7 @@
       subtitle: "Manage art listings, editions, sales, certificates and delivery tracking.",
       collection: "collection", display: "title", status: "availability",
       columns: ["title", "collectionName", "price", "remaining", "availability"],
-      fields: [f("title", "Artwork title", "text", true), f("collectionName", "Collection name", "text", true), f("category", "Category", "select", true, ["Art Print", "Studio Art", "Limited Edition"]), f("description", "Description / story", "textarea"), f("image", "Image URL"), f("price", "Price", "number", true), f("editionSize", "Edition size", "number", true), f("sold", "Editions sold", "number", true), f("remaining", "Editions remaining", "number"), f("availability", "Availability", "select", true, ["Available", "Reserved", "Sold Out", "Hidden"]), f("customer", "Latest customer"), f("editionNumber", "Latest edition number", "number"), f("payment", "Payment status", "select", false, ["Pending In Person", "Paid In Person", "Reserved", "Cancelled"]), f("shipping", "Shipping status", "select", false, ["Not Started", "Preparing", "Shipped", "Delivered", "Collected"]), f("tracking", "Tracking number"), f("certificate", "Certificate status", "select", false, ["Not Issued", "Issued", "Archived"])]
+      fields: [f("title", "Artwork title", "text", true), f("collectionName", "Collection name", "text", true), f("category", "Category", "select", true, ["Art Print", "Studio Art", "Limited Edition"]), f("year", "Year", "number"), f("description", "Description / story", "textarea"), f("image", "Image URL"), f("price", "Price", "number", true), f("editionSize", "Edition size", "number", true), f("sold", "Editions sold", "number", true), f("remaining", "Editions remaining", "number"), f("availability", "Availability", "select", true, ["Available", "Reserved", "Sold Out", "Hidden"]), f("customer", "Latest customer"), f("editionNumber", "Latest edition number", "number"), f("payment", "Payment status", "select", false, ["Pending In Person", "Paid In Person", "Reserved", "Cancelled"]), f("shipping", "Shipping status", "select", false, ["Not Started", "Preparing", "Shipped", "Delivered", "Collected"]), f("tracking", "Tracking number"), f("certificate", "Certificate status", "select", false, ["Not Issued", "Issued", "Archived"])]
     },
     invoices: {
       title: "Invoices & Payments",
@@ -154,18 +162,18 @@
         { id: id(), title: "Dedicated Visual Partner", category: "Brand Partnerships", description: "Annual creative partnership for consistent output.", position: 6, visibility: "Visible" }
       ],
       bookings: [
-        { id: b1, client: c1, service: "Brand Shoot", date: "2026-07-10", start: "09:00", end: "13:00", location: "Johannesburg Studio", type: "Campaign", photographer: "Neo Mokgwadi", status: "Confirmed", deposit: "Paid", project: p1, shotList: "Product rituals, founder portrait, campaign stills", notes: "Soft morning light." },
-        { id: b2, client: c2, service: "Creative Direction Call", date: "2026-07-12", start: "11:00", end: "12:00", location: "Remote", type: "Partnership", photographer: "Neo Mokgwadi", status: "Scheduled", deposit: "Waived", project: "", shotList: "Retainer planning", notes: "Discuss annual partnership." }
+        { id: b1, client: c1, service: "Brand Shoot", date: "2026-07-10", start: "09:00", end: "13:00", location: "Johannesburg Studio", type: "Campaign", photographer: "Dan Mokgwadi", status: "Confirmed", deposit: "Paid", project: p1, shotList: "Product rituals, founder portrait, campaign stills", notes: "Soft morning light." },
+        { id: b2, client: c2, service: "Creative Direction Call", date: "2026-07-12", start: "11:00", end: "12:00", location: "Remote", type: "Partnership", photographer: "Dan Mokgwadi", status: "Scheduled", deposit: "Waived", project: "", shotList: "Retainer planning", notes: "Discuss annual partnership." }
       ],
       projects: [
-        { id: p1, name: "Rituals Campaign", client: c1, booking: b1, type: "Brand Campaign", brief: "Launch campaign visuals for quiet ritual moments.", moodboard: "Neutral walls, sculptural shadows.", shotList: "Product rituals, founder portrait, campaign stills", deliverables: "24 edited images, 6 social crops", timeline: "Jul 10 - Jul 24", tasks: "Confirm props\nShoot\nEdit selects\nDeliver gallery", files: "Drive/Rituals", comments: "Client prefers minimal crops.", status: "Editing" },
-        { id: p2, name: "LELO Studio", client: c3, booking: "", type: "Product Photography", brief: "Product still life set.", moodboard: "", shotList: "", deliverables: "18 finals", timeline: "Completed June", tasks: "Archived", files: "Drive/LELO", comments: "Paid in full.", status: "Delivered" }
+        { id: p1, name: "Rituals Campaign", image: "assests/images/collection/thumbs/still-point.jpg", client: c1, booking: b1, type: "Brand Campaign", brief: "Launch campaign visuals for quiet ritual moments.", moodboard: "Neutral walls, sculptural shadows.", shotList: "Product rituals, founder portrait, campaign stills", deliverables: "24 edited images, 6 social crops", timeline: "Jul 10 - Jul 24", tasks: "Confirm props\nShoot\nEdit selects\nDeliver gallery", files: "Drive/Rituals", comments: "Client prefers minimal crops.", status: "Editing" },
+        { id: p2, name: "LELO Studio", image: "assests/images/collection/thumbs/presence.jpg", client: c3, booking: "", type: "Product Photography", brief: "Product still life set.", moodboard: "", shotList: "", deliverables: "18 finals", timeline: "Completed June", tasks: "Archived", files: "Drive/LELO", comments: "Paid in full.", status: "Delivered" }
       ],
       partnerships: [
         { id: id(), client: c2, company: "Hennessy SA", contact: "Thabo Mokoena", application: "Seeking ongoing campaign and event visual storytelling.", duration: "Annual Creative Partnership - minimum 12-month term", start: "2026-08-01", end: "2027-07-31", deliverables: "Monthly shoot, 20 edited images, quarterly campaign story", allowance: 1, sessionsRemaining: 11, proposal: "Proposal sent", contract: "Pending", review: "Discovery call booked.", status: "Proposal" }
       ],
       collection: [
-        { id: id(), title: "Still Point", collectionName: "Found Beauty", category: "Art Print", description: "A study of quiet architecture and shadow.", image: "assests/images/collection/thumbs/still-point.jpg", price: 4200, editionSize: 25, sold: 4, remaining: 21, availability: "Available", customer: "", editionNumber: "", payment: "Pending In Person", shipping: "Not Started", tracking: "", certificate: "Not Issued" },
+        { id: id(), title: "Dineo", collectionName: "Found Beauty", category: "Art Print", description: "A study of quiet architecture and shadow.", image: "assests/images/collection/thumbs/still-point.jpg", price: 4200, editionSize: 25, sold: 4, remaining: 21, availability: "Available", customer: "", editionNumber: "", payment: "Pending In Person", shipping: "Not Started", tracking: "", certificate: "Not Issued" },
         { id: id(), title: "Presence", collectionName: "Found Beauty", category: "Limited Edition", description: "Field portrait in late light.", image: "assests/images/collection/thumbs/presence.jpg", price: 5600, editionSize: 12, sold: 9, remaining: 3, availability: "Reserved", customer: "M. Dlamini", editionNumber: 9, payment: "Reserved", shipping: "Preparing", tracking: "", certificate: "Not Issued" }
       ],
       invoices: [
@@ -176,25 +184,193 @@
       content: [{ id: id(), title: "Rituals Hero Still", client: c1, project: p1, shootDate: "2026-07-10", category: "Campaign", tags: "rituals,product,shadow", fileType: "Image", file: "assests/images/collection/thumbs/still-point.jpg", status: "Linked" }],
       journal: [{ id: id(), title: "Slowing Down To See", slug: "slowing-down-to-see", image: "assests/images/hero-image.JPG", category: "Manifesto", body: "A short studio reflection on intentional image making.", seoTitle: "Slowing Down To See", seoDescription: "LGNDRY.Co manifesto note.", published: "2026-07-15", status: "Scheduled" }],
       cms: [{ id: id(), section: "Homepage", area: "Hero copy", copy: "Found Beauty in the Mundane.", image: "assests/images/hero-image.JPG", cta: "Explore our world", status: "Published", updated: "2026-07-07" }],
-      documents: [{ id: id(), title: "Rituals Campaign Agreement", type: "Contract", client: c1, project: p1, template: "Standard campaign agreement", signed: "", status: "Sent" }]
+      documents: [{ id: id(), title: "Rituals Campaign Agreement", type: "Contract", client: c1, project: p1, template: "Standard campaign agreement", signed: "", status: "Sent" }],
+      activity: [
+        { id: id(), message: 'Invoice "INV-032" sent to Rituals', at: new Date(Date.now() - 2 * 60 * 60 * 1000).toISOString() },
+        { id: id(), message: "Booking confirmed with Rituals for Jul 10", at: new Date(Date.now() - 5 * 60 * 60 * 1000).toISOString() },
+        { id: id(), message: 'Project "LELO Studio" marked delivered', at: new Date(Date.now() - 2 * 24 * 60 * 60 * 1000).toISOString() }
+      ]
     };
   }
 
-  function loadData() {
-    try {
-      var raw = localStorage.getItem(STORAGE_KEY);
-      if (raw) return JSON.parse(raw);
-      var starter = seed();
-      localStorage.setItem(STORAGE_KEY, JSON.stringify(starter));
-      return starter;
-    } catch (error) {
-      console.error(error);
-      return seed();
-    }
+  function logActivity(message) {
+    data.activity = data.activity || [];
+    data.activity.unshift({ id: id(), message: message, at: new Date().toISOString() });
+    data.activity = data.activity.slice(0, 100);
+    supabaseClient.from("ops_activity_log").insert({ message: message }).then(function (result) {
+      if (result.error) console.error(result.error);
+    });
   }
 
-  function saveData() {
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
+  function timeAgo(iso) {
+    if (!iso) return "";
+    var minutes = Math.round((Date.now() - new Date(iso).getTime()) / 60000);
+    if (minutes < 1) return "Just now";
+    if (minutes < 60) return minutes + "m ago";
+    var hours = Math.round(minutes / 60);
+    if (hours < 24) return hours + "h ago";
+    return Math.round(hours / 24) + "d ago";
+  }
+
+  function loadRemoteData() {
+    var queries = TABLES.map(function (table) {
+      return supabaseClient.from(table).select("*").then(function (result) {
+        if (result.error) throw result.error;
+        return { table: table, rows: result.data };
+      });
+    });
+    return Promise.all(queries).then(function (results) {
+      var grouped = {};
+      results.forEach(function (entry) { grouped[entry.table] = entry.rows; });
+      return supabaseClient.from("ops_activity_log").select("id, message, created_at").order("created_at", { ascending: false }).limit(30).then(function (activityResult) {
+        if (activityResult.error) throw activityResult.error;
+        grouped.activity = activityResult.data.map(function (row) { return { id: row.id, message: row.message, at: row.created_at }; });
+        return grouped;
+      });
+    });
+  }
+
+  function hasAnyRemoteRecords(remoteData) {
+    return Object.keys(remoteData).some(function (key) {
+      return key !== "activity" && remoteData[key] && remoteData[key].length;
+    });
+  }
+
+  function generateUuidFallback() {
+    return "xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx".replace(/[xy]/g, function (char) {
+      var random = Math.random() * 16 | 0;
+      var value = char === "x" ? random : (random & 0x3 | 0x8);
+      return value.toString(16);
+    });
+  }
+
+  function newUuid() {
+    return (window.crypto && window.crypto.randomUUID) ? window.crypto.randomUUID() : generateUuidFallback();
+  }
+
+  function normalizeForDb(record) {
+    var payload = Object.assign({}, record);
+    Object.keys(payload).forEach(function (key) {
+      if (payload[key] === "") payload[key] = null;
+    });
+    return payload;
+  }
+
+  function buildInsertRows(bundle) {
+    var relationFields = ["client", "project", "booking"];
+    var idMap = {};
+    var collections = Object.keys(bundle).filter(function (key) { return key !== "activity" && Array.isArray(bundle[key]); });
+    collections.forEach(function (collection) {
+      bundle[collection].forEach(function (record) { idMap[record.id] = newUuid(); });
+    });
+    var rowsByTable = {};
+    collections.forEach(function (collection) {
+      rowsByTable[collection] = bundle[collection].map(function (record) {
+        var payload = Object.assign({}, record);
+        payload.id = idMap[payload.id];
+        relationFields.forEach(function (field) {
+          if (payload[field] && idMap[payload[field]]) payload[field] = idMap[payload[field]];
+        });
+        return normalizeForDb(payload);
+      });
+    });
+    var activityRows = (bundle.activity || []).map(function (entry) {
+      return { message: entry.message, created_at: entry.at };
+    });
+    return { rowsByTable: rowsByTable, activityRows: activityRows };
+  }
+
+  // Writes rows table-by-table respecting FK dependency order (clients/standalone
+  // tables first, then bookings without their project link, then projects, then
+  // the booking->project link, then everything else that references clients/projects).
+  function persistRowsByTable(rowsByTable, mode) {
+    function write(table, rows) {
+      if (!rows || !rows.length) return Promise.resolve({ error: null });
+      return mode === "upsert" ? supabaseClient.from(table).upsert(rows) : supabaseClient.from(table).insert(rows);
+    }
+    function checkAll(results) {
+      var failed = results.filter(function (result) { return result && result.error; });
+      if (failed.length) throw failed[0].error;
+    }
+    var independentTables = ["collection", "practice", "journal", "cms", "clients"];
+    var laterTables = ["partnerships", "invoices", "galleries", "content", "documents"];
+
+    return Promise.all(independentTables.map(function (table) { return write(table, rowsByTable[table]); })).then(function (results) {
+      checkAll(results);
+      var bookingsRows = (rowsByTable.bookings || []).map(function (row) { return Object.assign({}, row, { project: null }); });
+      return write("bookings", bookingsRows);
+    }).then(function (result) {
+      checkAll([result]);
+      return write("projects", rowsByTable.projects);
+    }).then(function (result) {
+      checkAll([result]);
+      var updates = (rowsByTable.bookings || []).filter(function (row) { return row.project; }).map(function (row) {
+        return supabaseClient.from("bookings").update({ project: row.project }).eq("id", row.id);
+      });
+      return Promise.all(updates);
+    }).then(function (results) {
+      checkAll(results);
+      return Promise.all(laterTables.map(function (table) { return write(table, rowsByTable[table]); }));
+    }).then(function (results) {
+      checkAll(results);
+    });
+  }
+
+  function insertBundle(built) {
+    return persistRowsByTable(built.rowsByTable, "insert").then(function () {
+      if (!built.activityRows.length) return null;
+      return supabaseClient.from("ops_activity_log").insert(built.activityRows);
+    }).then(function (result) {
+      if (result && result.error) throw result.error;
+    });
+  }
+
+  function migrateLocalData() {
+    var raw = null;
+    try { raw = localStorage.getItem(STORAGE_KEY); } catch (error) { raw = null; }
+    if (!raw) return Promise.resolve();
+    var local;
+    try { local = JSON.parse(raw); } catch (error) { return Promise.resolve(); }
+    return insertBundle(buildInsertRows(local)).then(function () {
+      try { localStorage.removeItem(STORAGE_KEY); } catch (error) {}
+    });
+  }
+
+  function persistRecord(collection, record) {
+    var payload = normalizeForDb(record);
+    return supabaseClient.from(collection).upsert(payload).then(function (result) {
+      if (result.error) { console.error(result.error); toast("Sync failed: " + result.error.message); }
+      return result;
+    });
+  }
+
+  function deleteRecordRemote(collection, recordId) {
+    supabaseClient.from(collection).delete().eq("id", recordId).then(function (result) {
+      if (result.error) { console.error(result.error); toast("Delete sync failed: " + result.error.message); }
+    });
+  }
+
+  function resetDemoData() {
+    var deletions = TABLES.map(function (table) {
+      return supabaseClient.from(table).delete().neq("id", "00000000-0000-0000-0000-000000000000");
+    });
+    Promise.all(deletions).then(function (results) {
+      var failed = results.filter(function (result) { return result.error; });
+      if (failed.length) throw failed[0].error;
+      return supabaseClient.from("ops_activity_log").delete().neq("id", "00000000-0000-0000-0000-000000000000");
+    }).then(function (result) {
+      if (result && result.error) throw result.error;
+      return insertBundle(buildInsertRows(seed()));
+    }).then(function () {
+      return loadRemoteData();
+    }).then(function (remoteData) {
+      data = remoteData;
+      toast("Demo data restored.");
+      render();
+    }).catch(function (error) {
+      console.error(error);
+      toast("Reset failed: " + error.message);
+    });
   }
 
   function esc(value) {
@@ -226,7 +402,7 @@
   function render() {
     renderNav();
     if (state.route === "dashboard") {
-      setTitle("Welcome back, Neo.", "Here is what is happening with LGNDRY.Co today.");
+      setTitle("Welcome back, Dan.", "Here is what is happening with LGNDRY.Co today.");
       view().innerHTML = dashboard();
       bindDashboard();
       return;
@@ -276,11 +452,15 @@
     var artSales = collection.reduce(function (total, art) { return total + Number(art.price || 0) * Number(art.sold || 0); }, 0);
     return '<section class="hero-strip"><img src="assests/images/collection/thumbs/still-point.jpg" alt="LGNDRY.Co studio still"><div class="hero-strip__copy"><h2>Create intentionally.<br>Lead creatively.</h2><p>Manage. Create. Deliver. Elevate.</p></div></section>' +
       '<section class="dashboard-metrics">' +
-      metric("Active Projects", projects.filter(function (p) { return p.status !== "Delivered"; }).length, "View all projects", icons.projects) +
-      metric("Upcoming Bookings", upcoming.length, "View calendar", icons.bookings) +
-      metric("Outstanding Invoices", money(outstanding), "Needs follow-up", icons.invoices) +
-      metric("Collection Sales", money(paid + artSales), "Paid and edition value", icons.collection) +
-      metric("Partnership Pipeline", partnerships.length, "Prospects and retainers", icons.partnerships) +
+      metric("Active Projects", projects.filter(function (p) { return p.status !== "Delivered"; }).length, "View all projects", icons.projects, "projects") +
+      metric("Upcoming Bookings", upcoming.length, "View calendar", icons.bookings, "bookings") +
+      metric("Outstanding Invoices", money(outstanding), "Needs follow-up", icons.invoices, "invoices") +
+      metric("Collection Sales", money(paid + artSales), "Paid and edition value", icons.collection, "collection") +
+      metric("Partnership Pipeline", partnerships.length, "Prospects and retainers", icons.partnerships, "partnerships") +
+      "</section>" +
+      '<section class="split-grid">' +
+      recentProjects(projects) +
+      recentActivity() +
       "</section>" +
       '<section class="panels-grid">' +
       snapshot("Today's Schedule", bookings.filter(function (b) { return b.date === today; }), "bookings") +
@@ -291,15 +471,44 @@
       snapshot("Recent Enquiries", bookings.filter(function (b) { return b.status === "Enquiry"; }).concat(active("clients").filter(function (c) { return c.status === "Lead"; })), "clients") +
       pipeline() +
       calendar(upcoming) +
-      "</section>";
+      "</section>" +
+      focusStrip();
+  }
+
+  function recentProjects(projects) {
+    var rows = projects.slice(0, 5).map(function (project) {
+      var progress = PROJECT_PROGRESS[project.status] != null ? PROJECT_PROGRESS[project.status] : 10;
+      var statusCls = statusClass(project.status);
+      var dotClass = statusCls === "warn" || statusCls === "bad" ? "dot dot--warn" : "dot";
+      return '<div class="project"><img src="' + esc(project.image || "assests/images/hero-image.JPG") + '" alt="">' +
+        "<div><h3>" + esc(project.name) + "</h3><p>" + esc(label("clients", project.client)) + "</p></div>" +
+        '<span class="project__status"><span class="' + dotClass + '"></span>' + esc(project.status) + "</span>" +
+        '<span class="project__progress">' + progress + '%</span>' +
+        '<div class="bar"><span style="--value:' + progress + '%"></span></div></div>';
+    }).join("");
+    return '<article class="panel"><div class="panel__header"><span class="panel__label">Recent Projects</span></div><div class="project-list">' + (rows || '<p class="empty-state">No projects yet.</p>') + '</div><div class="panel__footer"><button class="panel__link" type="button" data-route-jump="projects">View all projects<span>&rarr;</span></button></div></article>';
+  }
+
+  function recentActivity() {
+    var rows = (data.activity || []).slice(0, 6).map(function (entry) {
+      return '<div class="activity"><span class="activity__icon">' + icons.activity + "</span><p>" + esc(entry.message) + '</p><span class="activity__time">' + esc(timeAgo(entry.at)) + "</span></div>";
+    }).join("");
+    return '<article class="panel"><div class="panel__header"><span class="panel__label">Recent Activity</span></div><div class="activity-list">' + (rows || '<p class="empty-state">No activity yet.</p>') + "</div></article>";
+  }
+
+  function focusStrip() {
+    return '<section class="focus-strip"><img src="assests/images/art/outdoor/InShot_20260118_234450089.jpg" alt="LGNDRY.Co studio detail"><div class="focus-strip__quote"><p>Discipline is the bridge<br>between vision and legacy.</p></div><div class="focus-strip__action"><span class="panel__label">Stay Focused</span><p>Your next level is built on what you do today.</p><button class="table-action" type="button" data-route-jump="analytics">View Goals</button></div></section>';
   }
 
   function sumAmount(total, item) {
     return total + Number(item.amount || 0);
   }
 
-  function metric(labelText, value, hint, icon) {
-    return '<article class="metric"><div class="metric__head"><span class="metric__label">' + esc(labelText) + '</span><span class="metric__icon">' + (icon || icons.dashboard) + "</span></div><div><div class=\"metric__value\">" + esc(value) + '</div><div class="metric__hint">' + esc(hint || "") + "</div></div></article>";
+  function metric(labelText, value, hint, icon, route) {
+    var hintMarkup = route
+      ? '<button type="button" class="metric__hint metric__hint--link" data-route-jump="' + esc(route) + '">' + esc(hint || "") + "</button>"
+      : '<div class="metric__hint">' + esc(hint || "") + "</div>";
+    return '<article class="metric"><div class="metric__head"><span class="metric__label">' + esc(labelText) + '</span><span class="metric__icon">' + (icon || icons.dashboard) + "</span></div><div><div class=\"metric__value\">" + esc(value) + "</div>" + hintMarkup + "</div></article>";
   }
 
   function snapshot(title, items, route) {
@@ -411,13 +620,26 @@
   function bindModule(schema) {
     document.querySelector("[data-module-search]").addEventListener("input", function (event) {
       state.query = event.target.value;
-      render();
+      refreshTable(schema);
     });
     document.querySelector("[data-filter]").addEventListener("change", function (event) {
       state.filter = event.target.value;
-      render();
+      refreshTable(schema);
     });
     document.querySelector("[data-new]").addEventListener("click", function () { openModal(schema, null); });
+    bindTableRows(schema);
+  }
+
+  // Re-renders only the results table (not the search input / filter select /
+  // New button), so typing in the module search box never loses focus.
+  function refreshTable(schema) {
+    var wrap = document.querySelector(".records-table-wrap");
+    if (!wrap) return;
+    wrap.innerHTML = table(schema, filtered(schema));
+    bindTableRows(schema);
+  }
+
+  function bindTableRows(schema) {
     document.querySelectorAll("[data-edit]").forEach(function (button) { button.addEventListener("click", function () { openModal(schema, byId(schema.collection, button.dataset.edit)); }); });
     document.querySelectorAll("[data-archive]").forEach(function (button) { button.addEventListener("click", function () { archiveRecord(schema, button.dataset.archive); }); });
     document.querySelectorAll("[data-delete]").forEach(function (button) { button.addEventListener("click", function () { deleteRecord(schema, button.dataset.delete); }); });
@@ -457,7 +679,8 @@
     event.preventDefault();
     var schema = state.editing.schema;
     var form = event.currentTarget;
-    var next = state.editing.record ? Object.assign({}, state.editing.record) : { id: id() };
+    var wasNew = !state.editing.record;
+    var next = state.editing.record ? Object.assign({}, state.editing.record) : { id: newUuid() };
     var ok = true;
     schema.fields.forEach(function (field) {
       var input = form.elements[field.name];
@@ -480,7 +703,8 @@
     var index = list.findIndex(function (record) { return record.id === next.id; });
     if (index > -1) list[index] = next;
     else list.unshift(next);
-    saveData();
+    persistRecord(schema.collection, next);
+    logActivity((wasNew ? "Created " : "Updated ") + singular(schema.title) + ' "' + label(schema.collection, next.id) + '"');
     closeModal();
     toast("Saved successfully.");
     render();
@@ -488,20 +712,29 @@
 
   function archiveRecord(schema, recordId) {
     var record = byId(schema.collection, recordId);
-    if (!record || !confirm("Archive this record?")) return;
-    record.archived = true;
-    if (schema.status) record[schema.status] = "Archived";
-    saveData();
-    toast("Record archived.");
-    render();
+    if (!record) return;
+    confirmDialog("This record will be hidden from active views but kept in the database.", { title: "Archive this record?", confirmLabel: "Archive", danger: false }).then(function (confirmed) {
+      if (!confirmed) return;
+      record.archived = true;
+      if (schema.status) record[schema.status] = "Archived";
+      persistRecord(schema.collection, record);
+      logActivity("Archived " + singular(schema.title) + ' "' + label(schema.collection, recordId) + '"');
+      toast("Record archived.");
+      render();
+    });
   }
 
   function deleteRecord(schema, recordId) {
-    if (!confirm("Delete this record permanently from local storage?")) return;
-    data[schema.collection] = data[schema.collection].filter(function (record) { return record.id !== recordId; });
-    saveData();
-    toast("Record deleted.");
-    render();
+    var record = byId(schema.collection, recordId);
+    var recordLabel = record ? label(schema.collection, recordId) : "record";
+    confirmDialog("This will permanently remove it from the studio database. This cannot be undone.", { title: "Delete this record?", confirmLabel: "Delete" }).then(function (confirmed) {
+      if (!confirmed) return;
+      data[schema.collection] = data[schema.collection].filter(function (r) { return r.id !== recordId; });
+      deleteRecordRemote(schema.collection, recordId);
+      logActivity("Deleted " + singular(schema.title) + ' "' + recordLabel + '"');
+      toast("Record deleted.");
+      render();
+    });
   }
 
   function generateProject(bookingId) {
@@ -512,11 +745,12 @@
       toast("This booking already has a project.");
       return;
     }
-    var project = { id: id(), name: booking.service + " / " + label("clients", booking.client), client: booking.client, booking: booking.id, type: booking.type, brief: booking.notes || "", moodboard: "", shotList: booking.shotList || "", deliverables: "", timeline: (booking.date || "") + " onwards", tasks: "Confirm brief\nShoot\nEdit\nDeliver", files: "", comments: "Generated from booking.", status: "Planning" };
+    var project = { id: newUuid(), name: booking.service + " / " + label("clients", booking.client), client: booking.client, booking: booking.id, type: booking.type, brief: booking.notes || "", moodboard: "", shotList: booking.shotList || "", deliverables: "", timeline: (booking.date || "") + " onwards", tasks: "Confirm brief\nShoot\nEdit\nDeliver", files: "", comments: "Generated from booking.", status: "Planning" };
     data.projects.unshift(project);
     booking.project = project.id;
     if (booking.status === "Confirmed") booking.status = "Scheduled";
-    saveData();
+    persistRecord("projects", project).then(function () { persistRecord("bookings", booking); });
+    logActivity('Generated project "' + project.name + '" from booking');
     toast("Project generated from booking.");
     state.route = "projects";
     state.query = "";
@@ -539,34 +773,71 @@
   }
 
   function settings() {
-    return '<section class="split-grid"><article class="panel"><div class="panel__header"><div><span class="panel__label">Storage</span><h2 class="panel__title">Local Command Center Data</h2></div></div><p class="record-meta">All modules persist in this browser with localStorage. Export JSON before moving machines or clearing browser data.</p><div class="toolbar" style="justify-content:flex-start;margin-top:18px"><button class="primary-btn" data-export type="button">Export JSON</button><button class="ghost-btn" data-import type="button">Import JSON</button><button class="danger-btn" data-reset type="button">Reset Demo Data</button></div></article><article class="panel"><div class="panel__header"><span class="panel__label">Operational Lifecycle</span></div><p>Enquiry - Client - Booking - Project - Shoot - Gallery Delivery - Invoice - Payment - Archive</p><p>Application - Discovery Call - Proposal - Contract - Onboarding - Active Partnership - Renewal</p><p>Artwork Upload - Purchase - Edition Tracking - Certificate - Shipping - Completed Order</p></article></section>';
+    return '<section class="split-grid"><article class="panel"><div class="panel__header"><div><span class="panel__label">Storage</span><h2 class="panel__title">Cloud Command Center Data</h2></div></div><p class="record-meta">All modules persist to the LGNDRY.Co Supabase database and sync across devices. Export a JSON backup any time, or import one to restore.</p><div class="toolbar" style="justify-content:flex-start;margin-top:18px"><button class="primary-btn" data-export type="button">Export JSON</button><button class="ghost-btn" data-import type="button">Import JSON</button><button class="danger-btn" data-reset type="button">Reset Demo Data</button></div></article><article class="panel"><div class="panel__header"><span class="panel__label">Operational Lifecycle</span></div><p>Enquiry - Client - Booking - Project - Shoot - Gallery Delivery - Invoice - Payment - Archive</p><p>Application - Discovery Call - Proposal - Contract - Onboarding - Active Partnership - Renewal</p><p>Artwork Upload - Purchase - Edition Tracking - Certificate - Shipping - Completed Order</p></article></section>';
   }
 
   function bindSettings() {
     document.querySelector("[data-export]").addEventListener("click", function () {
-      var text = JSON.stringify(data, null, 2);
-      if (navigator.clipboard) navigator.clipboard.writeText(text);
-      console.log(text);
-      toast("JSON copied to clipboard and console.");
+      var blob = new Blob([JSON.stringify(data, null, 2)], { type: "application/json" });
+      var url = URL.createObjectURL(blob);
+      var link = document.createElement("a");
+      link.href = url;
+      link.download = "lgndry-co-ops-export-" + new Date().toISOString().slice(0, 10) + ".json";
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+      URL.revokeObjectURL(url);
+      toast("Export downloaded.");
     });
     document.querySelector("[data-import]").addEventListener("click", function () {
-      var raw = prompt("Paste exported LGNDRY.Co JSON");
-      if (!raw) return;
-      try {
-        data = JSON.parse(raw);
-        saveData();
-        toast("Data imported.");
-        render();
-      } catch (error) {
-        toast("Import failed. Check the JSON.");
-      }
+      var input = document.createElement("input");
+      input.type = "file";
+      input.accept = "application/json";
+      input.addEventListener("change", function () {
+        var file = input.files[0];
+        if (!file) return;
+        var reader = new FileReader();
+        reader.onload = function () {
+          var parsed;
+          try {
+            parsed = JSON.parse(reader.result);
+          } catch (error) {
+            toast("Import failed. Check the JSON.");
+            return;
+          }
+          importBundle(parsed);
+        };
+        reader.readAsText(file);
+      });
+      input.click();
     });
     document.querySelector("[data-reset]").addEventListener("click", function () {
-      if (!confirm("Reset all local command center data to starter records?")) return;
-      data = seed();
-      saveData();
-      toast("Demo data restored.");
+      confirmDialog("All cloud command center data will be replaced with starter records. This cannot be undone.", { title: "Reset demo data?", confirmLabel: "Reset" }).then(function (confirmed) {
+        if (!confirmed) return;
+        resetDemoData();
+      });
+    });
+  }
+
+  function importBundle(parsed) {
+    var rowsByTable = {};
+    Object.keys(parsed).forEach(function (collection) {
+      if (TABLES.indexOf(collection) === -1 || !Array.isArray(parsed[collection])) return;
+      rowsByTable[collection] = parsed[collection].map(normalizeForDb);
+    });
+    if (!Object.keys(rowsByTable).length) {
+      toast("Nothing to import.");
+      return;
+    }
+    persistRowsByTable(rowsByTable, "upsert").then(function () {
+      return loadRemoteData();
+    }).then(function (remoteData) {
+      data = remoteData;
+      toast("Data imported.");
       render();
+    }).catch(function (error) {
+      console.error(error);
+      toast("Import failed: " + error.message);
     });
   }
 
@@ -589,6 +860,39 @@
     toast.timer = setTimeout(function () { element.classList.remove("is-visible"); }, 2600);
   }
 
+  function confirmDialog(message, options) {
+    options = options || {};
+    var modal = document.querySelector("[data-confirm-modal]");
+    var okBtn = modal.querySelector("[data-confirm-ok]");
+    var cancelBtn = modal.querySelector("[data-confirm-cancel]");
+    modal.querySelector("[data-confirm-title]").textContent = options.title || "Are you sure?";
+    modal.querySelector("[data-confirm-message]").textContent = message;
+    okBtn.textContent = options.confirmLabel || "Confirm";
+    okBtn.className = options.danger === false ? "primary-btn" : "danger-btn";
+    modal.classList.add("is-open");
+    modal.setAttribute("aria-hidden", "false");
+
+    return new Promise(function (resolve) {
+      function cleanup(result) {
+        modal.classList.remove("is-open");
+        modal.setAttribute("aria-hidden", "true");
+        okBtn.removeEventListener("click", onOk);
+        cancelBtn.removeEventListener("click", onCancel);
+        modal.removeEventListener("click", onBackdrop);
+        document.removeEventListener("keydown", onKeydown);
+        resolve(result);
+      }
+      function onOk() { cleanup(true); }
+      function onCancel() { cleanup(false); }
+      function onBackdrop(event) { if (event.target === modal) cleanup(false); }
+      function onKeydown(event) { if (event.key === "Escape") cleanup(false); }
+      okBtn.addEventListener("click", onOk);
+      cancelBtn.addEventListener("click", onCancel);
+      modal.addEventListener("click", onBackdrop);
+      document.addEventListener("keydown", onKeydown);
+    });
+  }
+
   function initTheme() {
     var root = document.documentElement;
     var stored = localStorage.getItem(THEME_KEY);
@@ -604,6 +908,112 @@
   function syncTheme() {
     var isLight = document.documentElement.getAttribute("data-theme") === "light";
     document.querySelector("[data-theme-label]").textContent = isLight ? "Dark mode" : "Light mode";
+  }
+
+  function closePopovers() {
+    document.querySelectorAll(".popover.is-open").forEach(function (popover) { popover.classList.remove("is-open"); });
+  }
+
+  function togglePopover(popover) {
+    var isOpen = popover.classList.contains("is-open");
+    closePopovers();
+    if (!isOpen) popover.classList.add("is-open");
+  }
+
+  function initPopovers() {
+    document.querySelector("[data-bell-toggle]").addEventListener("click", function (event) {
+      event.stopPropagation();
+      var popover = document.querySelector("[data-bell-popover]");
+      popover.innerHTML = '<span class="popover-title">Recent Activity</span><div class="activity-list">' + ((data.activity || []).slice(0, 5).map(function (entry) {
+        return '<div class="activity"><span class="activity__icon">' + icons.activity + "</span><p>" + esc(entry.message) + '</p><span class="activity__time">' + esc(timeAgo(entry.at)) + "</span></div>";
+      }).join("") || '<p class="empty-state">No activity yet.</p>') + "</div>";
+      togglePopover(popover);
+    });
+    document.querySelector("[data-profile-toggle]").addEventListener("click", function (event) {
+      event.stopPropagation();
+      togglePopover(document.querySelector("[data-profile-popover]"));
+    });
+    document.querySelectorAll("[data-popover-route]").forEach(function (button) {
+      button.addEventListener("click", function () {
+        closePopovers();
+        state.route = button.dataset.popoverRoute;
+        state.query = "";
+        state.filter = "all";
+        render();
+      });
+    });
+    document.querySelector("[data-sign-out]").addEventListener("click", function () {
+      closePopovers();
+      supabaseClient.auth.signOut();
+    });
+    document.addEventListener("click", function (event) {
+      if (!event.target.closest(".popover-anchor")) closePopovers();
+    });
+  }
+
+  function showApp() {
+    document.querySelector("[data-auth-gate]").style.display = "none";
+    document.querySelector("[data-ops-shell]").style.display = "";
+  }
+
+  function showAuthGate(message) {
+    document.querySelector("[data-ops-shell]").style.display = "none";
+    document.querySelector("[data-auth-gate]").style.display = "";
+    var errorEl = document.querySelector("[data-auth-error]");
+    if (errorEl) errorEl.textContent = message || "";
+  }
+
+  function bootAfterAuth() {
+    loadRemoteData().then(function (remoteData) {
+      if (!hasAnyRemoteRecords(remoteData)) return migrateLocalData().then(loadRemoteData);
+      return remoteData;
+    }).then(function (finalData) {
+      data = finalData;
+      showApp();
+      if (!chromeInitialized) {
+        initTheme();
+        initPopovers();
+        chromeInitialized = true;
+      }
+      render();
+    }).catch(function (error) {
+      console.error(error);
+      showAuthGate("Failed to load studio data. Please refresh.");
+    });
+  }
+
+  function initAuth() {
+    document.querySelector("[data-auth-form]").addEventListener("submit", function (event) {
+      event.preventDefault();
+      var form = event.currentTarget;
+      var submitButton = document.querySelector("[data-auth-submit]");
+      submitButton.disabled = true;
+      supabaseClient.auth.signInWithPassword({
+        email: form.elements.email.value.trim(),
+        password: form.elements.password.value
+      }).then(function (result) {
+        submitButton.disabled = false;
+        if (result.error) {
+          document.querySelector("[data-auth-error]").textContent = result.error.message;
+          return;
+        }
+        form.reset();
+      }).catch(function (error) {
+        submitButton.disabled = false;
+        document.querySelector("[data-auth-error]").textContent = error.message;
+      });
+    });
+
+    supabaseClient.auth.onAuthStateChange(function (event, session) {
+      if (event === "SIGNED_OUT") {
+        data = { activity: [] };
+        showAuthGate();
+        return;
+      }
+      if ((event === "INITIAL_SESSION" || event === "SIGNED_IN") && session) {
+        bootAfterAuth();
+      }
+    });
   }
 
   document.addEventListener("click", function (event) {
@@ -633,6 +1043,5 @@
     if (event.key === "Escape") closeModal();
   });
 
-  initTheme();
-  render();
+  initAuth();
 }());

@@ -387,7 +387,6 @@
   if (!bar) { return; }
 
   var buttons = bar.querySelectorAll('[data-filter]');
-  var cards = document.querySelectorAll('.work[data-category]');
 
   for (var i = 0; i < buttons.length; i++) {
     (function (btn) {
@@ -398,6 +397,7 @@
         btn.classList.add('collection-filter--active');
 
         var filter = btn.getAttribute('data-filter');
+        var cards = document.querySelectorAll('.work[data-category]');
         for (var k = 0; k < cards.length; k++) {
           var show = filter === 'all' || cards[k].getAttribute('data-category') === filter;
           cards[k].style.display = show ? '' : 'none';
@@ -788,15 +788,14 @@
     });
   }
 
-  var acquireButtons = document.querySelectorAll('.work__acquire');
-  for (var i = 0; i < acquireButtons.length; i++) {
-    acquireButtons[i].addEventListener('click', function (e) {
-      var card = this.closest('.work');
-      if (!card) return;
-      e.preventDefault();
-      addToCart(card, this);
-    });
-  }
+  grid.addEventListener('click', function (e) {
+    var trigger = e.target.closest('.work__acquire');
+    if (!trigger) return;
+    var card = trigger.closest('.work');
+    if (!card) return;
+    e.preventDefault();
+    addToCart(card, trigger);
+  });
 
   cartButton = createCartButton();
   updateButton();
@@ -831,6 +830,51 @@
     if (target && target.focus) target.focus();
   }
 
+  function submitContactForm(form) {
+    var submitBtn = form.querySelector('.contact-submit[type="submit"]');
+    if (submitBtn) { submitBtn.disabled = true; submitBtn.querySelector('span').textContent = 'Sending...'; }
+
+    function value(name) {
+      var field = form.querySelector('[name="' + name + '"]');
+      return field ? field.value : '';
+    }
+
+    var fields = {
+      assistance_needed: value('assistance_needed'),
+      project_readiness: value('project_readiness'),
+      timeline: value('timeline'),
+      budget_range: value('budget_range'),
+      message: value('message'),
+      name: value('name'),
+      email: value('email'),
+      phone: value('phone'),
+      company: value('company')
+    };
+
+    if (!window.LgndrySiteData || !window.LgndrySiteData.submitContactLead) {
+      handleContactFailure(submitBtn);
+      return;
+    }
+
+    window.LgndrySiteData.submitContactLead(fields).then(function () {
+      form.innerHTML = '<div class="contact-form__section"><span>Message sent</span><p>Thank you for reaching out. We will be in touch within 24 hours.</p></div>';
+    }).catch(function (error) {
+      console.error('Contact form submission failed', error);
+      handleContactFailure(submitBtn);
+    });
+  }
+
+  function handleContactFailure(submitBtn) {
+    if (submitBtn) { submitBtn.disabled = false; submitBtn.querySelector('span').textContent = 'Send message'; }
+    var actions = submitBtn ? submitBtn.closest('.contact-form__actions') : null;
+    if (!actions) return;
+    var note = actions.parentNode.querySelector('[data-contact-error]') || document.createElement('p');
+    note.setAttribute('data-contact-error', '');
+    note.className = 'contact-form__error';
+    note.textContent = 'Something went wrong sending your message. Please try again or email us directly at info@lgndry-co.co.za.';
+    actions.parentNode.insertBefore(note, actions);
+  }
+
   for (var i = 0; i < forms.length; i++) {
     (function (form) {
       var next = form.querySelector('[data-contact-next]');
@@ -848,6 +892,13 @@
           setPhase(form, 0);
         });
       }
+
+      form.addEventListener('submit', function (e) {
+        e.preventDefault();
+        var secondPhase = form.querySelector('[data-contact-phase="1"]');
+        if (secondPhase && !validatePhase(secondPhase)) return;
+        submitContactForm(form);
+      });
     })(forms[i]);
   }
 }());
@@ -1231,9 +1282,9 @@
     var form = modal.querySelector('.booking-modal__form');
     if (form) {
       form.addEventListener('submit', function (e) {
-        if (!validateUpTo(stepLabels.length - 1) || !validateStep(stepLabels.length - 1)) {
-          e.preventDefault();
-        }
+        e.preventDefault();
+        if (!validateUpTo(stepLabels.length - 1) || !validateStep(stepLabels.length - 1)) return;
+        submitBookingRequest();
       });
     }
 
@@ -1255,6 +1306,51 @@
         first.focus();
       }
     });
+  }
+
+  function submitBookingRequest() {
+    var next = modal.querySelector('[data-booking-next]');
+    var back = modal.querySelector('[data-booking-back]');
+    var review = modal.querySelector('[data-booking-review]');
+    if (next) { next.disabled = true; next.querySelector('span').textContent = 'Sending...'; }
+
+    if (!window.LgndrySiteData || !window.LgndrySiteData.submitBooking) {
+      handleSubmitFailure(next, review);
+      return;
+    }
+
+    window.LgndrySiteData.submitBooking({
+      session_type: getValue('session_type'),
+      services: getCheckedValues('services').join(', '),
+      project_details: getValue('project_details'),
+      preferred_date: getValue('preferred_date'),
+      preferred_time: getValue('preferred_time'),
+      session_location: getValue('session_location'),
+      date_flexibility: getValue('date_flexibility'),
+      client_name: getValue('client_name'),
+      client_email: getValue('client_email'),
+      client_phone: getValue('client_phone'),
+      company: getValue('company'),
+      budget: getValue('budget')
+    }).then(function () {
+      if (review) review.innerHTML = '<h3>Request sent</h3><p>Thank you — your booking enquiry has been sent to LGNDRY.Co. We will be in touch within 24 hours.</p>';
+      if (next) next.hidden = true;
+      if (back) back.hidden = true;
+    }).catch(function (error) {
+      console.error('Booking submission failed', error);
+      handleSubmitFailure(next, review);
+    });
+  }
+
+  function handleSubmitFailure(next, review) {
+    if (next) { next.disabled = false; next.querySelector('span').textContent = 'Send Request'; }
+    if (review) {
+      var note = review.querySelector('[data-booking-submit-error]') || document.createElement('p');
+      note.setAttribute('data-booking-submit-error', '');
+      note.className = 'booking-modal__error is-visible';
+      note.textContent = 'Something went wrong sending your request. Please try again or email us directly at info@lgndry-co.co.za.';
+      review.appendChild(note);
+    }
   }
 
   for (var i = 0; i < bookingTriggers.length; i++) {
@@ -1658,9 +1754,9 @@
     var form = modal.querySelector('.booking-modal__form');
     if (form) {
       form.addEventListener('submit', function (e) {
-        if (!validateUpTo(stepLabels.length - 1) || !validateStep(stepLabels.length - 1)) {
-          e.preventDefault();
-        }
+        e.preventDefault();
+        if (!validateUpTo(stepLabels.length - 1) || !validateStep(stepLabels.length - 1)) return;
+        submitPartnershipRequest();
       });
     }
 
@@ -1682,6 +1778,52 @@
         first.focus();
       }
     });
+  }
+
+  function submitPartnershipRequest() {
+    var next = modal.querySelector('[data-booking-next]');
+    var back = modal.querySelector('[data-booking-back]');
+    var review = modal.querySelector('[data-booking-review]');
+    if (next) { next.disabled = true; next.querySelector('span').textContent = 'Sending...'; }
+
+    if (!window.LgndrySiteData || !window.LgndrySiteData.submitPartnership) {
+      handlePartnershipFailure(next, review);
+      return;
+    }
+
+    window.LgndrySiteData.submitPartnership({
+      partnership_type: getValue('partnership_type'),
+      focus: getCheckedValues('focus').join(', '),
+      brand_goals: getValue('brand_goals'),
+      company: getValue('company'),
+      industry: getValue('industry'),
+      brand_link: getValue('brand_link'),
+      brand_location: getValue('brand_location'),
+      content_frequency: getValue('content_frequency'),
+      contact_name: getValue('contact_name'),
+      contact_role: getValue('contact_role'),
+      contact_email: getValue('contact_email'),
+      contact_phone: getValue('contact_phone'),
+      partner_budget: getValue('partner_budget')
+    }).then(function () {
+      if (review) review.innerHTML = '<h3>Application sent</h3><p>Thank you — your partnership application has been sent to LGNDRY.Co. We will be in touch within 48 hours.</p>';
+      if (next) next.hidden = true;
+      if (back) back.hidden = true;
+    }).catch(function (error) {
+      console.error('Partnership submission failed', error);
+      handlePartnershipFailure(next, review);
+    });
+  }
+
+  function handlePartnershipFailure(next, review) {
+    if (next) { next.disabled = false; next.querySelector('span').textContent = 'Send Request'; }
+    if (review) {
+      var note = review.querySelector('[data-booking-submit-error]') || document.createElement('p');
+      note.setAttribute('data-booking-submit-error', '');
+      note.className = 'booking-modal__error is-visible';
+      note.textContent = 'Something went wrong sending your application. Please try again or email us directly at info@lgndry-co.co.za.';
+      review.appendChild(note);
+    }
   }
 
   for (var i = 0; i < triggers.length; i++) {
@@ -1840,17 +1982,16 @@
     if (lastFocused && lastFocused.focus) lastFocused.focus();
   }
 
-  var mediaFigures = grid.querySelectorAll('.work__media');
-  for (var i = 0; i < mediaFigures.length; i++) {
-    mediaFigures[i].addEventListener('click', function () {
-      var card = this.closest('.work');
-      if (!card) return;
-      var visible = getVisibleCards();
-      var startIndex = visible.indexOf(card);
-      if (startIndex < 0) return;
-      open(visible, startIndex);
-    });
-  }
+  grid.addEventListener('click', function (e) {
+    var media = e.target.closest('.work__media');
+    if (!media) return;
+    var card = media.closest('.work');
+    if (!card) return;
+    var visible = getVisibleCards();
+    var startIndex = visible.indexOf(card);
+    if (startIndex < 0) return;
+    open(visible, startIndex);
+  });
 
   window.lgndryLightbox = { open: open, close: close };
 }());
