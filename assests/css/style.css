@@ -1234,7 +1234,6 @@ body {
   font-weight: 400;
   font-size: 0.95rem;
   letter-spacing: 0.2em;
-  text-transform: uppercase;
   color: var(--text-primary);
   text-decoration: none;
   transition: opacity 0.3s ease;
@@ -1292,13 +1291,19 @@ body {
 }
 
 .hero__copy {
+  position: absolute;
+  right: clamp(32px, 5vw, 80px);
+  bottom: clamp(40px, 7vh, 84px);
   max-width: 42ch;
+  margin: 0;
   font-family: 'Inter', sans-serif;
   font-weight: 300;
   font-size: 0.85rem;
   letter-spacing: 0.05em;
   line-height: 1.85;
+  text-align: right;
   color: #FFFFFF;
+  pointer-events: auto;
 }
 
 .hero__cta {
@@ -1358,7 +1363,11 @@ body {
   }
 
   .hero__copy {
+    right: clamp(24px, 7vw, 36px);
+    bottom: clamp(28px, 5vh, 48px);
+    left: clamp(24px, 7vw, 36px);
     max-width: 34ch;
+    margin-left: auto;
     font-size: 0.78rem;
     line-height: 1.7;
   }

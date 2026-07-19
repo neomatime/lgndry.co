@@ -2179,6 +2179,7 @@
   if (!wrapper) { return; }
 
   var heroText = wrapper.querySelector('.hero__text');
+  var heroCopy = wrapper.querySelector('.hero__copy');
   var heroImage = wrapper.querySelector('.hero__image');
   var prefersReducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 
@@ -2219,6 +2220,10 @@
       heroText.style.opacity = (1 - fade).toFixed(3);
       heroText.style.transform = 'translate3d(0, ' + (-fade * 64).toFixed(1) + 'px, 0)';
       heroText.style.pointerEvents = fade > 0.5 ? 'none' : '';
+      if (heroCopy) {
+        heroCopy.style.opacity = (1 - fade).toFixed(3);
+        heroCopy.style.transform = 'translate3d(0, ' + (-fade * 64).toFixed(1) + 'px, 0)';
+      }
       lastFade = fade;
     }
 
