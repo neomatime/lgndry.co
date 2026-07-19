@@ -3,7 +3,7 @@
 
   var COLLECTION_CATALOG = [
     { aliases: ["modishi wa lebowa"], title: "Modishi Wa Lebowa", price: 75000, remaining: 1, image: "assests/images/art/outdoor/ART PRINT (BFITM)/MODISHI WA LEBOWA CLEAN.jpg" },
-    { aliases: ["yellow bone"], title: "Yellow Bone", price: 25000, remaining: 8, image: "assests/images/art/outdoor/ART PRINT (BFITM)/YELLOW BONE 42D663DE.jpg" },
+    { aliases: ["yellow bone"], title: "Yellow Bone", price: 25000, remaining: 8, image: "assests/images/art/outdoor/ART PRINT (BFITM)/YELLOW BONE.jpeg" },
     { aliases: ["moshole", "mashole"], title: "Mashole", price: 100000, remaining: 3 },
     { aliases: ["letlapa"], title: "Letlapa", price: 18000, remaining: 13 },
     { aliases: ["gae"], title: "Gae", price: 35000, remaining: 6 },
