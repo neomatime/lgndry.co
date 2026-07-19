@@ -1376,9 +1376,8 @@ body {
   .hero__short-copy-group {
     right: clamp(40px, 11vw, 60px);
     bottom: clamp(92px, 14vh, 120px);
-    left: clamp(24px, 7vw, 36px);
+    left: clamp(24px, 5vw, 64px);
     max-width: 34ch;
-    margin-left: auto;
   }
 
   .hero__short-copy {
