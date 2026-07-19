@@ -2048,10 +2048,9 @@
     render();
   }
 
-  function open(cards, startIndex) {
+  function openItems(nextItems, startIndex) {
     if (!lightbox) createLightbox();
-    items = [];
-    for (var i = 0; i < cards.length; i++) items.push(readCard(cards[i]));
+    items = nextItems;
     index = startIndex;
     lastFocused = document.activeElement;
     render();
@@ -2061,6 +2060,35 @@
     setTimeout(function () { stage.focus(); }, 0);
   }
 
+  function open(cards, startIndex) {
+    var nextItems = [];
+    for (var i = 0; i < cards.length; i++) nextItems.push(readCard(cards[i]));
+    openItems(nextItems, startIndex);
+  }
+
+  function openSeries(card, media) {
+    var paths;
+    try {
+      paths = JSON.parse(media.getAttribute('data-series-images'));
+    } catch (error) {
+      paths = [];
+    }
+    if (!paths.length) return false;
+
+    var cardData = readCard(card);
+    var seriesItems = paths.map(function (path, seriesIndex) {
+      return {
+        src: path,
+        alt: cardData.title + ' — image ' + (seriesIndex + 1) + ' of ' + paths.length,
+        title: cardData.title,
+        year: cardData.year,
+        edition: cardData.edition
+      };
+    });
+    var current = Number(media.getAttribute('data-series-index')) || 0;
+    openItems(seriesItems, current);
+    return true;
+  }
   function close() {
     if (!lightbox) return;
     lightbox.classList.remove('is-open');
@@ -2074,6 +2102,9 @@
     if (!media) return;
     var card = media.closest('.work');
     if (!card) return;
+    if (media.classList.contains('work__media--series') && openSeries(card, media)) {
+      return;
+    }
     var visible = getVisibleCards();
     var startIndex = visible.indexOf(card);
     if (startIndex < 0) return;
