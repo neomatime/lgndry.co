@@ -2,7 +2,7 @@
   "use strict";
 
   var COLLECTION_CATALOG = [
-    { aliases: ["modishi wa lebowa"], title: "Modishi Wa Lebowa", price: 75000, remaining: 1 },
+    { aliases: ["modishi wa lebowa"], title: "Modishi Wa Lebowa", price: 75000, remaining: 1, image: "assests/images/art/outdoor/ART PRINT (BFITM)/MODISHI WA LEBOWA .jpg" },
     { aliases: ["yellow bone"], title: "Yellow Bone", price: 25000, remaining: 8 },
     { aliases: ["moshole", "mashole"], title: "Mashole", price: 100000, remaining: 3 },
     { aliases: ["letlapa"], title: "Letlapa", price: 18000, remaining: 13 },
@@ -50,6 +50,7 @@
         normalized.remaining = entry.remaining;
         normalized.availability = entry.remaining > 0 ? "Available" : "Sold Out";
         normalized.seriesLabel = entry.seriesLabel || "";
+        if (entry.image) normalized.image = entry.image;
         return normalized;
       }).filter(Boolean);
     });
