@@ -4024,6 +4024,83 @@ body {
     flex-direction: column;
   }
 }
+/* Collection artwork series controls */
+.work__media--series {
+  position: relative;
+}
+
+.work__series-controls {
+  position: absolute;
+  inset: 0;
+  z-index: 2;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 14px;
+  pointer-events: none;
+}
+
+.work__series-nav {
+  width: 34px;
+  height: 34px;
+  border: 1px solid rgba(255, 255, 255, 0.55);
+  border-radius: 50%;
+  background: rgba(13, 13, 13, 0.36);
+  color: #fff;
+  font: 300 25px/1 serif;
+  cursor: pointer;
+  pointer-events: auto;
+  opacity: 0;
+  transform: translateX(4px);
+  transition: opacity 0.25s ease, background-color 0.25s ease, transform 0.25s ease;
+}
+
+.work__series-nav--prev {
+  transform: translateX(-4px);
+}
+
+.work__media--series:hover .work__series-nav,
+.work__series-nav:focus-visible {
+  opacity: 1;
+  transform: translateX(0);
+}
+
+.work__series-nav:hover,
+.work__series-nav:focus-visible {
+  background: rgba(13, 13, 13, 0.62);
+  outline: none;
+}
+
+.work__series-dots {
+  position: absolute;
+  bottom: 13px;
+  left: 50%;
+  display: flex;
+  gap: 6px;
+  transform: translateX(-50%);
+}
+
+.work__series-dot {
+  width: 5px;
+  height: 5px;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.5);
+  box-shadow: 0 0 0 1px rgba(13, 13, 13, 0.12);
+  transition: background-color 0.2s ease, transform 0.2s ease;
+}
+
+.work__series-dot.is-active {
+  background: #fff;
+  transform: scale(1.35);
+}
+
+@media (hover: none), (max-width: 768px) {
+  .work__series-nav {
+    opacity: 1;
+    transform: none;
+  }
+}
+
 /* ═══════════════════════════════════════════════════
    COLLECTION LIGHTBOX (view full-size artwork)
    ═══════════════════════════════════════════════════ */

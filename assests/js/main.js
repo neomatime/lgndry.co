@@ -1841,6 +1841,93 @@
 }());
 
 
+/* Collection: artwork series carousels */
+(function () {
+  var grid = document.querySelector('.collection-grid');
+  if (!grid) return;
+
+  var base = 'assests/images/art/studio art/STUDIO ART (FB)/';
+  var seriesByTitle = {
+    'composure': [base + 'Composure 1.jpeg', base + 'Composure 2.jpeg', base + 'Composure 3.jpeg'],
+    'dineo': [base + 'DINEO 1.jpeg', base + 'DINEO 2.jpeg', base + 'DINEO 3.jpeg'],
+    'mmago poi': [base + 'Mmago Poi 1.jpeg', base + 'Mmago Poi 2.jpeg', base + 'Mmago Poi 3.jpeg'],
+    'tsakani': [base + 'Tsakani 1.jpeg', base + 'Tsakani 2.jpeg', base + 'Tsakani 3.jpeg']
+  };
+
+  function showSlide(media, index) {
+    var images = JSON.parse(media.getAttribute('data-series-images'));
+    var title = media.getAttribute('data-series-title');
+    var nextIndex = (index + images.length) % images.length;
+    var image = media.querySelector('img');
+    var dots = media.querySelectorAll('[data-series-slide]');
+
+    media.setAttribute('data-series-index', nextIndex);
+    image.src = images[nextIndex];
+    image.setAttribute('data-full-src', images[nextIndex]);
+    image.alt = title + ' — image ' + (nextIndex + 1) + ' of ' + images.length;
+
+    for (var i = 0; i < dots.length; i++) {
+      var active = i === nextIndex;
+      dots[i].classList.toggle('is-active', active);
+      dots[i].setAttribute('aria-current', active ? 'true' : 'false');
+    }
+  }
+
+  function enhanceCard(card) {
+    if (card.hasAttribute('data-series-ready')) return;
+    var titleEl = card.querySelector('.work__title');
+    var media = card.querySelector('.work__media');
+    var image = media && media.querySelector('img');
+    if (!titleEl || !media || !image) return;
+
+    var title = titleEl.textContent.trim();
+    var images = seriesByTitle[title.toLowerCase()];
+    if (!images) return;
+
+    card.setAttribute('data-series-ready', 'true');
+    media.classList.add('work__media--series');
+    media.setAttribute('data-series-images', JSON.stringify(images));
+    media.setAttribute('data-series-title', title);
+    media.setAttribute('data-series-index', '0');
+    media.setAttribute('aria-label', title + ' image series');
+
+    var controls = document.createElement('div');
+    controls.className = 'work__series-controls';
+    controls.innerHTML =
+      '<button class="work__series-nav work__series-nav--prev" type="button" data-series-step="-1" aria-label="Previous image in ' + title + ' series">&#8249;</button>' +
+      '<div class="work__series-dots" aria-hidden="true">' +
+        images.map(function (_, index) {
+          return '<span class="work__series-dot' + (index === 0 ? ' is-active' : '') + '" data-series-slide="' + index + '"></span>';
+        }).join('') +
+      '</div>' +
+      '<button class="work__series-nav work__series-nav--next" type="button" data-series-step="1" aria-label="Next image in ' + title + ' series">&#8250;</button>';
+    media.appendChild(controls);
+    showSlide(media, 0);
+  }
+
+  function enhanceAll() {
+    var cards = grid.querySelectorAll('.work');
+    for (var i = 0; i < cards.length; i++) enhanceCard(cards[i]);
+  }
+
+  grid.addEventListener('click', function (event) {
+    var button = event.target.closest('[data-series-step]');
+    if (!button) return;
+    event.preventDefault();
+    event.stopPropagation();
+
+    var media = button.closest('.work__media--series');
+    var current = Number(media.getAttribute('data-series-index')) || 0;
+    showSlide(media, current + Number(button.getAttribute('data-series-step')));
+  });
+
+  enhanceAll();
+
+  if ('MutationObserver' in window) {
+    new MutationObserver(enhanceAll).observe(grid, { childList: true });
+  }
+}());
+
 /* Collection: full-size image lightbox */
 (function () {
   var grid = document.querySelector('.collection-grid');
