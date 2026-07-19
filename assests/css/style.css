@@ -1290,6 +1290,21 @@ body {
   opacity: 1;
 }
 
+.hero__short-copy {
+  position: absolute;
+  right: clamp(32px, 5vw, 80px);
+  bottom: clamp(40px, 7vh, 84px);
+  max-width: 42ch;
+  margin: 0;
+  font-family: 'Inter', sans-serif;
+  font-weight: 300;
+  font-size: 0.85rem;
+  letter-spacing: 0.05em;
+  line-height: 1.85;
+  text-align: right;
+  color: #FFFFFF;
+  pointer-events: none;
+}
 .hero__cta {
   display: inline-flex;
   align-items: center;
@@ -1346,6 +1361,15 @@ body {
     margin: clamp(66px, 8vh, 86px) 0 20px;
   }
 
+  .hero__short-copy {
+    right: clamp(24px, 7vw, 36px);
+    bottom: clamp(28px, 5vh, 48px);
+    left: clamp(24px, 7vw, 36px);
+    max-width: 34ch;
+    margin-left: auto;
+    font-size: 0.78rem;
+    line-height: 1.7;
+  }
   .hero__cta {
     margin-top: 26px;
   }
