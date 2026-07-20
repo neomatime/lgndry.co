@@ -2287,12 +2287,12 @@ body {
 
 .about-collabs__track {
   display: grid;
-  grid-template-columns: repeat(5, minmax(0, 1fr));
+  grid-template-columns: repeat(3, minmax(0, 1fr));
   align-items: center;
   gap: 36px;
 }
 
-.about-collabs__track > :nth-child(n + 6) {
+.about-collabs__track > :nth-child(n + 4) {
   display: none;
 }
 
@@ -2450,7 +2450,7 @@ body {
     animation: aboutLogoMarquee 22s linear infinite;
   }
 
-  .about-collabs__track > :nth-child(n + 6) {
+  .about-collabs__track > :nth-child(n + 4) {
     display: inline-flex;
   }
 
