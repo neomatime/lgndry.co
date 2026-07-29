@@ -1,0 +1,236 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Gallery — LGNDRY.Co</title>
+  <meta name="robots" content="noindex, nofollow">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@300;400;500&family=Inter:wght@300;400;500&display=swap" rel="stylesheet">
+  <link rel="icon" type="image/png" href="assests/logos/LGNDRY.CO Final.png">
+  <style>
+    :root {
+      --text-primary: #1D1D1D;
+      --text-secondary: #7A746E;
+      --line: rgba(29, 29, 29, 0.14);
+      --bg: #FAF8F5;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      font-family: 'Inter', sans-serif;
+      color: var(--text-primary);
+      background: var(--bg);
+    }
+    .gallery-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 16px;
+      padding: 28px 32px;
+      border-bottom: 1px solid var(--line);
+    }
+    .gallery-header a {
+      font-family: 'Cormorant Garamond', serif;
+      font-size: 1.3rem;
+      font-weight: 500;
+      color: var(--text-primary);
+      text-decoration: none;
+    }
+    .gallery-header span {
+      font-size: 0.68rem;
+      font-weight: 500;
+      letter-spacing: 0.16em;
+      text-transform: uppercase;
+      color: var(--text-secondary);
+    }
+    main {
+      max-width: 1100px;
+      margin: 0 auto;
+      padding: 56px 32px 96px;
+    }
+    .gallery-title {
+      font-family: 'Cormorant Garamond', serif;
+      font-size: clamp(2rem, 4vw, 3rem);
+      font-weight: 400;
+      margin: 0 0 12px;
+    }
+    .gallery-meta {
+      font-size: 0.82rem;
+      color: var(--text-secondary);
+      margin: 0 0 40px;
+    }
+    .gallery-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+      gap: 20px;
+    }
+    .gallery-item {
+      position: relative;
+      border: 1px solid var(--line);
+      background: #fff;
+    }
+    .gallery-item img {
+      display: block;
+      width: 100%;
+      height: 320px;
+      object-fit: cover;
+    }
+    .gallery-item a.download {
+      display: block;
+      padding: 12px;
+      text-align: center;
+      font-size: 0.72rem;
+      font-weight: 500;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      color: var(--text-primary);
+      text-decoration: none;
+      border-top: 1px solid var(--line);
+    }
+    .gallery-item a.download:hover { background: var(--line); }
+    .gate, .empty, .error {
+      max-width: 420px;
+      margin: 120px auto;
+      text-align: center;
+      display: grid;
+      gap: 18px;
+    }
+    .gate h1, .empty h1, .error h1 {
+      font-family: 'Cormorant Garamond', serif;
+      font-size: 1.7rem;
+      font-weight: 400;
+      margin: 0;
+    }
+    .gate p, .empty p, .error p {
+      margin: 0;
+      font-size: 0.86rem;
+      color: var(--text-secondary);
+    }
+    .gate input {
+      width: 100%;
+      padding: 12px 14px;
+      border: 1px solid var(--line);
+      background: transparent;
+      font: inherit;
+      color: var(--text-primary);
+    }
+    .gate button, .gate-error {
+      font-size: 0.78rem;
+    }
+    .gate button {
+      padding: 12px 20px;
+      border: 1px solid var(--text-primary);
+      background: var(--text-primary);
+      color: #fff;
+      cursor: pointer;
+      font-family: inherit;
+    }
+    .gate-error { color: #7A1D1D; min-height: 16px; }
+  </style>
+</head>
+<body>
+  <header class="gallery-header">
+    <a href="index.html">LGNDRY.Co</a>
+    <span>Gallery Delivery</span>
+  </header>
+  <main id="content">
+    <div class="empty"><h1>Loading&hellip;</h1></div>
+  </main>
+
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
+  <script>
+  (function () {
+    "use strict";
+
+    var SUPABASE_URL = "https://tscaluhtfrvwlwjybfsg.supabase.co";
+    var SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InRzY2FsdWh0ZnJ2d2x3anliZnNnIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODM0MjIwNTUsImV4cCI6MjA5ODk5ODA1NX0.dk7oFywIWf1xRTlYtfxHHe96VaQ6iFSPKMsCExy4e5A";
+    var client = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+    var content = document.getElementById("content");
+
+    function escapeHtml(value) {
+      return String(value == null ? "" : value).replace(/[&<>"']/g, function (char) {
+        return { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[char];
+      });
+    }
+
+    function showError(title, message) {
+      content.innerHTML = '<div class="error"><h1>' + escapeHtml(title) + '</h1><p>' + escapeHtml(message) + '</p></div>';
+    }
+
+    function renderGallery(record) {
+      var files = String(record.files || "").split("\n").map(function (line) { return line.trim(); }).filter(Boolean);
+
+      if (!files.length) {
+        content.innerHTML = '<div class="empty"><h1>' + escapeHtml(record.title || "Gallery") + '</h1><p>This gallery has no images uploaded yet. Check back soon.</p></div>';
+        return;
+      }
+
+      var downloadsEnabled = record.downloads !== "Disabled";
+      var grid = files.map(function (url) {
+        var downloadLink = downloadsEnabled
+          ? '<a class="download" href="' + escapeHtml(url) + '" download data-download-link>Download</a>'
+          : "";
+        return '<figure class="gallery-item"><img src="' + escapeHtml(url) + '" alt="' + escapeHtml(record.title || "") + '" loading="lazy">' + downloadLink + "</figure>";
+      }).join("");
+
+      content.innerHTML = '<h1 class="gallery-title">' + escapeHtml(record.title || "Your Gallery") + '</h1>' +
+        '<p class="gallery-meta">' + files.length + " image" + (files.length === 1 ? "" : "s") + (record.expiry ? " &middot; Available until " + escapeHtml(record.expiry) : "") + '</p>' +
+        '<div class="gallery-grid">' + grid + "</div>";
+
+      if (record.status === "Sent") {
+        client.from("galleries").update({ status: "Viewed" }).eq("id", record.id).then(function () {});
+      }
+
+      if (downloadsEnabled) {
+        content.querySelectorAll("[data-download-link]").forEach(function (link) {
+          link.addEventListener("click", function () {
+            client.from("galleries").update({ status: "Downloaded" }).eq("id", record.id).then(function () {});
+          });
+        });
+      }
+    }
+
+    function unlockAndRender(record) {
+      if (!record.password) {
+        renderGallery(record);
+        return;
+      }
+      content.innerHTML = '<div class="gate"><h1>Password Protected</h1><p>This gallery is protected. Enter the password shared with you to view it.</p>' +
+        '<input type="password" data-gate-password placeholder="Password"><button type="button" data-gate-submit>View Gallery</button><p class="gate-error" data-gate-error></p></div>';
+      var input = content.querySelector("[data-gate-password]");
+      var errorEl = content.querySelector("[data-gate-error]");
+      content.querySelector("[data-gate-submit]").addEventListener("click", function () {
+        if (input.value === record.password) {
+          renderGallery(record);
+        } else {
+          errorEl.textContent = "Incorrect password.";
+        }
+      });
+      input.addEventListener("keydown", function (event) {
+        if (event.key === "Enter") content.querySelector("[data-gate-submit]").click();
+      });
+    }
+
+    var params = new URLSearchParams(window.location.search);
+    var id = params.get("id");
+
+    if (!id) {
+      showError("Gallery not found", "This link is missing a gallery reference.");
+      return;
+    }
+
+    client.from("galleries").select("*").eq("id", id).maybeSingle().then(function (result) {
+      if (result.error || !result.data) {
+        showError("Gallery unavailable", "This link may have expired or is no longer available.");
+        return;
+      }
+      unlockAndRender(result.data);
+    }).catch(function () {
+      showError("Gallery unavailable", "Something went wrong loading this gallery. Please try again.");
+    });
+  }());
+  </script>
+</body>
+</html>

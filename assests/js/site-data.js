@@ -291,6 +291,37 @@
     });
   }());
 
+  /* Selected Collaborations: render live eyebrow label (Home + About) */
+  (function () {
+    var eyebrows = document.querySelectorAll(".companies .eyebrow, #collabs-title");
+    if (!eyebrows.length) return;
+
+    window.LgndrySiteData.fetchCmsBySection("Collaborations").then(function (records) {
+      var label = records.filter(function (record) { return record.area === "Eyebrow label"; })[0];
+      if (!label || !label.copy) return;
+      eyebrows.forEach(function (el) { el.textContent = label.copy; });
+    }).catch(function (error) {
+      console.error("Failed to load collaborations CMS content, showing static fallback.", error);
+    });
+  }());
+
+  /* About page final CTAs: render live button labels */
+  (function () {
+    var links = document.querySelectorAll(".about-final__links .about-link span:first-child");
+    if (!links.length) return;
+
+    window.LgndrySiteData.fetchCmsBySection("Calls-to-action").then(function (records) {
+      var byArea = {};
+      records.forEach(function (record) { byArea[record.area] = record; });
+      var primary = byArea["Primary CTA"];
+      var secondary = byArea["Secondary CTA"];
+      if (primary && primary.copy && links[0]) links[0].textContent = primary.copy;
+      if (secondary && secondary.copy && links[1]) links[1].textContent = secondary.copy;
+    }).catch(function (error) {
+      console.error("Failed to load calls-to-action CMS content, showing static fallback.", error);
+    });
+  }());
+
   /* Practice page: render live hero copy */
   (function () {
     var title = document.querySelector(".practice-title");

@@ -93,14 +93,16 @@
       subtitle: "Create quotes, invoices and receipts linked to clients, shoots, projects and orders.",
       collection: "invoices", display: "number", status: "status",
       columns: ["number", "client", "type", "amount", "status"],
-      fields: [f("number", "Document number", "text", true), f("type", "Document type", "select", true, ["Quote", "Invoice", "Receipt"]), rel("client", "Client", "clients", true), rel("project", "Project / booking / order", "projects"), f("items", "Line items", "textarea", true), f("amount", "Amount", "number", true), f("vat", "VAT", "number"), f("due", "Due date", "date"), f("status", "Payment status", "select", true, ["Draft", "Sent", "Paid", "Partially Paid", "Overdue", "Cancelled"]), f("paidAt", "Payment date", "date")]
+      fields: [f("number", "Document number", "text", true), f("type", "Document type", "select", true, ["Quote", "Invoice", "Receipt"]), rel("client", "Client", "clients", true), rel("project", "Project / booking / order", "projects"), f("items", "Line items (one per line, e.g. 'Brand Shoot — R5,000')", "textarea", true), f("amount", "Amount", "number", true), f("vat", "VAT", "number"), f("due", "Due date", "date"), f("status", "Payment status", "select", true, ["Draft", "Sent", "Paid", "Partially Paid", "Overdue", "Cancelled"]), f("paidAt", "Payment date", "date")],
+      actions: ["downloadPdf"]
     },
     galleries: {
       title: "Gallery Delivery",
       subtitle: "Build delivery links, monitor viewed/downloaded status and manage expiries.",
       collection: "galleries", display: "title", status: "status",
       columns: ["title", "client", "project", "expiry", "status"],
-      fields: [f("title", "Gallery title", "text", true), rel("client", "Client", "clients", true), rel("project", "Project", "projects"), f("files", "Images / files", "textarea"), f("expiry", "Expiry date", "date"), f("downloads", "Downloads enabled", "select", true, ["Enabled", "Disabled"]), f("share", "Share link"), f("password", "Password protection"), f("status", "Gallery status", "select", true, ["Draft", "Sent", "Viewed", "Downloaded", "Expired"])]
+      fields: [f("title", "Gallery title", "text", true), rel("client", "Client", "clients", true), rel("project", "Project", "projects"), f("files", "Image URLs (one per line)", "textarea", false, null, "assests/images/...\nassests/images/..."), f("expiry", "Expiry date", "date"), f("downloads", "Downloads enabled", "select", true, ["Enabled", "Disabled"]), f("password", "Password protection (optional)"), f("status", "Gallery status", "select", true, ["Draft", "Sent", "Viewed", "Downloaded", "Expired"])],
+      actions: ["copyLink"]
     },
     content: {
       title: "Content Library",
@@ -135,7 +137,8 @@
       subtitle: "Generate and track contracts, NDAs, briefs, call sheets and releases.",
       collection: "documents", display: "title", status: "status",
       columns: ["title", "type", "client", "project", "status"],
-      fields: [f("title", "Document title", "text", true), f("type", "Document type", "select", true, ["Contract", "NDA", "Proposal", "Creative Brief", "Call Sheet", "Model Release", "Location Release"]), rel("client", "Client", "clients"), rel("project", "Project / booking / partnership", "projects"), f("template", "Template / upload link"), f("signed", "Signed document link"), f("status", "Status", "select", true, ["Draft", "Sent", "Signed", "Expired", "Archived"])]
+      fields: [f("title", "Document title", "text", true), f("type", "Document type", "select", true, ["Contract", "NDA", "Proposal", "Creative Brief", "Call Sheet", "Model Release", "Location Release"]), rel("client", "Client", "clients"), rel("project", "Project / booking / partnership", "projects"), f("body", "Document text", "textarea"), f("template", "Template / upload link"), f("signed", "Signed document link"), f("status", "Status", "select", true, ["Draft", "Sent", "Signed", "Expired", "Archived"])],
+      actions: ["downloadPdf"]
     }
   };
 
@@ -604,7 +607,7 @@
         if (index === 0) return '<td><strong>' + esc(value) + '</strong><div class="record-meta">' + esc(record.notes || record.brief || record.description || "") + "</div></td>";
         if (column === schema.status || ["status", "visibility", "availability", "deposit"].indexOf(column) > -1) return '<td><span class="status-pill ' + statusClass(value) + '">' + esc(value) + "</span></td>";
         return "<td>" + esc(value || "-") + "</td>";
-      }).join("") + '<td><div class="row-actions"><button class="table-action" data-edit="' + record.id + '" type="button">Edit</button>' + (schema.actions && schema.actions.indexOf("generateProject") > -1 ? '<button class="table-action" data-generate="' + record.id + '" type="button">Project</button>' : "") + '<button class="table-action" data-archive="' + record.id + '" type="button">Archive</button><button class="table-action" data-delete="' + record.id + '" type="button">Delete</button></div></td></tr>';
+      }).join("") + '<td><div class="row-actions"><button class="table-action" data-edit="' + record.id + '" type="button">Edit</button>' + (schema.actions && schema.actions.indexOf("generateProject") > -1 ? '<button class="table-action" data-generate="' + record.id + '" type="button">Project</button>' : "") + (schema.actions && schema.actions.indexOf("copyLink") > -1 ? '<button class="table-action" data-copy-link="' + record.id + '" type="button">Copy Link</button>' : "") + (schema.actions && schema.actions.indexOf("downloadPdf") > -1 ? '<button class="table-action" data-download-pdf="' + record.id + '" type="button">PDF</button>' : "") + '<button class="table-action" data-archive="' + record.id + '" type="button">Archive</button><button class="table-action" data-delete="' + record.id + '" type="button">Delete</button></div></td></tr>';
     }).join("") + "</tbody></table>";
   }
 
@@ -656,6 +659,108 @@
     document.querySelectorAll("[data-archive]").forEach(function (button) { button.addEventListener("click", function () { archiveRecord(schema, button.dataset.archive); }); });
     document.querySelectorAll("[data-delete]").forEach(function (button) { button.addEventListener("click", function () { deleteRecord(schema, button.dataset.delete); }); });
     document.querySelectorAll("[data-generate]").forEach(function (button) { button.addEventListener("click", function () { generateProject(button.dataset.generate); }); });
+    document.querySelectorAll("[data-copy-link]").forEach(function (button) { button.addEventListener("click", function () { copyGalleryLink(button.dataset.copyLink); }); });
+    document.querySelectorAll("[data-download-pdf]").forEach(function (button) { button.addEventListener("click", function () { downloadRecordPdf(schema, button.dataset.downloadPdf); }); });
+  }
+
+  function pdfLetterhead(doc, title) {
+    doc.setFont("helvetica", "bold");
+    doc.setFontSize(18);
+    doc.text("LGNDRY.Co", 20, 24);
+    doc.setFont("helvetica", "normal");
+    doc.setFontSize(9);
+    doc.setTextColor(120, 120, 120);
+    doc.text("Visual Storytelling Studio  |  Limpopo, South Africa  |  info@lgndry-co.co.za", 20, 30);
+    doc.setDrawColor(220, 220, 220);
+    doc.line(20, 36, 190, 36);
+    doc.setTextColor(29, 29, 29);
+    doc.setFont("helvetica", "bold");
+    doc.setFontSize(14);
+    doc.text(title, 20, 48);
+    doc.setFont("helvetica", "normal");
+    doc.setFontSize(10);
+  }
+
+  function buildInvoicePdf(record) {
+    var doc = new window.jspdf.jsPDF();
+    pdfLetterhead(doc, (record.type || "Invoice").toUpperCase() + "  " + (record.number || ""));
+
+    var y = 60;
+    doc.text("Billed to: " + label("clients", record.client), 20, y);
+    y += 6;
+    if (record.due) { doc.text("Due date: " + record.due, 20, y); y += 6; }
+    doc.text("Status: " + (record.status || "-"), 20, y);
+    y += 14;
+
+    doc.setFont("helvetica", "bold");
+    doc.text("Line items", 20, y);
+    doc.setFont("helvetica", "normal");
+    y += 8;
+
+    var items = String(record.items || "").split("\n").map(function (line) { return line.trim(); }).filter(Boolean);
+    if (!items.length) items = ["-"];
+    items.forEach(function (line) {
+      var wrapped = doc.splitTextToSize(line, 170);
+      doc.text(wrapped, 20, y);
+      y += 6 * wrapped.length;
+    });
+
+    y += 8;
+    doc.setDrawColor(220, 220, 220);
+    doc.line(20, y, 190, y);
+    y += 10;
+
+    doc.text("Amount: " + money(record.amount), 20, y);
+    y += 6;
+    if (record.vat) { doc.text("VAT: " + money(record.vat), 20, y); y += 6; }
+    doc.setFont("helvetica", "bold");
+    doc.text("Total: " + money(Number(record.amount || 0) + Number(record.vat || 0)), 20, y);
+
+    doc.save((record.number || "invoice") + ".pdf");
+  }
+
+  function buildDocumentPdf(record) {
+    var doc = new window.jspdf.jsPDF();
+    pdfLetterhead(doc, record.title || "Document");
+
+    var y = 60;
+    doc.text("Type: " + (record.type || "-"), 20, y);
+    y += 6;
+    if (record.client) { doc.text("Client: " + label("clients", record.client), 20, y); y += 6; }
+    if (record.project) { doc.text("Project: " + label("projects", record.project), 20, y); y += 6; }
+    doc.text("Status: " + (record.status || "-"), 20, y);
+    y += 14;
+
+    if (record.body) {
+      var wrapped = doc.splitTextToSize(record.body, 170);
+      doc.text(wrapped, 20, y);
+    }
+
+    doc.save((record.title || "document") + ".pdf");
+  }
+
+  function downloadRecordPdf(schema, recordId) {
+    var record = byId(schema.collection, recordId);
+    if (!record) return;
+    if (!window.jspdf || !window.jspdf.jsPDF) {
+      toast("PDF generator failed to load. Check your connection and try again.");
+      return;
+    }
+    if (schema.collection === "invoices") buildInvoicePdf(record);
+    else if (schema.collection === "documents") buildDocumentPdf(record);
+  }
+
+  function copyGalleryLink(recordId) {
+    var url = window.location.origin + "/gallery.html?id=" + recordId;
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+      navigator.clipboard.writeText(url).then(function () {
+        toast("Gallery link copied.");
+      }).catch(function () {
+        toast(url);
+      });
+    } else {
+      toast(url);
+    }
   }
 
   function openModal(schema, record) {
@@ -845,7 +950,7 @@
   }
 
   function settings() {
-    return '<section class="split-grid"><article class="panel"><div class="panel__header"><div><span class="panel__label">Storage</span><h2 class="panel__title">Cloud Command Center Data</h2></div></div><p class="record-meta">All modules persist to the LGNDRY.Co Supabase database and sync across devices. Export a JSON backup any time, or import one to restore.</p><div class="toolbar" style="justify-content:flex-start;margin-top:18px"><button class="primary-btn" data-export type="button">Export JSON</button><button class="ghost-btn" data-import type="button">Import JSON</button><button class="danger-btn" data-reset type="button">Reset Demo Data</button></div></article><article class="panel"><div class="panel__header"><div><span class="panel__label">Alerts</span><h2 class="panel__title">Lead Notifications</h2></div></div><p class="record-meta">Get a push notification on this device the moment a booking, partnership application or contact-form lead comes in from the website - even when the Command Center isn\'t open.</p><p class="record-meta" data-push-status>Checking notification status...</p><div class="toolbar" style="justify-content:flex-start;margin-top:18px"><button class="primary-btn" data-push-toggle type="button" disabled>Enable Lead Alerts</button></div></article><article class="panel"><div class="panel__header"><span class="panel__label">Operational Lifecycle</span></div><p>Enquiry - Client - Booking - Project - Shoot - Gallery Delivery - Invoice - Payment - Archive</p><p>Application - Discovery Call - Proposal - Contract - Onboarding - Active Partnership - Renewal</p><p>Artwork Upload - Purchase - Edition Tracking - Certificate - Shipping - Completed Order</p></article></section>';
+    return '<section class="split-grid"><article class="panel"><div class="panel__header"><div><span class="panel__label">Storage</span><h2 class="panel__title">Cloud Command Center Data</h2></div></div><p class="record-meta">All modules persist to the LGNDRY.Co Supabase database and sync across devices. Export a JSON backup any time, or import one to restore.</p><div class="toolbar" style="justify-content:flex-start;margin-top:18px"><button class="primary-btn" data-export type="button">Export JSON</button><button class="ghost-btn" data-import type="button">Import JSON</button><button class="danger-btn" data-reset type="button">Reset Demo Data</button></div></article><article class="panel"><div class="panel__header"><div><span class="panel__label">Alerts</span><h2 class="panel__title">Lead Notifications</h2></div></div><p class="record-meta">Get a push notification on this device the moment a booking, partnership application or contact-form lead comes in from the website - even when the Command Center isn\'t open.</p><p class="record-meta" data-push-status>Checking notification status...</p><div class="toolbar" style="justify-content:flex-start;margin-top:18px"><button class="primary-btn" data-push-toggle type="button" disabled>Enable Lead Alerts</button></div></article><article class="panel"><div class="panel__header"><div><span class="panel__label">Access</span><h2 class="panel__title">Team</h2></div></div><p class="record-meta">Give other people their own login to the Command Center.</p><div data-team-list class="record-meta">Loading team...</div><div class="toolbar" style="justify-content:flex-start;margin-top:18px;flex-wrap:wrap"><input type="email" placeholder="Email address" data-team-email style="flex:1;min-width:180px"><input type="password" placeholder="Temporary password (min 8 chars)" data-team-password style="flex:1;min-width:180px"><button class="primary-btn" data-team-add type="button">Add Team Member</button></div><p class="record-meta" data-team-error></p></article><article class="panel"><div class="panel__header"><span class="panel__label">Operational Lifecycle</span></div><p>Enquiry - Client - Booking - Project - Shoot - Gallery Delivery - Invoice - Payment - Archive</p><p>Application - Discovery Call - Proposal - Contract - Onboarding - Active Partnership - Renewal</p><p>Artwork Upload - Purchase - Edition Tracking - Certificate - Shipping - Completed Order</p></article></section>';
   }
 
   function bindSettings() {
@@ -930,6 +1035,69 @@
         console.error(error);
         toast("Could not update lead alerts: " + error.message);
         pushToggleBtn.disabled = false;
+      });
+    });
+
+    var teamListEl = document.querySelector("[data-team-list]");
+    var teamErrorEl = document.querySelector("[data-team-error]");
+    var teamAddBtn = document.querySelector("[data-team-add]");
+    var teamEmailInput = document.querySelector("[data-team-email]");
+    var teamPasswordInput = document.querySelector("[data-team-password]");
+
+    function callTeamFunction(body) {
+      return supabaseClient.functions.invoke("manage-team", { body: body }).then(function (result) {
+        if (result.error) throw result.error;
+        if (result.data && result.data.error) throw new Error(result.data.error);
+        return result.data;
+      });
+    }
+
+    function refreshTeamList() {
+      teamListEl.textContent = "Loading team...";
+      callTeamFunction({ action: "list" }).then(function (data) {
+        var users = data.users || [];
+        teamListEl.innerHTML = users.map(function (user) {
+          var removeBtn = user.is_you ? "" : '<button class="table-action" data-team-remove="' + user.id + '" type="button">Remove</button>';
+          return '<div class="activity"><p>' + esc(user.email) + (user.is_you ? " (you)" : "") + '</p>' + removeBtn + '</div>';
+        }).join("") || "No team members yet.";
+        teamListEl.querySelectorAll("[data-team-remove]").forEach(function (button) {
+          button.addEventListener("click", function () {
+            confirmDialog("Remove this person's access to the Command Center?", { title: "Remove team member?", confirmLabel: "Remove" }).then(function (confirmed) {
+              if (!confirmed) return;
+              callTeamFunction({ action: "remove", userId: button.dataset.teamRemove }).then(function () {
+                toast("Team member removed.");
+                refreshTeamList();
+              }).catch(function (error) {
+                toast("Could not remove: " + error.message);
+              });
+            });
+          });
+        });
+      }).catch(function (error) {
+        teamListEl.textContent = "Could not load team: " + error.message;
+      });
+    }
+
+    refreshTeamList();
+
+    teamAddBtn.addEventListener("click", function () {
+      teamErrorEl.textContent = "";
+      var email = teamEmailInput.value.trim();
+      var password = teamPasswordInput.value;
+      if (!email || password.length < 8) {
+        teamErrorEl.textContent = "Enter an email and a password of at least 8 characters.";
+        return;
+      }
+      teamAddBtn.disabled = true;
+      callTeamFunction({ action: "invite", email: email, password: password }).then(function () {
+        teamEmailInput.value = "";
+        teamPasswordInput.value = "";
+        toast("Team member added.");
+        refreshTeamList();
+      }).catch(function (error) {
+        teamErrorEl.textContent = error.message;
+      }).then(function () {
+        teamAddBtn.disabled = false;
       });
     });
   }
