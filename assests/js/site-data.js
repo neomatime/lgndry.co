@@ -69,6 +69,14 @@
     });
   }
 
+  function fetchBudgetOptions(form) {
+    return fetchTable("budgets").then(function (items) {
+      return items.filter(function (item) { return item.form === form && item.visibility === "Visible"; }).sort(function (a, b) {
+        return Number(a.position || 0) - Number(b.position || 0);
+      }).map(function (item) { return item.label; });
+    });
+  }
+
   function createLeadClient(fields) {
     var payload = {
       name: fields.name || "",
@@ -177,6 +185,7 @@
     fetchCollection: fetchCollection,
     fetchCmsBySection: fetchCmsBySection,
     fetchPractice: fetchPractice,
+    fetchBudgetOptions: fetchBudgetOptions,
     submitBooking: submitBooking,
     submitPartnership: submitPartnership,
     submitContactLead: submitContactLead
@@ -258,6 +267,27 @@
       }
     }).catch(function (error) {
       console.error("Failed to load homepage CMS content, showing static fallback.", error);
+    });
+  }());
+
+  /* About page: render live hero copy */
+  (function () {
+    var title = document.querySelector(".about-title");
+    if (!title) return;
+
+    window.LgndrySiteData.fetchCmsBySection("About").then(function (records) {
+      var byArea = {};
+      records.forEach(function (record) { byArea[record.area] = record; });
+      var hero = byArea["Hero copy"];
+      var subcopy = byArea["Hero subcopy"];
+
+      if (hero && hero.copy) title.textContent = hero.copy;
+      if (subcopy && subcopy.copy) {
+        var copyEl = document.querySelector(".about-copy");
+        if (copyEl) copyEl.textContent = subcopy.copy;
+      }
+    }).catch(function (error) {
+      console.error("Failed to load about CMS content, showing static fallback.", error);
     });
   }());
 

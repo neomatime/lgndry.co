@@ -8,9 +8,10 @@
   var supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
   var VAPID_PUBLIC_KEY = "BM_IQFlZnwcu7g4r34KumlYmAJWP0sH4O2_3SNhvqT2gF4hP3enZGP9vgnxZN-FTIpRrXyKByvyb0gMhEA7h4es";
   var chromeInitialized = false;
-  var TABLES = ["clients", "practice", "bookings", "projects", "partnerships", "collection", "galleries", "content", "journal", "cms", "invoices", "documents"];
+  var TABLES = ["clients", "practice", "bookings", "projects", "partnerships", "collection", "galleries", "content", "journal", "cms", "budgets", "invoices", "documents"];
   var state = { route: "dashboard", query: "", filter: "all", editing: null };
   var data = { activity: [] };
+  window.LgndryOpsSnapshot = function () { return data; };
 
   var icons = {
     dashboard: svg('<rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/>'),
@@ -24,6 +25,7 @@
     practice: svg('<path d="m4 20 4-1 10-10-3-3L5 16z"/><path d="m14 6 3 3"/>'),
     journal: svg('<path d="M7 3h10v18H7z"/><path d="M9 7h6M9 11h6M9 15h4"/>'),
     cms: svg('<path d="M4 4h16v16H4z"/><path d="M4 9h16M9 20V9"/>'),
+    budgets: svg('<path d="M12 3v18M8 6.5a3 3 0 0 1 3-2h1.5a3 3 0 0 1 0 6H11a3 3 0 0 0 0 6h1.5a3 3 0 0 0 3-2"/>'),
     invoices: svg('<path d="M7 3h7l4 4v14H7z"/><path d="M14 3v5h5M9 13h6M9 17h6"/>'),
     analytics: svg('<path d="M4 20V9M10 20V4M16 20v-7M22 20H2"/>'),
     documents: svg('<path d="M7 3h7l4 4v14H7z"/><path d="M14 3v5h5"/>'),
@@ -38,7 +40,7 @@
     ["projects", "Projects"], ["partnerships", "Brand Partnerships"],
     ["collection", "Collection"], ["galleries", "Gallery Delivery"],
     ["content", "Content Library"], ["practice", "Practice"], ["journal", "Journal"],
-    ["cms", "Website CMS"], ["invoices", "Invoices"], ["analytics", "Analytics"],
+    ["cms", "Website CMS"], ["budgets", "Form Pricing"], ["invoices", "Invoices"], ["analytics", "Analytics"],
     ["documents", "Documents"], ["settings", "Settings"]
   ];
 
@@ -119,7 +121,14 @@
       subtitle: "Update live website copy, imagery, collaborations and calls-to-action without code.",
       collection: "cms", display: "section", status: "status",
       columns: ["section", "area", "status", "updated"],
-      fields: [f("section", "Website section", "select", true, ["Homepage", "Practice", "Collection", "About", "Contact", "Collaborations", "Calls-to-action"]), f("area", "Content area", "text", true), f("copy", "Copy", "textarea"), f("image", "Image URL"), f("cta", "Call-to-action"), f("status", "Status", "select", true, ["Draft", "Ready", "Published", "Archived"]), f("updated", "Updated date", "date")]
+      fields: [f("section", "Website section", "select", true, ["Homepage", "About", "Practice", "Collection", "Contact", "Collaborations", "Calls-to-action"]), f("area", "Content area", "text", true), f("copy", "Copy", "textarea"), f("image", "Image URL"), f("cta", "Call-to-action"), f("status", "Status", "select", true, ["Draft", "Ready", "Published", "Archived"]), f("updated", "Updated date", "date")]
+    },
+    budgets: {
+      title: "Form Pricing",
+      subtitle: "Control the budget range options shown on the booking, contact and partnership forms.",
+      collection: "budgets", display: "label", status: "visibility",
+      columns: ["form", "label", "position", "visibility"],
+      fields: [f("form", "Form", "select", true, ["Booking", "Contact", "Partnership"]), f("label", "Budget range label", "text", true), f("position", "Order", "number", true), f("visibility", "Website visibility", "select", true, ["Visible", "Hidden", "Archived"])]
     },
     documents: {
       title: "Documents",
@@ -435,7 +444,10 @@
 
   function renderNav() {
     document.querySelector("[data-nav]").innerHTML = modules.map(function (module) {
-      return '<button type="button" class="nav-item ' + (state.route === module[0] ? "nav-item--active" : "") + '" data-route="' + module[0] + '">' + (icons[module[0]] || "") + "<span>" + module[1] + "</span></button>";
+      var schema = schemas[module[0]];
+      var count = schema ? active(schema.collection).length : null;
+      var countMarkup = count != null ? '<span class="nav-item__count">' + count + '</span>' : '';
+      return '<button type="button" class="nav-item ' + (state.route === module[0] ? "nav-item--active" : "") + '" data-route="' + module[0] + '">' + (icons[module[0]] || "") + "<span>" + module[1] + "</span>" + countMarkup + "</button>";
     }).join("");
   }
 
@@ -553,7 +565,7 @@
   }
 
   function singular(title) {
-    return title.replace("Brand Partnerships", "partnership").replace("Gallery Delivery", "gallery").replace("Content Library", "asset").replace("Invoices & Payments", "invoice").replace(/s$/, "").toLowerCase();
+    return title.replace("Brand Partnerships", "partnership").replace("Gallery Delivery", "gallery").replace("Content Library", "asset").replace("Invoices & Payments", "invoice").replace("Form Pricing", "budget option").replace(/s$/, "").toLowerCase();
   }
 
   function filtered(schema) {
@@ -765,7 +777,9 @@
     var avg = active("projects").length ? Math.round((paid + outstanding) / active("projects").length) : 0;
     var services = {};
     active("bookings").forEach(function (booking) { services[booking.service] = (services[booking.service] || 0) + 1; });
-    return '<section class="analytics-grid">' + metric("Monthly Revenue", money(paid), "Paid invoices", icons.invoices) + metric("Artwork Sales", money(art), "Edition value", icons.collection) + metric("Outstanding", money(outstanding), "Open invoices", icons.invoices) + metric("Average Project", money(avg), "Current project value", icons.analytics) + metric("Returning Clients", active("clients").filter(function (c) { return c.status === "Returning"; }).length, "Relationship health", icons.clients) + '</section><section class="split-grid"><article class="panel"><div class="panel__header"><span class="panel__label">Top Services</span></div><div class="bar-list">' + Object.keys(services).map(function (name) { return barRow(name, services[name], Math.min(100, services[name] * 28)); }).join("") + '</div></article><article class="panel"><div class="panel__header"><span class="panel__label">Revenue by Client</span></div><div class="bar-list">' + active("clients").map(function (client) { var sum = active("invoices").filter(function (invoice) { return invoice.client === client.id; }).reduce(sumAmount, 0); return barRow(client.name, money(sum), Math.min(100, sum / 250)); }).join("") + "</div></article></section>";
+    var topServicesRows = Object.keys(services).map(function (name) { return barRow(name, services[name], Math.min(100, services[name] * 28)); }).join("");
+    var revenueByClientRows = active("clients").map(function (client) { var sum = active("invoices").filter(function (invoice) { return invoice.client === client.id; }).reduce(sumAmount, 0); return barRow(client.name, money(sum), Math.min(100, sum / 250)); }).join("");
+    return '<section class="analytics-grid">' + metric("Monthly Revenue", money(paid), "Paid invoices", icons.invoices) + metric("Artwork Sales", money(art), "Edition value", icons.collection) + metric("Outstanding", money(outstanding), "Open invoices", icons.invoices) + metric("Average Project", money(avg), "Current project value", icons.analytics) + metric("Returning Clients", active("clients").filter(function (c) { return c.status === "Returning"; }).length, "Relationship health", icons.clients) + '</section><section class="split-grid"><article class="panel"><div class="panel__header"><span class="panel__label">Top Services</span></div><div class="bar-list">' + (topServicesRows || '<p class="empty-state">No bookings yet.</p>') + '</div></article><article class="panel"><div class="panel__header"><span class="panel__label">Revenue by Client</span></div><div class="bar-list">' + (revenueByClientRows || '<p class="empty-state">No clients yet.</p>') + "</div></article></section>";
   }
 
   function barRow(labelText, value, width) {
@@ -1052,12 +1066,20 @@
     });
   }
 
+  function showLoadingGate() {
+    document.querySelector("[data-auth-gate]").style.display = "none";
+    document.querySelector("[data-ops-shell]").style.display = "none";
+    document.querySelector("[data-loading-gate]").style.display = "";
+  }
+
   function showApp() {
+    document.querySelector("[data-loading-gate]").style.display = "none";
     document.querySelector("[data-auth-gate]").style.display = "none";
     document.querySelector("[data-ops-shell]").style.display = "";
   }
 
   function showAuthGate(message) {
+    document.querySelector("[data-loading-gate]").style.display = "none";
     document.querySelector("[data-ops-shell]").style.display = "none";
     document.querySelector("[data-auth-gate]").style.display = "";
     var errorEl = document.querySelector("[data-auth-error]");
@@ -1065,6 +1087,7 @@
   }
 
   function bootAfterAuth() {
+    showLoadingGate();
     loadRemoteData().then(function (remoteData) {
       if (!hasAnyRemoteRecords(remoteData)) return migrateLocalData().then(loadRemoteData);
       return remoteData;
@@ -1089,11 +1112,13 @@
       var form = event.currentTarget;
       var submitButton = document.querySelector("[data-auth-submit]");
       submitButton.disabled = true;
+      submitButton.textContent = "Signing in...";
       supabaseClient.auth.signInWithPassword({
         email: form.elements.email.value.trim(),
         password: form.elements.password.value
       }).then(function (result) {
         submitButton.disabled = false;
+        submitButton.textContent = "Sign In";
         if (result.error) {
           document.querySelector("[data-auth-error]").textContent = result.error.message;
           return;
@@ -1101,6 +1126,7 @@
         form.reset();
       }).catch(function (error) {
         submitButton.disabled = false;
+        submitButton.textContent = "Sign In";
         document.querySelector("[data-auth-error]").textContent = error.message;
       });
     });

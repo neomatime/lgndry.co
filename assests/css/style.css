@@ -2763,6 +2763,30 @@ body {
   color: var(--text-secondary);
 }
 
+.form-success__icon {
+  color: var(--text-primary);
+  margin-bottom: 6px;
+}
+
+.contact-form__section--success {
+  justify-items: start;
+  padding: 32px 0 8px;
+  animation: form-success-in 0.5s ease;
+}
+
+.contact-form__section--success h3 {
+  margin: 0;
+  font-family: 'Cormorant Garamond', serif;
+  font-size: clamp(1.8rem, 2.6vw, 2.4rem);
+  font-weight: 400;
+  line-height: 1.15;
+}
+
+@keyframes form-success-in {
+  from { opacity: 0; transform: translateY(8px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
 .contact-form__error {
   grid-column: 1 / -1;
   margin: 4px 0 0;
@@ -3415,6 +3439,14 @@ body {
   font-size: clamp(2rem, 3vw, 2.8rem);
   font-weight: 400;
   line-height: 1.08;
+}
+
+.booking-modal__success {
+  animation: form-success-in 0.5s ease;
+}
+
+.booking-modal__success .form-success__icon {
+  margin-bottom: 18px;
 }
 
 .booking-modal__review dl {

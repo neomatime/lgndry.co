@@ -800,10 +800,28 @@
   cartButton = createCartButton();
   updateButton();
 }());
+/* Shared: replace a budget <select>'s options with live values from the Command Center */
+function populateBudgetSelect(select, form) {
+  if (!select || !window.LgndrySiteData || !window.LgndrySiteData.fetchBudgetOptions) return;
+  var previousValue = select.value;
+  window.LgndrySiteData.fetchBudgetOptions(form).then(function (labels) {
+    if (!labels.length) return;
+    select.innerHTML = '<option value="">Select budget range</option>' + labels.map(function (label) {
+      return '<option>' + label + '</option>';
+    }).join('');
+    if (previousValue && labels.indexOf(previousValue) !== -1) select.value = previousValue;
+  }).catch(function (error) {
+    console.error('Failed to load live budget options, showing static fallback.', error);
+  });
+}
 /* Contact form: two-phase lead qualification */
 (function () {
   var forms = document.querySelectorAll('[data-contact-form]');
   if (!forms.length) return;
+
+  for (var f = 0; f < forms.length; f++) {
+    populateBudgetSelect(forms[f].querySelector('[name="budget_range"]'), 'Contact');
+  }
 
   function validatePhase(phase) {
     var fields = phase.querySelectorAll('input, select, textarea');
@@ -857,7 +875,12 @@
     }
 
     window.LgndrySiteData.submitContactLead(fields).then(function () {
-      form.innerHTML = '<div class="contact-form__section"><span>Message sent</span><p>Thank you for reaching out. We will be in touch within 24 hours.</p></div>';
+      form.innerHTML = '<div class="contact-form__section contact-form__section--success">' +
+        '<svg class="form-success__icon" width="48" height="48" viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><circle cx="24" cy="24" r="22" stroke="currentColor" stroke-width="1"/><path d="M15 24.5L21 30.5L33 17.5" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/></svg>' +
+        '<h3>Message sent</h3>' +
+        '<p>Thank you for reaching out. We will be in touch within 24 hours.</p>' +
+      '</div>';
+      form.scrollIntoView({ behavior: 'smooth', block: 'center' });
     }).catch(function (error) {
       console.error('Contact form submission failed', error);
       handleContactFailure(submitBtn);
@@ -1215,6 +1238,7 @@
     if (!modal) {
       modal = createModal();
       bindModal();
+      populateBudgetSelect(modal.querySelector('select[name="budget"]'), 'Booking');
     }
     lastFocused = trigger || document.activeElement;
     resetModal();
@@ -1333,7 +1357,15 @@
       company: getValue('company'),
       budget: getValue('budget')
     }).then(function () {
-      if (review) review.innerHTML = '<h3>Request sent</h3><p>Thank you — your booking enquiry has been sent to LGNDRY.Co. We will be in touch within 24 hours.</p>';
+      if (review) {
+        review.innerHTML = '<div class="booking-modal__success">' +
+          '<svg class="form-success__icon" width="48" height="48" viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><circle cx="24" cy="24" r="22" stroke="currentColor" stroke-width="1"/><path d="M15 24.5L21 30.5L33 17.5" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/></svg>' +
+          '<h3>Request sent</h3>' +
+          '<p>Thank you — your booking enquiry has been sent to LGNDRY.Co. We will be in touch within 24 hours.</p>' +
+        '</div>';
+      }
+      var scrollPanel = modal.querySelector('.booking-modal__panel');
+      if (scrollPanel) scrollPanel.scrollTop = 0;
       if (next) next.hidden = true;
       if (back) back.hidden = true;
     }).catch(function (error) {
@@ -1687,6 +1719,7 @@
     if (!modal) {
       modal = createModal();
       bindModal();
+      populateBudgetSelect(modal.querySelector('select[name="partner_budget"]'), 'Partnership');
     }
     lastFocused = trigger || document.activeElement;
     resetModal();
@@ -1806,7 +1839,15 @@
       contact_phone: getValue('contact_phone'),
       partner_budget: getValue('partner_budget')
     }).then(function () {
-      if (review) review.innerHTML = '<h3>Application sent</h3><p>Thank you — your partnership application has been sent to LGNDRY.Co. We will be in touch within 48 hours.</p>';
+      if (review) {
+        review.innerHTML = '<div class="booking-modal__success">' +
+          '<svg class="form-success__icon" width="48" height="48" viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><circle cx="24" cy="24" r="22" stroke="currentColor" stroke-width="1"/><path d="M15 24.5L21 30.5L33 17.5" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/></svg>' +
+          '<h3>Application sent</h3>' +
+          '<p>Thank you — your partnership application has been sent to LGNDRY.Co. We will be in touch within 48 hours.</p>' +
+        '</div>';
+      }
+      var scrollPanel = modal.querySelector('.booking-modal__panel');
+      if (scrollPanel) scrollPanel.scrollTop = 0;
       if (next) next.hidden = true;
       if (back) back.hidden = true;
     }).catch(function (error) {

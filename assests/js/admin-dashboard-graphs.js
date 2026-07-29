@@ -42,6 +42,33 @@
     return '<div class="graph-bar"><span>' + label + '</span><div class="graph-bar__track"><span style="width:' + width + '%"></span></div><strong>' + value + "</strong></div>";
   }
 
+  function weeklyActivityBuckets() {
+    var snapshot = window.LgndryOpsSnapshot ? window.LgndryOpsSnapshot() : null;
+    var activity = (snapshot && snapshot.activity) || [];
+    var buckets = [0, 0, 0, 0, 0, 0];
+    var now = Date.now();
+    var weekMs = 7 * 24 * 60 * 60 * 1000;
+    activity.forEach(function (entry) {
+      var t = new Date(entry.at).getTime();
+      if (isNaN(t)) return;
+      var index = Math.floor((now - t) / weekMs);
+      if (index >= 0 && index < 6) buckets[5 - index]++;
+    });
+    return buckets;
+  }
+
+  function momentumMarkup() {
+    var buckets = weeklyActivityBuckets();
+    var total = buckets.reduce(function (sum, count) { return sum + count; }, 0);
+    if (!total) return { total: 0, markup: '<p class="empty-state">No activity yet.</p>' };
+    var max = Math.max.apply(null, buckets);
+    var bars = buckets.map(function (count) {
+      var height = Math.max(8, Math.round((count / max) * 100));
+      return '<span style="height:' + height + '%"></span>';
+    }).join("");
+    return { total: total, markup: '<div class="graph-line">' + bars + "</div>" };
+  }
+
   function graphMarkup() {
     var current = metrics();
     var activeProjects = numberFromText(current["Active Projects"]);
@@ -51,11 +78,12 @@
     var pipeline = numberFromText(current["Partnership Pipeline"]);
     var revenueMax = Math.max(outstandingInvoices, collectionSales, 1);
     var opsMax = Math.max(activeProjects, upcomingBookings, pipeline, 1);
+    var momentum = momentumMarkup();
 
     return '<section class="dashboard-graphs" aria-label="Command center graphs">' +
       '<article class="graph-panel"><div><div class="graph-panel__head"><span class="panel__label">Revenue Pulse</span><strong class="graph-panel__value">' + (current["Collection Sales"] || "R0") + '</strong></div><div class="graph-bars">' + bar("Sales", collectionSales, revenueMax) + bar("Open", outstandingInvoices, revenueMax) + '</div></div></article>' +
       '<article class="graph-panel"><div><div class="graph-panel__head"><span class="panel__label">Operations Load</span><strong class="graph-panel__value">' + (activeProjects + upcomingBookings + pipeline) + '</strong></div><div class="graph-bars">' + bar("Projects", activeProjects, opsMax) + bar("Bookings", upcomingBookings, opsMax) + bar("Pipeline", pipeline, opsMax) + '</div></div></article>' +
-      '<article class="graph-panel"><div><div class="graph-panel__head"><span class="panel__label">Studio Momentum</span><strong class="graph-panel__value">' + upcomingBookings + '</strong></div><div class="graph-line"><span style="height:34%"></span><span style="height:56%"></span><span style="height:42%"></span><span style="height:78%"></span><span style="height:64%"></span><span style="height:88%"></span></div></div></article>' +
+      '<article class="graph-panel"><div><div class="graph-panel__head"><span class="panel__label">Studio Momentum</span><strong class="graph-panel__value">' + momentum.total + '</strong></div>' + momentum.markup + "</div></article>" +
       "</section>";
   }
 

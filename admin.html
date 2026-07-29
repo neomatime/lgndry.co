@@ -386,6 +386,41 @@
       font-size: 0.78rem;
     }
 
+    .loading-gate {
+      min-height: 100vh;
+      display: grid;
+      place-items: center;
+      padding: 24px;
+    }
+
+    .loading-gate__mark {
+      display: grid;
+      justify-items: center;
+      gap: 18px;
+    }
+
+    .loading-gate__spinner {
+      width: 30px;
+      height: 30px;
+      border-radius: 999px;
+      border: 1px solid var(--line);
+      border-top-color: var(--text);
+      animation: loading-gate-spin 0.8s linear infinite;
+    }
+
+    .loading-gate__mark p {
+      margin: 0;
+      font-size: 0.72rem;
+      font-weight: 500;
+      letter-spacing: 0.14em;
+      text-transform: uppercase;
+      color: var(--muted);
+    }
+
+    @keyframes loading-gate-spin {
+      to { transform: rotate(360deg); }
+    }
+
     .dashboard-grid {
       display: grid;
       gap: 14px;
@@ -634,6 +669,12 @@
       <button class="primary-btn" type="submit" data-auth-submit>Sign In</button>
       <p class="auth-card__error" data-auth-error></p>
     </form>
+  </div>
+  <div class="loading-gate" data-loading-gate style="display:none">
+    <div class="loading-gate__mark">
+      <span class="loading-gate__spinner" aria-hidden="true"></span>
+      <p>Loading studio data&hellip;</p>
+    </div>
   </div>
   <div class="ops-shell" data-ops-shell style="display:none">
     <aside class="ops-sidebar" aria-label="Command center navigation">

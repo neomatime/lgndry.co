@@ -7,7 +7,7 @@
 
 .ops-app-shell .nav-item {
   display: grid;
-  grid-template-columns: 20px minmax(0, 1fr);
+  grid-template-columns: 20px minmax(0, 1fr) auto;
   align-items: center;
   gap: 14px;
   min-height: auto;
@@ -27,6 +27,23 @@
 
 .ops-app-shell .nav-item span {
   text-align: left;
+}
+
+.ops-app-shell .nav-item__count {
+  justify-self: end;
+  min-width: 20px;
+  padding: 1px 6px;
+  border-radius: 999px;
+  background: var(--panel-soft);
+  color: var(--muted);
+  font-size: 0.7rem;
+  font-weight: 500;
+  line-height: 1.5;
+  text-align: center;
+}
+
+.ops-app-shell .nav-item--active .nav-item__count {
+  color: var(--text);
 }
 
 .ops-app-shell .nav-item--active,
