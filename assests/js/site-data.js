@@ -77,8 +77,18 @@
     });
   }
 
+  function newUuid() {
+    if (window.crypto && window.crypto.randomUUID) return window.crypto.randomUUID();
+    return "xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx".replace(/[xy]/g, function (char) {
+      var random = Math.random() * 16 | 0;
+      var value = char === "x" ? random : (random & 0x3 | 0x8);
+      return value.toString(16);
+    });
+  }
+
   function createLeadClient(fields) {
     var payload = {
+      id: newUuid(),
       name: fields.name || "",
       type: fields.company ? "Company" : "Individual",
       contact: fields.name || "",
@@ -87,9 +97,9 @@
       status: "Lead",
       notes: fields.notes || ""
     };
-    return client.from("clients").insert(payload).select().single().then(function (result) {
+    return client.from("clients").insert(payload).then(function (result) {
       if (result.error) throw result.error;
-      return result.data;
+      return payload;
     });
   }
 
