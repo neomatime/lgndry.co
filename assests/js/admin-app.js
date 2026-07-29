@@ -6,6 +6,7 @@
   var SUPABASE_URL = "https://tscaluhtfrvwlwjybfsg.supabase.co";
   var SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InRzY2FsdWh0ZnJ2d2x3anliZnNnIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODM0MjIwNTUsImV4cCI6MjA5ODk5ODA1NX0.dk7oFywIWf1xRTlYtfxHHe96VaQ6iFSPKMsCExy4e5A";
   var supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+  var VAPID_PUBLIC_KEY = "BM_IQFlZnwcu7g4r34KumlYmAJWP0sH4O2_3SNhvqT2gF4hP3enZGP9vgnxZN-FTIpRrXyKByvyb0gMhEA7h4es";
   var chromeInitialized = false;
   var TABLES = ["clients", "practice", "bookings", "projects", "partnerships", "collection", "galleries", "content", "journal", "cms", "invoices", "documents"];
   var state = { route: "dashboard", query: "", filter: "all", editing: null };
@@ -771,8 +772,66 @@
     return '<div class="bar-row"><span>' + esc(labelText) + '</span><div class="bar-track"><span style="width:' + width + '%"></span></div><strong>' + esc(value) + "</strong></div>";
   }
 
+  function pushSupported() {
+    return "serviceWorker" in navigator && "PushManager" in window && "Notification" in window;
+  }
+
+  function urlBase64ToUint8Array(base64String) {
+    var padding = "=".repeat((4 - (base64String.length % 4)) % 4);
+    var base64 = (base64String + padding).replace(/-/g, "+").replace(/_/g, "/");
+    var rawData = window.atob(base64);
+    var outputArray = new Uint8Array(rawData.length);
+    for (var i = 0; i < rawData.length; i++) {
+      outputArray[i] = rawData.charCodeAt(i);
+    }
+    return outputArray;
+  }
+
+  function getPushSubscription() {
+    if (!pushSupported()) return Promise.resolve(null);
+    return navigator.serviceWorker.register("/push-sw.js").then(function (registration) {
+      return registration.pushManager.getSubscription();
+    }).catch(function () {
+      return null;
+    });
+  }
+
+  function enablePushNotifications() {
+    return navigator.serviceWorker.register("/push-sw.js").then(function (registration) {
+      return Notification.requestPermission().then(function (permission) {
+        if (permission !== "granted") {
+          throw new Error("Notification permission was not granted.");
+        }
+        return registration.pushManager.subscribe({
+          userVisibleOnly: true,
+          applicationServerKey: urlBase64ToUint8Array(VAPID_PUBLIC_KEY)
+        });
+      });
+    }).then(function (subscription) {
+      var json = subscription.toJSON();
+      return supabaseClient.from("push_subscriptions").upsert({
+        endpoint: json.endpoint,
+        p256dh: json.keys.p256dh,
+        auth: json.keys.auth
+      }, { onConflict: "endpoint" }).then(function (result) {
+        if (result.error) throw result.error;
+        return subscription;
+      });
+    });
+  }
+
+  function disablePushNotifications() {
+    return getPushSubscription().then(function (subscription) {
+      if (!subscription) return;
+      var endpoint = subscription.endpoint;
+      return subscription.unsubscribe().then(function () {
+        return supabaseClient.from("push_subscriptions").delete().eq("endpoint", endpoint);
+      });
+    });
+  }
+
   function settings() {
-    return '<section class="split-grid"><article class="panel"><div class="panel__header"><div><span class="panel__label">Storage</span><h2 class="panel__title">Cloud Command Center Data</h2></div></div><p class="record-meta">All modules persist to the LGNDRY.Co Supabase database and sync across devices. Export a JSON backup any time, or import one to restore.</p><div class="toolbar" style="justify-content:flex-start;margin-top:18px"><button class="primary-btn" data-export type="button">Export JSON</button><button class="ghost-btn" data-import type="button">Import JSON</button><button class="danger-btn" data-reset type="button">Reset Demo Data</button></div></article><article class="panel"><div class="panel__header"><span class="panel__label">Operational Lifecycle</span></div><p>Enquiry - Client - Booking - Project - Shoot - Gallery Delivery - Invoice - Payment - Archive</p><p>Application - Discovery Call - Proposal - Contract - Onboarding - Active Partnership - Renewal</p><p>Artwork Upload - Purchase - Edition Tracking - Certificate - Shipping - Completed Order</p></article></section>';
+    return '<section class="split-grid"><article class="panel"><div class="panel__header"><div><span class="panel__label">Storage</span><h2 class="panel__title">Cloud Command Center Data</h2></div></div><p class="record-meta">All modules persist to the LGNDRY.Co Supabase database and sync across devices. Export a JSON backup any time, or import one to restore.</p><div class="toolbar" style="justify-content:flex-start;margin-top:18px"><button class="primary-btn" data-export type="button">Export JSON</button><button class="ghost-btn" data-import type="button">Import JSON</button><button class="danger-btn" data-reset type="button">Reset Demo Data</button></div></article><article class="panel"><div class="panel__header"><div><span class="panel__label">Alerts</span><h2 class="panel__title">Lead Notifications</h2></div></div><p class="record-meta">Get a push notification on this device the moment a booking, partnership application or contact-form lead comes in from the website - even when the Command Center isn\'t open.</p><p class="record-meta" data-push-status>Checking notification status...</p><div class="toolbar" style="justify-content:flex-start;margin-top:18px"><button class="primary-btn" data-push-toggle type="button" disabled>Enable Lead Alerts</button></div></article><article class="panel"><div class="panel__header"><span class="panel__label">Operational Lifecycle</span></div><p>Enquiry - Client - Booking - Project - Shoot - Gallery Delivery - Invoice - Payment - Archive</p><p>Application - Discovery Call - Proposal - Contract - Onboarding - Active Partnership - Renewal</p><p>Artwork Upload - Purchase - Edition Tracking - Certificate - Shipping - Completed Order</p></article></section>';
   }
 
   function bindSettings() {
@@ -814,6 +873,49 @@
       confirmDialog("All cloud command center data will be replaced with starter records. This cannot be undone.", { title: "Reset demo data?", confirmLabel: "Reset" }).then(function (confirmed) {
         if (!confirmed) return;
         resetDemoData();
+      });
+    });
+
+    var pushStatusEl = document.querySelector("[data-push-status]");
+    var pushToggleBtn = document.querySelector("[data-push-toggle]");
+
+    function refreshPushUI(subscription) {
+      if (!pushSupported()) {
+        pushStatusEl.textContent = "Push notifications aren't supported in this browser.";
+        pushToggleBtn.disabled = true;
+        return;
+      }
+      if (subscription) {
+        pushStatusEl.textContent = "Lead alerts are ON for this device.";
+        pushToggleBtn.textContent = "Disable Lead Alerts";
+        pushToggleBtn.className = "ghost-btn";
+      } else {
+        pushStatusEl.textContent = "Lead alerts are OFF for this device.";
+        pushToggleBtn.textContent = "Enable Lead Alerts";
+        pushToggleBtn.className = "primary-btn";
+      }
+      pushToggleBtn.disabled = false;
+    }
+
+    getPushSubscription().then(refreshPushUI);
+
+    pushToggleBtn.addEventListener("click", function () {
+      pushToggleBtn.disabled = true;
+      getPushSubscription().then(function (existing) {
+        if (existing) {
+          return disablePushNotifications().then(function () {
+            toast("Lead alerts turned off on this device.");
+            return null;
+          });
+        }
+        return enablePushNotifications().then(function (subscription) {
+          toast("Lead alerts turned on for this device.");
+          return subscription;
+        });
+      }).then(refreshPushUI).catch(function (error) {
+        console.error(error);
+        toast("Could not update lead alerts: " + error.message);
+        pushToggleBtn.disabled = false;
       });
     });
   }
