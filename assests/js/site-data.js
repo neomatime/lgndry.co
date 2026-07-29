@@ -199,6 +199,9 @@
       var acquire = unavailable
         ? '<span class="work__unavailable">' + escapeHtml(item.availability) + "</span>"
         : '<a class="work__acquire" href="mailto:info@lgndry-co.co.za?subject=Acquire%20%E2%80%94%20' + encodeURIComponent(item.title || "") + '"><span>Add to cart</span><svg width="40" height="8" viewBox="0 0 40 8" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><path d="M0 4H38M38 4L34 1M38 4L34 7" stroke="currentColor" stroke-width="1"/></svg></a>';
+      var sizes = String(item.sizes || "").split("\n").map(function (line) { return line.trim(); }).filter(Boolean);
+      if (!sizes.length) sizes = ["50 × 70 cm", "60 × 90 cm", "70 × 100 cm"];
+      var sizeOptions = sizes.map(function (size) { return "<option>" + escapeHtml(size) + "</option>"; }).join("");
       return '<article class="work" data-category="' + categoryToFilter(item.category) + '">' +
         '<figure class="work__media" data-images=\'' + escapeHtml(JSON.stringify(item.imageList || [item.image])) + '\'><img src="' + escapeHtml(item.image) + '" data-full-src="' + escapeHtml(item.image) + '" loading="lazy" decoding="async" alt="' + escapeHtml(item.title) + '"></figure>' +
         '<div class="work__body">' +
@@ -206,7 +209,7 @@
           '<p class="work__year">' + escapeHtml(item.year || "") + "</p>" +
           '<div class="work__row">' +
             '<div class="work__meta"><p>' + escapeHtml(item.remaining || 0) + " available</p><p>" + escapeHtml(item.seriesLabel || "Archival Pigment Print") + "</p>" +
-            '<label class="work__size">Size:<select aria-label="Print size for ' + escapeHtml(item.title) + '"><option>50 &times; 70 cm</option><option>60 &times; 90 cm</option><option>70 &times; 100 cm</option></select></label></div>' +
+            '<label class="work__size">Size:<select aria-label="Print size for ' + escapeHtml(item.title) + '">' + sizeOptions + "</select></label></div>" +
             '<p class="work__price">' + formatPrice(item.price) + "</p>" +
           "</div>" +
           acquire +

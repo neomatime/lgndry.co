@@ -86,7 +86,7 @@
       subtitle: "Manage art listings, editions, sales, certificates and delivery tracking.",
       collection: "collection", display: "title", status: "availability",
       columns: ["title", "collectionName", "price", "remaining", "availability"],
-      fields: [f("title", "Artwork title", "text", true), f("collectionName", "Collection name", "text", true), f("category", "Category", "select", true, ["Art Print", "Studio Art", "Limited Edition"]), f("year", "Year", "number"), f("description", "Description / story", "textarea"), f("image", "Main image URL", "text", true), f("images", "Additional images (one URL per line, optional)", "textarea"), f("price", "Price", "number", true), f("editionSize", "Edition size", "number", true), f("sold", "Editions sold", "number", true), f("remaining", "Editions remaining", "number"), f("availability", "Availability", "select", true, ["Available", "Reserved", "Sold Out", "Hidden"]), f("customer", "Latest customer"), f("editionNumber", "Latest edition number", "number"), f("payment", "Payment status", "select", false, ["Pending In Person", "Paid In Person", "Reserved", "Cancelled"]), f("shipping", "Shipping status", "select", false, ["Not Started", "Preparing", "Shipped", "Delivered", "Collected"]), f("tracking", "Tracking number"), f("certificate", "Certificate status", "select", false, ["Not Issued", "Issued", "Archived"])]
+      fields: [f("title", "Artwork title", "text", true), f("collectionName", "Collection name", "text", true), f("category", "Category", "select", true, ["Art Print", "Studio Art", "Limited Edition"]), f("year", "Year", "number"), f("description", "Description / story", "textarea"), f("image", "Main image URL", "text", true), f("images", "Additional images (one URL per line, optional)", "textarea"), f("sizes", "Print sizes offered (one per line)", "textarea", true), f("price", "Price", "number", true), f("editionSize", "Edition size", "number", true), f("sold", "Editions sold", "number", true), f("remaining", "Editions remaining", "number"), f("availability", "Availability", "select", true, ["Available", "Reserved", "Sold Out", "Hidden"]), f("customer", "Latest customer"), f("editionNumber", "Latest edition number", "number"), f("payment", "Payment status", "select", false, ["Pending In Person", "Paid In Person", "Reserved", "Cancelled"]), f("shipping", "Shipping status", "select", false, ["Not Started", "Preparing", "Shipped", "Delivered", "Collected"]), f("tracking", "Tracking number"), f("certificate", "Certificate status", "select", false, ["Not Issued", "Issued", "Archived"])]
     },
     invoices: {
       title: "Invoices & Payments",
@@ -773,15 +773,16 @@
 
   function renderField(field, value) {
     var wide = field.type === "textarea" || ["notes", "brief", "copy", "body", "deliverables", "tasks", "files", "comments"].indexOf(field.name) > -1;
+    var safeValue = (value === undefined || value === null) ? "" : value;
     var control = "";
     if (field.type === "select") {
-      control = '<select name="' + field.name + '" ' + (field.required ? "required" : "") + '><option value="">Select</option>' + field.options.map(function (option) { return '<option ' + (String(value || "") === option ? "selected" : "") + ' value="' + esc(option) + '">' + esc(option) + "</option>"; }).join("") + "</select>";
+      control = '<select name="' + field.name + '" ' + (field.required ? "required" : "") + '><option value="">Select</option>' + field.options.map(function (option) { return '<option ' + (String(safeValue) === option ? "selected" : "") + ' value="' + esc(option) + '">' + esc(option) + "</option>"; }).join("") + "</select>";
     } else if (field.type === "relation") {
-      control = '<select name="' + field.name + '" ' + (field.required ? "required" : "") + '><option value="">Unlinked</option>' + active(field.collection).map(function (record) { return '<option ' + (String(value || "") === record.id ? "selected" : "") + ' value="' + record.id + '">' + esc(label(field.collection, record.id)) + "</option>"; }).join("") + "</select>";
+      control = '<select name="' + field.name + '" ' + (field.required ? "required" : "") + '><option value="">Unlinked</option>' + active(field.collection).map(function (record) { return '<option ' + (String(safeValue) === record.id ? "selected" : "") + ' value="' + record.id + '">' + esc(label(field.collection, record.id)) + "</option>"; }).join("") + "</select>";
     } else if (field.type === "textarea") {
-      control = '<textarea name="' + field.name + '" ' + (field.required ? "required" : "") + ' placeholder="' + esc(field.placeholder) + '">' + esc(value || "") + "</textarea>";
+      control = '<textarea name="' + field.name + '" ' + (field.required ? "required" : "") + ' placeholder="' + esc(field.placeholder) + '">' + esc(safeValue) + "</textarea>";
     } else {
-      control = '<input name="' + field.name + '" type="' + field.type + '" ' + (field.required ? "required" : "") + ' value="' + esc(value || "") + '" placeholder="' + esc(field.placeholder) + '">';
+      control = '<input name="' + field.name + '" type="' + field.type + '" ' + (field.required ? "required" : "") + ' value="' + esc(safeValue) + '" placeholder="' + esc(field.placeholder) + '">';
     }
     return '<label class="form-field ' + (wide ? "form-field--wide" : "") + '"><span class="form-label">' + esc(field.label) + (field.required ? " *" : "") + "</span>" + control + '<span class="error-text" data-error="' + field.name + '"></span></label>';
   }
