@@ -1882,76 +1882,10 @@ function populateBudgetSelect(select, form) {
 }());
 
 
-/* Collection: canonical order, pricing, and availability */
-(function () {
-  var grid = document.querySelector('.collection-grid');
-  var catalog = window.LgndryCollectionCatalog;
-  if (!grid || !catalog || !catalog.length) return;
-
-  function entryFor(title) {
-    var normalized = String(title || '').trim().toLowerCase();
-    return catalog.find(function (entry) {
-      return entry.aliases.indexOf(normalized) !== -1 ||
-        entry.title.toLowerCase() === normalized;
-    });
-  }
-
-  function formatPrice(value) {
-    return 'R ' + Math.round(Number(value) || 0).toString().replace(/B(?=(d{3})+(?!d))/g, ',');
-  }
-
-  function applyCatalog() {
-    var cards = Array.prototype.slice.call(grid.querySelectorAll('.work'));
-    var byEntry = [];
-
-    cards.forEach(function (card) {
-      var title = card.querySelector('.work__title');
-      if (!title) return;
-      var entry = entryFor(title.textContent);
-      if (!entry) return;
-
-      title.textContent = entry.title;
-
-      var price = card.querySelector('.work__price');
-      if (price) price.textContent = formatPrice(entry.price);
-
-      var meta = card.querySelectorAll('.work__meta p');
-      if (meta[0]) meta[0].textContent = entry.remaining + ' available';
-      if (meta[1] && entry.seriesLabel) meta[1].textContent = entry.seriesLabel;
-
-      byEntry[catalog.indexOf(entry)] = card;
-    });
-
-    var current = Array.prototype.slice.call(grid.querySelectorAll(':scope > .work'));
-    var desired = byEntry.filter(Boolean);
-    var alreadyOrdered = desired.length === current.length && desired.every(function (card, index) {
-      return current[index] === card;
-    });
-
-    if (!alreadyOrdered) {
-      desired.forEach(function (card) { grid.appendChild(card); });
-    }
-  }
-
-  applyCatalog();
-
-  if ('MutationObserver' in window) {
-    new MutationObserver(applyCatalog).observe(grid, { childList: true });
-  }
-}());
-
 /* Collection: artwork series carousels */
 (function () {
   var grid = document.querySelector('.collection-grid');
   if (!grid) return;
-
-  var base = 'assests/images/art/studio art/STUDIO ART (FB)/';
-  var seriesByTitle = {
-    'composure': [base + 'Composure 1.jpeg', base + 'Composure 2.jpeg', base + 'Composure 3.jpeg'],
-    'dineo': [base + 'DINEO 1.jpeg', base + 'DINEO 2.jpeg', base + 'DINEO 3.jpeg'],
-    'mmago poi': [base + 'Mmago Poi 1.jpeg', base + 'Mmago Poi 2.jpeg', base + 'Mmago Poi 3.jpeg'],
-    'tsakani': [base + 'Tsakani 1.jpeg', base + 'Tsakani 2.jpeg', base + 'Tsakani 3.jpeg']
-  };
 
   function showSlide(media, index) {
     var images = JSON.parse(media.getAttribute('data-series-images'));
@@ -1980,8 +1914,10 @@ function populateBudgetSelect(select, form) {
     if (!titleEl || !media || !image) return;
 
     var title = titleEl.textContent.trim();
-    var images = seriesByTitle[title.toLowerCase()];
-    if (!images) return;
+    var raw = media.getAttribute('data-images');
+    var images;
+    try { images = raw ? JSON.parse(raw) : null; } catch (error) { images = null; }
+    if (!images || images.length < 2) return;
 
     card.setAttribute('data-series-ready', 'true');
     media.classList.add('work__media--series');

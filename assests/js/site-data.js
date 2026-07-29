@@ -1,27 +1,6 @@
 (function () {
   "use strict";
 
-  var COLLECTION_CATALOG = [
-    { aliases: ["modishi wa lebowa"], title: "Modishi Wa Lebowa", price: 75000, remaining: 1, image: "assests/images/art/outdoor/ART PRINT (BFITM)/MODISHI WA LEBOWA CLEAN.jpg" },
-    { aliases: ["yellow bone"], title: "Yellow Bone", price: 25000, remaining: 8, image: "assests/images/art/outdoor/ART PRINT (BFITM)/YELLOW BONE.jpeg" },
-    { aliases: ["moshole", "mashole"], title: "Mashole", price: 100000, remaining: 3 },
-    { aliases: ["letlapa"], title: "Letlapa", price: 18000, remaining: 13 },
-    { aliases: ["gae"], title: "Gae", price: 35000, remaining: 6 },
-    { aliases: ["composure"], title: "Composure", price: 35000, remaining: 8 },
-    { aliases: ["mmago poi"], title: "Mmago Poi", price: 55000, remaining: 6 },
-    { aliases: ["tsakani"], title: "Tsakani", price: 65000, remaining: 5, seriesLabel: "A series of 3 images" },
-    { aliases: ["dineo"], title: "Dineo", price: 60000, remaining: 6, seriesLabel: "A series of 3 images" }
-  ];
-
-  function catalogEntry(title) {
-    var normalized = String(title || "").trim().toLowerCase();
-    return COLLECTION_CATALOG.find(function (entry) {
-      return entry.aliases.indexOf(normalized) !== -1;
-    });
-  }
-
-  window.LgndryCollectionCatalog = COLLECTION_CATALOG;
-
   if (!window.supabase) return;
 
   var SUPABASE_URL = "https://tscaluhtfrvwlwjybfsg.supabase.co";
@@ -37,22 +16,16 @@
 
   function fetchCollection() {
     return fetchTable("collection").then(function (items) {
-      return COLLECTION_CATALOG.map(function (entry) {
-        var item = items.find(function (candidate) {
-          return catalogEntry(candidate.title) === entry;
-        });
-        if (!item) return null;
-
+      return items.filter(function (item) {
+        return item.availability !== "Hidden";
+      }).map(function (item) {
         var normalized = {};
         Object.keys(item).forEach(function (key) { normalized[key] = item[key]; });
-        normalized.title = entry.title;
-        normalized.price = entry.price;
-        normalized.remaining = entry.remaining;
-        normalized.availability = entry.remaining > 0 ? "Available" : "Sold Out";
-        normalized.seriesLabel = entry.seriesLabel || "";
-        if (entry.image) normalized.image = entry.image;
+        var extraImages = String(item.images || "").split("\n").map(function (line) { return line.trim(); }).filter(Boolean);
+        normalized.imageList = item.image ? [item.image].concat(extraImages.filter(function (url) { return url !== item.image; })) : extraImages;
+        normalized.seriesLabel = normalized.imageList.length > 1 ? "A series of " + normalized.imageList.length + " images" : "";
         return normalized;
-      }).filter(Boolean);
+      });
     });
   }
   function fetchCmsBySection(section) {
@@ -227,7 +200,7 @@
         ? '<span class="work__unavailable">' + escapeHtml(item.availability) + "</span>"
         : '<a class="work__acquire" href="mailto:info@lgndry-co.co.za?subject=Acquire%20%E2%80%94%20' + encodeURIComponent(item.title || "") + '"><span>Add to cart</span><svg width="40" height="8" viewBox="0 0 40 8" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><path d="M0 4H38M38 4L34 1M38 4L34 7" stroke="currentColor" stroke-width="1"/></svg></a>';
       return '<article class="work" data-category="' + categoryToFilter(item.category) + '">' +
-        '<figure class="work__media"><img src="' + escapeHtml(item.image) + '" data-full-src="' + escapeHtml(item.image) + '" loading="lazy" decoding="async" alt="' + escapeHtml(item.title) + '"></figure>' +
+        '<figure class="work__media" data-images=\'' + escapeHtml(JSON.stringify(item.imageList || [item.image])) + '\'><img src="' + escapeHtml(item.image) + '" data-full-src="' + escapeHtml(item.image) + '" loading="lazy" decoding="async" alt="' + escapeHtml(item.title) + '"></figure>' +
         '<div class="work__body">' +
           "<h3 class=\"work__title\">" + escapeHtml(item.title) + "</h3>" +
           '<p class="work__year">' + escapeHtml(item.year || "") + "</p>" +
