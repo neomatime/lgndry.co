@@ -816,7 +816,6 @@
       toast("Please complete the required fields.");
       return;
     }
-    if (schema.collection === "collection") next.remaining = Number(next.editionSize || 0) - Number(next.sold || 0);
     var list = data[schema.collection];
     var index = list.findIndex(function (record) { return record.id === next.id; });
     if (index > -1) list[index] = next;
