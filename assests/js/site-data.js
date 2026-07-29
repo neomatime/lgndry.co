@@ -291,6 +291,46 @@
     });
   }());
 
+  /* Practice page: render live hero copy */
+  (function () {
+    var title = document.querySelector(".practice-title");
+    if (!title) return;
+
+    window.LgndrySiteData.fetchCmsBySection("Practice").then(function (records) {
+      var byArea = {};
+      records.forEach(function (record) { byArea[record.area] = record; });
+      var hero = byArea["Hero copy"];
+      var subcopy = byArea["Hero subcopy"];
+
+      if (hero && hero.copy) title.textContent = hero.copy;
+      if (subcopy && subcopy.copy) {
+        var copyEl = document.querySelector(".practice-lede");
+        if (copyEl) copyEl.textContent = subcopy.copy;
+      }
+    }).catch(function (error) {
+      console.error("Failed to load practice CMS content, showing static fallback.", error);
+    });
+  }());
+
+  /* Contact page: render live hero copy */
+  (function () {
+    var title = document.querySelector(".contact-title");
+    if (!title) return;
+
+    window.LgndrySiteData.fetchCmsBySection("Contact").then(function (records) {
+      var byArea = {};
+      records.forEach(function (record) { byArea[record.area] = record; });
+      var subcopy = byArea["Hero subcopy"];
+
+      if (subcopy && subcopy.copy) {
+        var copyEl = document.querySelector(".contact-hero__copy p");
+        if (copyEl) copyEl.textContent = subcopy.copy;
+      }
+    }).catch(function (error) {
+      console.error("Failed to load contact CMS content, showing static fallback.", error);
+    });
+  }());
+
   /* Practice page: render live service lists */
   (function () {
     var lists = document.querySelectorAll(".practice-service__list");

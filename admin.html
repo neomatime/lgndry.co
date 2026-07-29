@@ -345,6 +345,66 @@
 
     .popover-item:hover { background: var(--line); }
 
+    .global-search__results {
+      position: absolute;
+      top: calc(100% + 10px);
+      left: 0;
+      right: 0;
+      background: var(--panel);
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      box-shadow: 0 18px 40px rgba(0, 0, 0, 0.18);
+      padding: 8px;
+      z-index: 40;
+      display: none;
+      max-height: 360px;
+      overflow-y: auto;
+    }
+
+    .global-search__results.is-open { display: block; }
+
+    .global-search__item {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      width: 100%;
+      text-align: left;
+      background: none;
+      border: none;
+      padding: 10px;
+      border-radius: 8px;
+      color: var(--text);
+      font: inherit;
+      font-size: 0.86rem;
+      cursor: pointer;
+    }
+
+    .global-search__item:hover { background: var(--line); }
+
+    .global-search__type {
+      font-size: 0.66rem;
+      font-weight: 600;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      color: var(--muted);
+      white-space: nowrap;
+    }
+
+    .global-search__label {
+      flex: 1;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+
+    .global-search__empty {
+      margin: 0;
+      padding: 10px;
+      font-size: 0.82rem;
+      color: var(--muted);
+    }
+
     .auth-gate {
       min-height: 100vh;
       display: grid;
@@ -691,7 +751,7 @@
     <main class="ops-main" id="app">
       <header class="topbar">
         <div class="welcome"><h1 data-view-title>Welcome back, Dan.</h1><p data-view-subtitle>Here is what is happening with LGNDRY.Co today.</p></div>
-        <label class="search"><span class="sr-only">Search</span><input type="search" placeholder="Search anything..." data-global-search><svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><circle cx="11" cy="11" r="7"/><path d="M16.5 16.5L21 21"/></svg></label>
+        <label class="search"><span class="sr-only">Search</span><input type="search" placeholder="Search anything..." data-global-search autocomplete="off"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><circle cx="11" cy="11" r="7"/><path d="M16.5 16.5L21 21"/></svg><div class="global-search__results" data-search-results></div></label>
         <button class="theme-toggle" type="button" data-theme-toggle aria-label="Switch to light mode"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><circle cx="12" cy="12" r="4"/><path d="M12 2v3M12 19v3M2 12h3M19 12h3M4.9 4.9 7 7M17 17l2.1 2.1M19.1 4.9 17 7M7 17l-2.1 2.1"/></svg><span data-theme-label>Light mode</span></button>
         <div class="popover-anchor">
           <button class="icon-button" type="button" aria-label="Notifications" data-bell-toggle><svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M6 10a6 6 0 0 1 12 0v4l2 3H4l2-3z"/><path d="M10 20a2 2 0 0 0 4 0"/></svg></button>

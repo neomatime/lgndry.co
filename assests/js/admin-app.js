@@ -1152,9 +1152,71 @@
     render();
   });
 
+  function recordDisplayName(record) {
+    return record.name || record.title || record.service || record.number || record.company || record.section || "Record";
+  }
+
+  function globalSearchMatches(query) {
+    var q = query.trim().toLowerCase();
+    if (!q) return [];
+    var results = [];
+    Object.keys(schemas).forEach(function (route) {
+      var schema = schemas[route];
+      if (results.length >= 8 || !schema.collection) return;
+      active(schema.collection).forEach(function (record) {
+        if (results.length >= 8) return;
+        if (JSON.stringify(record).toLowerCase().indexOf(q) === -1) return;
+        results.push({ route: route, schema: schema, record: record });
+      });
+    });
+    return results;
+  }
+
+  function renderGlobalSearchResults(query) {
+    var panel = document.querySelector("[data-search-results]");
+    if (!panel) return;
+    var q = query.trim();
+    if (!q) {
+      panel.classList.remove("is-open");
+      panel.innerHTML = "";
+      return;
+    }
+    var matches = globalSearchMatches(q);
+    if (!matches.length) {
+      panel.innerHTML = '<p class="global-search__empty">No matches for &ldquo;' + esc(q) + '&rdquo;.</p>';
+      panel.classList.add("is-open");
+      return;
+    }
+    panel.innerHTML = matches.map(function (match, index) {
+      return '<button type="button" class="global-search__item" data-search-jump="' + index + '"><span class="global-search__label">' + esc(recordDisplayName(match.record)) + '</span><span class="global-search__type">' + esc(match.schema.title) + '</span></button>';
+    }).join("");
+    panel.classList.add("is-open");
+    panel.querySelectorAll("[data-search-jump]").forEach(function (button) {
+      button.addEventListener("click", function () {
+        var match = matches[Number(button.dataset.searchJump)];
+        if (!match) return;
+        state.route = match.route;
+        state.query = "";
+        state.filter = "all";
+        document.querySelector("[data-global-search]").value = "";
+        panel.classList.remove("is-open");
+        render();
+        openModal(match.schema, match.record);
+      });
+    });
+  }
+
   document.querySelector("[data-global-search]").addEventListener("input", function (event) {
     state.query = event.target.value;
-    render();
+    renderGlobalSearchResults(state.query);
+    if (schemas[state.route]) render();
+  });
+
+  document.addEventListener("click", function (event) {
+    var panel = document.querySelector("[data-search-results]");
+    if (!panel || !panel.classList.contains("is-open")) return;
+    if (event.target.closest(".search")) return;
+    panel.classList.remove("is-open");
   });
 
   document.querySelectorAll("[data-close-modal]").forEach(function (button) {
