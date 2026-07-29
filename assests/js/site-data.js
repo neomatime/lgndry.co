@@ -22,8 +22,7 @@
         var normalized = {};
         Object.keys(item).forEach(function (key) { normalized[key] = item[key]; });
         var extraImages = String(item.images || "").split("\n").map(function (line) { return line.trim(); }).filter(Boolean);
-        normalized.imageList = item.image ? [item.image].concat(extraImages.filter(function (url) { return url !== item.image; })) : extraImages;
-        normalized.seriesLabel = normalized.imageList.length > 1 ? "A series of " + normalized.imageList.length + " images" : "";
+        normalized.imageList = extraImages.length ? extraImages : [item.image];
         return normalized;
       });
     });
