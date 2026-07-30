@@ -9,7 +9,7 @@
   var VAPID_PUBLIC_KEY = "BM_IQFlZnwcu7g4r34KumlYmAJWP0sH4O2_3SNhvqT2gF4hP3enZGP9vgnxZN-FTIpRrXyKByvyb0gMhEA7h4es";
   var chromeInitialized = false;
   var TABLES = ["clients", "practice", "bookings", "projects", "partnerships", "collection", "galleries", "content", "journal", "cms", "budgets", "invoices", "documents"];
-  var state = { route: "dashboard", query: "", filter: "all", editing: null };
+  var state = { route: "dashboard", query: "", filter: "all", editing: null, columnFilters: {} };
   var data = { activity: [] };
   window.LgndryOpsSnapshot = function () { return data; };
 
@@ -86,7 +86,7 @@
       subtitle: "Manage art listings, editions, sales, certificates and delivery tracking.",
       collection: "collection", display: "title", status: "availability",
       columns: ["title", "collectionName", "price", "remaining", "availability"],
-      fields: [f("title", "Artwork title", "text", true), f("collectionName", "Collection name", "text", true), f("category", "Category", "select", true, ["Art Print", "Studio Art", "Limited Edition"]), f("year", "Year", "number"), f("description", "Description / story", "textarea"), f("image", "Main image URL", "text", true), f("images", "Additional images (one URL per line, optional)", "textarea"), f("seriesLabel", "Medium / series line (shown under 'available' count)", "text", true), f("sizes", "Print sizes offered (one per line)", "textarea", true), f("price", "Price", "number", true), f("editionSize", "Edition size", "number", true), f("sold", "Editions sold", "number", true), f("remaining", "Editions remaining", "number"), f("availability", "Availability", "select", true, ["Available", "Reserved", "Sold Out", "Hidden"]), f("customer", "Latest customer"), f("editionNumber", "Latest edition number", "number"), f("payment", "Payment status", "select", false, ["Pending In Person", "Paid In Person", "Reserved", "Cancelled"]), f("shipping", "Shipping status", "select", false, ["Not Started", "Preparing", "Shipped", "Delivered", "Collected"]), f("tracking", "Tracking number"), f("certificate", "Certificate status", "select", false, ["Not Issued", "Issued", "Archived"])]
+      fields: [f("title", "Artwork title", "text", true), f("collectionName", "Collection name", "text", true), f("category", "Category", "select", true, ["Art Print", "Studio Art", "Limited Edition"]), f("year", "Year", "number"), f("description", "Description / story", "textarea"), f("image", "Main image", "image", true), f("images", "Additional images (optional)", "imagelist"), f("seriesLabel", "Medium / series line (shown under 'available' count)", "text", true), f("sizes", "Print sizes offered (one per line)", "textarea", true), f("price", "Price", "number", true), f("editionSize", "Edition size", "number", true), f("sold", "Editions sold", "number", true), f("remaining", "Editions remaining", "number"), f("availability", "Availability", "select", true, ["Available", "Reserved", "Sold Out", "Hidden"]), f("customer", "Latest customer"), f("editionNumber", "Latest edition number", "number"), f("payment", "Payment status", "select", false, ["Pending In Person", "Paid In Person", "Reserved", "Cancelled"]), f("shipping", "Shipping status", "select", false, ["Not Started", "Preparing", "Shipped", "Delivered", "Collected"]), f("tracking", "Tracking number"), f("certificate", "Certificate status", "select", false, ["Not Issued", "Issued", "Archived"])]
     },
     invoices: {
       title: "Invoices & Payments",
@@ -101,7 +101,7 @@
       subtitle: "Build delivery links, monitor viewed/downloaded status and manage expiries.",
       collection: "galleries", display: "title", status: "status",
       columns: ["title", "client", "project", "expiry", "status"],
-      fields: [f("title", "Gallery title", "text", true), rel("client", "Client", "clients", true), rel("project", "Project", "projects"), f("files", "Image URLs (one per line)", "textarea", false, null, "assests/images/...\nassests/images/..."), f("expiry", "Expiry date", "date"), f("downloads", "Downloads enabled", "select", true, ["Enabled", "Disabled"]), f("password", "Password protection (optional)"), f("status", "Gallery status", "select", true, ["Draft", "Sent", "Viewed", "Downloaded", "Expired"])],
+      fields: [f("title", "Gallery title", "text", true), rel("client", "Client", "clients", true), rel("project", "Project", "projects"), f("files", "Gallery images", "imagelist"), f("expiry", "Expiry date", "date"), f("downloads", "Downloads enabled", "select", true, ["Enabled", "Disabled"]), f("password", "Password protection (optional)"), f("status", "Gallery status", "select", true, ["Draft", "Sent", "Viewed", "Downloaded", "Expired"])],
       actions: ["copyLink"]
     },
     content: {
@@ -109,21 +109,21 @@
       subtitle: "Search, tag and connect assets to clients, projects, galleries and campaigns.",
       collection: "content", display: "title", status: "status",
       columns: ["title", "client", "project", "category", "status"],
-      fields: [f("title", "Asset title", "text", true), rel("client", "Client", "clients"), rel("project", "Project", "projects"), f("shootDate", "Shoot date", "date"), f("category", "Category", "select", true, ["Raw", "Edited", "Social", "Campaign", "Archive", "Website"]), f("tags", "Tags"), f("fileType", "File type", "select", true, ["Image", "Video", "PDF", "Document", "Link"]), f("file", "File URL / path"), f("status", "Status", "select", true, ["Active", "Linked", "Archived"])]
+      fields: [f("title", "Asset title", "text", true), rel("client", "Client", "clients"), rel("project", "Project", "projects"), f("shootDate", "Shoot date", "date"), f("category", "Category", "select", true, ["Raw", "Edited", "Social", "Campaign", "Archive", "Website"]), f("tags", "Tags"), f("fileType", "File type", "select", true, ["Image", "Video", "PDF", "Document", "Link"]), f("file", "File", "file"), f("status", "Status", "select", true, ["Active", "Linked", "Archived"])]
     },
     journal: {
       title: "Journal",
       subtitle: "Plan, schedule and publish editorial stories for the website.",
       collection: "journal", display: "title", status: "status",
       columns: ["title", "slug", "category", "status", "published"],
-      fields: [f("title", "Title", "text", true), f("slug", "Slug", "text", true), f("image", "Featured image"), f("category", "Category"), f("body", "Body content", "textarea"), f("seoTitle", "SEO title"), f("seoDescription", "SEO description", "textarea"), f("published", "Published date", "date"), f("status", "Status", "select", true, ["Draft", "Scheduled", "Published", "Archived"])]
+      fields: [f("title", "Title", "text", true), f("slug", "Slug", "text", true), f("image", "Featured image", "image"), f("category", "Category"), f("body", "Body content", "textarea"), f("seoTitle", "SEO title"), f("seoDescription", "SEO description", "textarea"), f("published", "Published date", "date"), f("status", "Status", "select", true, ["Draft", "Scheduled", "Published", "Archived"])]
     },
     cms: {
       title: "Website CMS",
       subtitle: "Update live website copy, imagery, collaborations and calls-to-action without code.",
       collection: "cms", display: "section", status: "status",
       columns: ["section", "area", "status", "updated"],
-      fields: [f("section", "Website section", "select", true, ["Homepage", "About", "Practice", "Collection", "Contact", "Collaborations", "Calls-to-action"]), f("area", "Content area", "text", true), f("copy", "Copy", "textarea"), f("image", "Image URL"), f("cta", "Call-to-action"), f("status", "Status", "select", true, ["Draft", "Ready", "Published", "Archived"]), f("updated", "Updated date", "date")]
+      fields: [f("section", "Website section", "select", true, ["Homepage", "About", "Practice", "Collection", "Contact", "Collaborations", "Calls-to-action"]), f("area", "Content area", "text", true), f("copy", "Copy", "textarea"), f("image", "Image", "image"), f("cta", "Call-to-action"), f("status", "Status", "select", true, ["Draft", "Ready", "Published", "Archived"]), f("updated", "Updated date", "date")]
     },
     budgets: {
       title: "Form Pricing",
@@ -563,7 +563,16 @@
   function moduleView(schema) {
     var records = filtered(schema);
     var statusOptions = statuses(schema);
-    return '<div class="module-head"><div><span class="eyebrow">Operations Module</span><h2>' + esc(schema.title) + "</h2><p>" + esc(schema.subtitle) + '</p></div><div class="toolbar"><input type="search" placeholder="Search ' + esc(schema.title.toLowerCase()) + '" value="' + esc(state.query) + '" data-module-search><select data-filter><option value="all">All statuses</option>' + statusOptions.map(function (status) { return '<option ' + (state.filter === status ? "selected" : "") + ' value="' + esc(status) + '">' + esc(status) + "</option>"; }).join("") + '</select><button class="primary-btn" data-new type="button">New ' + esc(singular(schema.title)) + "</button></div></div>" +
+    var currentExtra = state.columnFilters[schema.collection] || {};
+    var extraFiltersHtml = filterableFields(schema).map(function (field) {
+      var options = fieldFilterOptions(schema, field);
+      var current = currentExtra[field.name] || "all";
+      return '<select data-column-filter="' + field.name + '"><option value="all">Any ' + esc(field.label) + '</option>' + options.map(function (option) {
+        return '<option ' + (current === option.value ? "selected" : "") + ' value="' + esc(option.value) + '">' + esc(option.text) + "</option>";
+      }).join("") + "</select>";
+    }).join("");
+    var hasActiveFilters = state.filter !== "all" || Object.keys(currentExtra).some(function (key) { return currentExtra[key] && currentExtra[key] !== "all"; });
+    return '<div class="module-head"><div><span class="eyebrow">Operations Module</span><h2>' + esc(schema.title) + "</h2><p>" + esc(schema.subtitle) + '</p></div><div class="toolbar"><input type="search" placeholder="Search ' + esc(schema.title.toLowerCase()) + '" value="' + esc(state.query) + '" data-module-search><select data-filter><option value="all">All statuses</option>' + statusOptions.map(function (status) { return '<option ' + (state.filter === status ? "selected" : "") + ' value="' + esc(status) + '">' + esc(status) + "</option>"; }).join("") + "</select>" + extraFiltersHtml + (hasActiveFilters ? '<button class="ghost-btn" data-clear-filters type="button">Clear Filters</button>' : "") + '<button class="primary-btn" data-new type="button">New ' + esc(singular(schema.title)) + "</button></div></div>" +
       '<div class="records-table-wrap">' + table(schema, records) + "</div>";
   }
 
@@ -584,7 +593,31 @@
     if (state.filter !== "all") {
       rows = rows.filter(function (record) { return (record[schema.status] || record.status || record.visibility || record.availability) === state.filter; });
     }
+    var extra = state.columnFilters[schema.collection] || {};
+    Object.keys(extra).forEach(function (fieldName) {
+      var value = extra[fieldName];
+      if (!value || value === "all") return;
+      rows = rows.filter(function (record) { return String(record[fieldName] || "") === value; });
+    });
     return rows;
+  }
+
+  function filterableFields(schema) {
+    return schema.fields.filter(function (field) {
+      if (field.name === schema.status) return false;
+      if (["status", "visibility", "availability"].indexOf(field.name) > -1) return false;
+      return field.type === "select" || field.type === "relation";
+    });
+  }
+
+  function fieldFilterOptions(schema, field) {
+    if (field.type === "relation") {
+      return active(field.collection).map(function (record) { return { value: record.id, text: label(field.collection, record.id) }; });
+    }
+    var found = {};
+    active(schema.collection).forEach(function (record) { if (record[field.name]) found[record[field.name]] = true; });
+    (field.options || []).forEach(function (option) { found[option] = true; });
+    return Object.keys(found).map(function (value) { return { value: value, text: value }; });
   }
 
   function statuses(schema) {
@@ -639,8 +672,23 @@
     });
     document.querySelector("[data-filter]").addEventListener("change", function (event) {
       state.filter = event.target.value;
-      refreshTable(schema);
+      render();
     });
+    document.querySelectorAll("[data-column-filter]").forEach(function (select) {
+      select.addEventListener("change", function (event) {
+        state.columnFilters[schema.collection] = state.columnFilters[schema.collection] || {};
+        state.columnFilters[schema.collection][event.target.dataset.columnFilter] = event.target.value;
+        render();
+      });
+    });
+    var clearBtn = document.querySelector("[data-clear-filters]");
+    if (clearBtn) {
+      clearBtn.addEventListener("click", function () {
+        state.filter = "all";
+        state.columnFilters[schema.collection] = {};
+        render();
+      });
+    }
     document.querySelector("[data-new]").addEventListener("click", function () { openModal(schema, null); });
     bindTableRows(schema);
   }
@@ -763,6 +811,36 @@
     }
   }
 
+  function uploadToMedia(file, folder) {
+    var extMatch = /\.[a-zA-Z0-9]+$/.exec(file.name || "");
+    var ext = extMatch ? extMatch[0].toLowerCase() : "";
+    var path = folder + "/" + Date.now() + "-" + Math.random().toString(36).slice(2, 8) + ext;
+    return supabaseClient.storage.from("media").upload(path, file, { cacheControl: "3600", upsert: false }).then(function (result) {
+      if (result.error) throw result.error;
+      return supabaseClient.storage.from("media").getPublicUrl(path).data.publicUrl;
+    });
+  }
+
+  function startUpload(file, statusEl, onSuccess) {
+    if (!file) return;
+    statusEl.textContent = "Uploading...";
+    uploadToMedia(file, "uploads").then(function (url) {
+      statusEl.textContent = "Uploaded";
+      setTimeout(function () { statusEl.textContent = ""; }, 2000);
+      onSuccess(url);
+    }).catch(function (error) {
+      console.error(error);
+      statusEl.textContent = "Upload failed: " + (error.message || "please try again.");
+    });
+  }
+
+  function syncImagelistValue(field) {
+    var urls = Array.prototype.map.call(field.querySelectorAll("[data-imagelist-item]"), function (item) {
+      return item.getAttribute("data-url");
+    });
+    field.querySelector("[data-imagelist-value]").value = urls.join("\n");
+  }
+
   function openModal(schema, record) {
     state.editing = { schema: schema, record: record };
     document.querySelector("[data-modal-title]").textContent = (record ? "Edit " : "New ") + singular(schema.title);
@@ -772,7 +850,7 @@
   }
 
   function renderField(field, value) {
-    var wide = field.type === "textarea" || ["notes", "brief", "copy", "body", "deliverables", "tasks", "files", "comments"].indexOf(field.name) > -1;
+    var wide = ["textarea", "image", "imagelist", "file"].indexOf(field.type) > -1 || ["notes", "brief", "copy", "body", "deliverables", "tasks", "files", "comments"].indexOf(field.name) > -1;
     var safeValue = (value === undefined || value === null) ? "" : value;
     var control = "";
     if (field.type === "select") {
@@ -781,6 +859,36 @@
       control = '<select name="' + field.name + '" ' + (field.required ? "required" : "") + '><option value="">Unlinked</option>' + active(field.collection).map(function (record) { return '<option ' + (String(safeValue) === record.id ? "selected" : "") + ' value="' + record.id + '">' + esc(label(field.collection, record.id)) + "</option>"; }).join("") + "</select>";
     } else if (field.type === "textarea") {
       control = '<textarea name="' + field.name + '" ' + (field.required ? "required" : "") + ' placeholder="' + esc(field.placeholder) + '">' + esc(safeValue) + "</textarea>";
+    } else if (field.type === "image") {
+      control = '<div class="image-field" data-image-field data-image-folder="' + esc(field.name) + '">' +
+        '<div class="image-field__drop" data-image-dropzone>' +
+          (safeValue ? '<img class="image-field__preview" src="' + esc(safeValue) + '" data-image-preview>' : '<div class="image-field__placeholder" data-image-preview><svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="9" cy="9" r="1.5"/><path d="M21 15l-5-5L5 21"/></svg><span>Drop an image or click to choose</span></div>') +
+        "</div>" +
+        '<div class="image-field__actions"><button type="button" class="ghost-btn" data-image-trigger>' + (safeValue ? "Replace Image" : "Choose Image") + '</button><span class="image-field__status" data-image-status></span></div>' +
+        '<input type="file" accept="image/*" hidden data-image-input>' +
+        '<input type="hidden" name="' + field.name + '" value="' + esc(safeValue) + '" ' + (field.required ? "required" : "") + " data-image-value>" +
+      "</div>";
+    } else if (field.type === "imagelist") {
+      var listUrls = String(safeValue || "").split("\n").map(function (line) { return line.trim(); }).filter(Boolean);
+      control = '<div class="imagelist-field" data-imagelist-field>' +
+        '<div class="imagelist-field__grid" data-imagelist-grid>' +
+          listUrls.map(function (url) {
+            return '<div class="imagelist-field__item" data-imagelist-item data-url="' + esc(url) + '"><img src="' + esc(url) + '"><button type="button" class="imagelist-field__remove" data-imagelist-remove aria-label="Remove image">&times;</button></div>';
+          }).join("") +
+          '<button type="button" class="imagelist-field__add" data-imagelist-trigger><svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M12 5v14M5 12h14"/></svg><span>Add</span></button>' +
+        "</div>" +
+        '<span class="image-field__status" data-imagelist-status></span>' +
+        '<input type="file" accept="image/*" hidden data-imagelist-input>' +
+        '<textarea name="' + field.name + '" hidden data-imagelist-value>' + esc(listUrls.join("\n")) + "</textarea>" +
+      "</div>";
+    } else if (field.type === "file") {
+      var fileName = safeValue ? safeValue.split("/").pop() : "";
+      control = '<div class="file-field" data-file-field>' +
+        '<div class="file-field__current" data-file-current>' + (safeValue ? '<a href="' + esc(safeValue) + '" target="_blank" rel="noopener">' + esc(fileName) + "</a>" : '<span class="file-field__placeholder">No file chosen</span>') + "</div>" +
+        '<div class="image-field__actions"><button type="button" class="ghost-btn" data-file-trigger>' + (safeValue ? "Replace File" : "Choose File") + '</button><span class="image-field__status" data-file-status></span></div>' +
+        '<input type="file" hidden data-file-input>' +
+        '<input type="hidden" name="' + field.name + '" value="' + esc(safeValue) + '" ' + (field.required ? "required" : "") + " data-file-value>" +
+      "</div>";
     } else {
       control = '<input name="' + field.name + '" type="' + field.type + '" ' + (field.required ? "required" : "") + ' value="' + esc(safeValue) + '" placeholder="' + esc(field.placeholder) + '">';
     }
@@ -1393,6 +1501,110 @@
 
   document.querySelector("[data-modal]").addEventListener("click", function (event) {
     if (event.target.matches("[data-modal]")) closeModal();
+  });
+
+  document.querySelector("[data-modal]").addEventListener("click", function (event) {
+    var imageTrigger = event.target.closest("[data-image-trigger]");
+    if (imageTrigger) {
+      imageTrigger.closest("[data-image-field]").querySelector("[data-image-input]").click();
+      return;
+    }
+    var dropzone = event.target.closest("[data-image-dropzone]");
+    if (dropzone) {
+      dropzone.closest("[data-image-field]").querySelector("[data-image-input]").click();
+      return;
+    }
+    var listTrigger = event.target.closest("[data-imagelist-trigger]");
+    if (listTrigger) {
+      listTrigger.closest("[data-imagelist-field]").querySelector("[data-imagelist-input]").click();
+      return;
+    }
+    var removeBtn = event.target.closest("[data-imagelist-remove]");
+    if (removeBtn) {
+      var field = removeBtn.closest("[data-imagelist-field]");
+      removeBtn.closest("[data-imagelist-item]").remove();
+      syncImagelistValue(field);
+      return;
+    }
+    var fileTrigger = event.target.closest("[data-file-trigger]");
+    if (fileTrigger) {
+      fileTrigger.closest("[data-file-field]").querySelector("[data-file-input]").click();
+    }
+  });
+
+  document.querySelector("[data-modal]").addEventListener("change", function (event) {
+    var imageInput = event.target.closest("[data-image-input]");
+    if (imageInput) {
+      var ifield = imageInput.closest("[data-image-field]");
+      var ifile = imageInput.files[0];
+      if (!ifile) return;
+      startUpload(ifile, ifield.querySelector("[data-image-status]"), function (url) {
+        ifield.querySelector("[data-image-value]").value = url;
+        ifield.querySelector("[data-image-preview]").outerHTML = '<img class="image-field__preview" src="' + esc(url) + '" data-image-preview>';
+        var trig = ifield.querySelector("[data-image-trigger]");
+        if (trig) trig.textContent = "Replace Image";
+      });
+      return;
+    }
+    var listInput = event.target.closest("[data-imagelist-input]");
+    if (listInput) {
+      var lfield = listInput.closest("[data-imagelist-field]");
+      var lfile = listInput.files[0];
+      if (!lfile) return;
+      startUpload(lfile, lfield.querySelector("[data-imagelist-status]"), function (url) {
+        var grid = lfield.querySelector("[data-imagelist-grid]");
+        var addBtn = grid.querySelector("[data-imagelist-trigger]");
+        var item = document.createElement("div");
+        item.className = "imagelist-field__item";
+        item.setAttribute("data-imagelist-item", "");
+        item.setAttribute("data-url", url);
+        item.innerHTML = '<img src="' + esc(url) + '"><button type="button" class="imagelist-field__remove" data-imagelist-remove aria-label="Remove image">&times;</button>';
+        grid.insertBefore(item, addBtn);
+        syncImagelistValue(lfield);
+      });
+      return;
+    }
+    var fileInput = event.target.closest("[data-file-input]");
+    if (fileInput) {
+      var ffield = fileInput.closest("[data-file-field]");
+      var ffile = fileInput.files[0];
+      if (!ffile) return;
+      startUpload(ffile, ffield.querySelector("[data-file-status]"), function (url) {
+        ffield.querySelector("[data-file-value]").value = url;
+        ffield.querySelector("[data-file-current]").innerHTML = '<a href="' + esc(url) + '" target="_blank" rel="noopener">' + esc(ffile.name) + "</a>";
+        var trig = ffield.querySelector("[data-file-trigger]");
+        if (trig) trig.textContent = "Replace File";
+      });
+    }
+  });
+
+  document.querySelector("[data-modal]").addEventListener("dragover", function (event) {
+    var dropzone = event.target.closest("[data-image-dropzone]");
+    if (!dropzone) return;
+    event.preventDefault();
+    dropzone.classList.add("is-dragover");
+  });
+
+  document.querySelector("[data-modal]").addEventListener("dragleave", function (event) {
+    var dropzone = event.target.closest("[data-image-dropzone]");
+    if (!dropzone) return;
+    dropzone.classList.remove("is-dragover");
+  });
+
+  document.querySelector("[data-modal]").addEventListener("drop", function (event) {
+    var dropzone = event.target.closest("[data-image-dropzone]");
+    if (!dropzone) return;
+    event.preventDefault();
+    dropzone.classList.remove("is-dragover");
+    var file = event.dataTransfer.files && event.dataTransfer.files[0];
+    if (!file) return;
+    var field = dropzone.closest("[data-image-field]");
+    startUpload(file, field.querySelector("[data-image-status]"), function (url) {
+      field.querySelector("[data-image-value]").value = url;
+      field.querySelector("[data-image-preview]").outerHTML = '<img class="image-field__preview" src="' + esc(url) + '" data-image-preview>';
+      var trig = field.querySelector("[data-image-trigger]");
+      if (trig) trig.textContent = "Replace Image";
+    });
   });
 
   document.querySelector("[data-form]").addEventListener("submit", submitForm);

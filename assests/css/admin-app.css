@@ -577,6 +577,147 @@
   font-size: 0.75rem;
 }
 
+.image-field__drop {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  min-height: 140px;
+  padding: 16px;
+  border: 1px dashed var(--line);
+  border-radius: var(--radius);
+  background: var(--panel);
+  cursor: pointer;
+  text-align: center;
+  transition: border-color 0.15s ease, background 0.15s ease;
+}
+
+.image-field__drop.is-dragover {
+  border-color: var(--text);
+  background: var(--panel-soft);
+}
+
+.image-field__placeholder {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  color: var(--muted);
+  font-size: 0.78rem;
+}
+
+.image-field__placeholder svg {
+  width: 26px;
+  height: 26px;
+  stroke-width: 1.4;
+}
+
+.image-field__preview {
+  display: block;
+  max-width: 100%;
+  max-height: 160px;
+  border-radius: calc(var(--radius) - 2px);
+  object-fit: cover;
+}
+
+.image-field__actions {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-top: 10px;
+}
+
+.image-field__status {
+  font-size: 0.72rem;
+  color: var(--muted);
+}
+
+.imagelist-field__grid {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+.imagelist-field__item {
+  position: relative;
+  width: 84px;
+  height: 84px;
+  border-radius: calc(var(--radius) - 2px);
+  overflow: hidden;
+  border: 1px solid var(--line);
+}
+
+.imagelist-field__item img {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.imagelist-field__remove {
+  position: absolute;
+  top: 4px;
+  right: 4px;
+  width: 20px;
+  height: 20px;
+  display: grid;
+  place-items: center;
+  border: none;
+  border-radius: 999px;
+  background: rgba(0, 0, 0, 0.65);
+  color: #fff;
+  font-size: 0.9rem;
+  line-height: 1;
+  cursor: pointer;
+}
+
+.imagelist-field__add {
+  width: 84px;
+  height: 84px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  border: 1px dashed var(--line);
+  border-radius: calc(var(--radius) - 2px);
+  background: var(--panel);
+  color: var(--muted);
+  font-size: 0.62rem;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  cursor: pointer;
+}
+
+.imagelist-field__add svg {
+  width: 18px;
+  height: 18px;
+  stroke-width: 1.4;
+}
+
+.file-field__current {
+  display: flex;
+  align-items: center;
+  min-height: 42px;
+  padding: 0 12px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  background: var(--panel);
+  font-size: 0.82rem;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.file-field__current a {
+  color: var(--text);
+}
+
+.file-field__placeholder {
+  color: var(--muted);
+}
+
 .toast {
   position: fixed;
   right: 22px;
