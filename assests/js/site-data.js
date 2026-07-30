@@ -18,6 +18,8 @@
     return fetchTable("collection").then(function (items) {
       return items.filter(function (item) {
         return item.availability !== "Hidden";
+      }).sort(function (a, b) {
+        return Number(a.position || 0) - Number(b.position || 0);
       }).map(function (item) {
         var normalized = {};
         Object.keys(item).forEach(function (key) { normalized[key] = item[key]; });
@@ -273,6 +275,27 @@
       }
     }).catch(function (error) {
       console.error("Failed to load about CMS content, showing static fallback.", error);
+    });
+  }());
+
+  /* About page: render live founder copy */
+  (function () {
+    var founderTitle = document.querySelector("#founder-title");
+    if (!founderTitle) return;
+
+    window.LgndrySiteData.fetchCmsBySection("About").then(function (records) {
+      var byArea = {};
+      records.forEach(function (record) { byArea[record.area] = record; });
+      var title = byArea["Founder title"];
+      var bio1 = byArea["Founder bio 1"];
+      var bio2 = byArea["Founder bio 2"];
+      var bioParagraphs = document.querySelectorAll(".about-founder__copy p:nth-of-type(1), .about-founder__copy p:nth-of-type(2)");
+
+      if (title && title.copy) founderTitle.innerHTML = title.copy.replace(/\n/g, "<br>");
+      if (bio1 && bio1.copy && bioParagraphs[0]) bioParagraphs[0].textContent = bio1.copy;
+      if (bio2 && bio2.copy && bioParagraphs[1]) bioParagraphs[1].textContent = bio2.copy;
+    }).catch(function (error) {
+      console.error("Failed to load about founder CMS content, showing static fallback.", error);
     });
   }());
 

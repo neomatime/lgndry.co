@@ -9,7 +9,7 @@
   var VAPID_PUBLIC_KEY = "BM_IQFlZnwcu7g4r34KumlYmAJWP0sH4O2_3SNhvqT2gF4hP3enZGP9vgnxZN-FTIpRrXyKByvyb0gMhEA7h4es";
   var chromeInitialized = false;
   var TABLES = ["clients", "practice", "bookings", "projects", "partnerships", "collection", "galleries", "content", "journal", "cms", "budgets", "invoices", "documents"];
-  var state = { route: "dashboard", query: "", filter: "all", editing: null, columnFilters: {} };
+  var state = { route: "dashboard", query: "", filter: "all", editing: null, columnFilters: {}, selected: {} };
   var data = { activity: [] };
   window.LgndryOpsSnapshot = function () { return data; };
 
@@ -120,7 +120,7 @@
       columns: ["title", "collectionName", "price", "remaining", "availability"],
       fields: [
         h("Artwork"),
-        f("title", "Artwork title", "text", true), f("collectionName", "Collection name", "text", true), f("category", "Category", "select", true, ["Art Print", "Studio Art", "Limited Edition"]), f("year", "Year", "number"), f("description", "Description / story", "textarea"),
+        f("title", "Artwork title", "text", true), f("collectionName", "Collection name", "text", true), f("category", "Category", "select", true, ["Art Print", "Studio Art", "Limited Edition"]), f("year", "Year", "number"), f("description", "Description / story", "textarea"), f("position", "Display order on the website (lower shows first)", "number", true),
         h("Photos"),
         f("image", "Main image", "image", true), f("images", "Additional images (optional)", "imagelist"),
         h("Pricing & Availability"),
@@ -194,7 +194,14 @@
       subtitle: "Generate and track contracts, NDAs, briefs, call sheets and releases.",
       collection: "documents", display: "title", status: "status",
       columns: ["title", "type", "client", "project", "status"],
-      fields: [f("title", "Document title", "text", true), f("type", "Document type", "select", true, ["Contract", "NDA", "Proposal", "Creative Brief", "Call Sheet", "Model Release", "Location Release"]), rel("client", "Client", "clients"), rel("project", "Project / booking / partnership", "projects"), f("body", "Document text", "textarea"), f("template", "Template / upload link"), f("signed", "Signed document link"), f("status", "Status", "select", true, ["Draft", "Sent", "Signed", "Expired", "Archived"])],
+      fields: [
+        h("Document"),
+        f("title", "Document title", "text", true), f("type", "Document type", "select", true, ["Contract", "NDA", "Proposal", "Creative Brief", "Call Sheet", "Model Release", "Location Release"]), rel("client", "Client", "clients"), rel("project", "Project / booking / partnership", "projects"), f("status", "Status", "select", true, ["Draft", "Sent", "Signed", "Expired", "Archived"]),
+        h("Content"),
+        f("body", "Document text", "textarea"),
+        h("Files"),
+        f("template", "Template file", "file"), f("signed", "Signed copy", "file")
+      ],
       actions: ["downloadPdf"]
     }
   };
@@ -632,8 +639,13 @@
         return '<option ' + (current === option.value ? "selected" : "") + ' value="' + esc(option.value) + '">' + esc(option.text) + "</option>";
       }).join("") + "</select>";
     }).join("");
+    var dateFiltersHtml = dateFilterableFields(schema).map(function (field) {
+      var fromVal = currentExtra[field.name + "_from"] || "";
+      var toVal = currentExtra[field.name + "_to"] || "";
+      return '<span class="date-filter" data-date-filter-group="' + field.name + '"><span class="date-filter__label">' + esc(field.label) + '</span><input type="date" data-date-filter-from="' + field.name + '" value="' + esc(fromVal) + '" aria-label="' + esc(field.label) + ' from"><span class="date-filter__sep">&rarr;</span><input type="date" data-date-filter-to="' + field.name + '" value="' + esc(toVal) + '" aria-label="' + esc(field.label) + ' to"></span>';
+    }).join("");
     var hasActiveFilters = state.filter !== "all" || Object.keys(currentExtra).some(function (key) { return currentExtra[key] && currentExtra[key] !== "all"; });
-    return '<div class="module-head"><div><span class="eyebrow">Operations Module</span><h2>' + esc(schema.title) + "</h2><p>" + esc(schema.subtitle) + '</p></div><div class="toolbar"><input type="search" placeholder="Search ' + esc(schema.title.toLowerCase()) + '" value="' + esc(state.query) + '" data-module-search><select data-filter><option value="all">All statuses</option>' + statusOptions.map(function (status) { return '<option ' + (state.filter === status ? "selected" : "") + ' value="' + esc(status) + '">' + esc(status) + "</option>"; }).join("") + "</select>" + extraFiltersHtml + (hasActiveFilters ? '<button class="ghost-btn" data-clear-filters type="button">Clear Filters</button>' : "") + '<button class="primary-btn" data-new type="button">New ' + esc(singular(schema.title)) + "</button></div></div>" +
+    return '<div class="module-head"><div><span class="eyebrow">Operations Module</span><h2>' + esc(schema.title) + "</h2><p>" + esc(schema.subtitle) + '</p></div><div class="toolbar"><input type="search" placeholder="Search ' + esc(schema.title.toLowerCase()) + '" value="' + esc(state.query) + '" data-module-search><select data-filter><option value="all">All statuses</option>' + statusOptions.map(function (status) { return '<option ' + (state.filter === status ? "selected" : "") + ' value="' + esc(status) + '">' + esc(status) + "</option>"; }).join("") + "</select>" + extraFiltersHtml + dateFiltersHtml + (hasActiveFilters ? '<button class="ghost-btn" data-clear-filters type="button">Clear Filters</button>' : "") + '<button class="primary-btn" data-new type="button">New ' + esc(singular(schema.title)) + "</button></div></div>" +
       '<div class="records-table-wrap">' + table(schema, records) + "</div>";
   }
 
@@ -655,10 +667,17 @@
       rows = rows.filter(function (record) { return (record[schema.status] || record.status || record.visibility || record.availability) === state.filter; });
     }
     var extra = state.columnFilters[schema.collection] || {};
-    Object.keys(extra).forEach(function (fieldName) {
-      var value = extra[fieldName];
+    Object.keys(extra).forEach(function (key) {
+      if (/_from$/.test(key) || /_to$/.test(key)) return;
+      var value = extra[key];
       if (!value || value === "all") return;
-      rows = rows.filter(function (record) { return String(record[fieldName] || "") === value; });
+      rows = rows.filter(function (record) { return String(record[key] || "") === value; });
+    });
+    dateFilterableFields(schema).forEach(function (field) {
+      var from = extra[field.name + "_from"];
+      var to = extra[field.name + "_to"];
+      if (from) rows = rows.filter(function (record) { return record[field.name] && record[field.name] >= from; });
+      if (to) rows = rows.filter(function (record) { return record[field.name] && record[field.name] <= to; });
     });
     return rows;
   }
@@ -669,6 +688,10 @@
       if (["status", "visibility", "availability"].indexOf(field.name) > -1) return false;
       return field.type === "select" || field.type === "relation";
     });
+  }
+
+  function dateFilterableFields(schema) {
+    return schema.fields.filter(function (field) { return field.type === "date"; });
   }
 
   function fieldFilterOptions(schema, field) {
@@ -693,10 +716,22 @@
     return Object.keys(found);
   }
 
+  function bulkBar(schema, rows) {
+    var selected = state.selected[schema.collection] || [];
+    var visibleIds = rows.map(function (record) { return record.id; });
+    var selectedVisible = selected.filter(function (id) { return visibleIds.indexOf(id) > -1; });
+    if (!selectedVisible.length) return "";
+    return '<div class="bulk-bar"><span>' + selectedVisible.length + " selected</span><button class=\"ghost-btn\" data-bulk-archive type=\"button\">Archive Selected</button><button class=\"danger-btn\" data-bulk-delete type=\"button\">Delete Selected</button><button class=\"ghost-btn\" data-bulk-clear type=\"button\">Clear Selection</button></div>";
+  }
+
   function table(schema, rows) {
-    if (!rows.length) return '<div class="loading">No matching records. Add one to begin.</div>';
-    return '<table class="records-table"><thead><tr>' + schema.columns.map(function (column) { return "<th>" + esc(titleCase(column)) + "</th>"; }).join("") + "<th>Actions</th></tr></thead><tbody>" + rows.map(function (record) {
-      return "<tr>" + schema.columns.map(function (column, index) {
+    var bar = bulkBar(schema, rows);
+    if (!rows.length) return bar + '<div class="loading">No matching records. Add one to begin.</div>';
+    var selected = state.selected[schema.collection] || [];
+    var allSelected = rows.length > 0 && rows.every(function (record) { return selected.indexOf(record.id) > -1; });
+    return bar + '<table class="records-table"><thead><tr><th class="records-table__check"><input type="checkbox" data-select-all ' + (allSelected ? "checked" : "") + " aria-label=\"Select all\"></th>" + schema.columns.map(function (column) { return "<th>" + esc(titleCase(column)) + "</th>"; }).join("") + "<th>Actions</th></tr></thead><tbody>" + rows.map(function (record) {
+      var isChecked = selected.indexOf(record.id) > -1;
+      return '<tr><td class="records-table__check"><input type="checkbox" data-select-row="' + record.id + '" ' + (isChecked ? "checked" : "") + ' aria-label="Select row"></td>' + schema.columns.map(function (column, index) {
         var value = displayValue(schema, record, column);
         if (index === 0) return '<td><strong>' + esc(value) + '</strong><div class="record-meta">' + esc(record.notes || record.brief || record.description || "") + "</div></td>";
         if (column === schema.status || ["status", "visibility", "availability", "deposit"].indexOf(column) > -1) return '<td><span class="status-pill ' + statusClass(value) + '">' + esc(value) + "</span></td>";
@@ -742,6 +777,20 @@
         render();
       });
     });
+    document.querySelectorAll("[data-date-filter-from]").forEach(function (input) {
+      input.addEventListener("change", function (event) {
+        state.columnFilters[schema.collection] = state.columnFilters[schema.collection] || {};
+        state.columnFilters[schema.collection][event.target.dataset.dateFilterFrom + "_from"] = event.target.value;
+        render();
+      });
+    });
+    document.querySelectorAll("[data-date-filter-to]").forEach(function (input) {
+      input.addEventListener("change", function (event) {
+        state.columnFilters[schema.collection] = state.columnFilters[schema.collection] || {};
+        state.columnFilters[schema.collection][event.target.dataset.dateFilterTo + "_to"] = event.target.value;
+        render();
+      });
+    });
     var clearBtn = document.querySelector("[data-clear-filters]");
     if (clearBtn) {
       clearBtn.addEventListener("click", function () {
@@ -770,6 +819,39 @@
     document.querySelectorAll("[data-generate]").forEach(function (button) { button.addEventListener("click", function () { generateProject(button.dataset.generate); }); });
     document.querySelectorAll("[data-copy-link]").forEach(function (button) { button.addEventListener("click", function () { copyGalleryLink(button.dataset.copyLink); }); });
     document.querySelectorAll("[data-download-pdf]").forEach(function (button) { button.addEventListener("click", function () { downloadRecordPdf(schema, button.dataset.downloadPdf); }); });
+    document.querySelectorAll("[data-select-row]").forEach(function (checkbox) {
+      checkbox.addEventListener("change", function (event) {
+        var id = event.target.dataset.selectRow;
+        var current = state.selected[schema.collection] || [];
+        if (event.target.checked) {
+          if (current.indexOf(id) === -1) current = current.concat([id]);
+        } else {
+          current = current.filter(function (existing) { return existing !== id; });
+        }
+        state.selected[schema.collection] = current;
+        refreshTable(schema);
+      });
+    });
+    var selectAll = document.querySelector("[data-select-all]");
+    if (selectAll) {
+      selectAll.addEventListener("change", function (event) {
+        var visibleIds = filtered(schema).map(function (record) { return record.id; });
+        var current = state.selected[schema.collection] || [];
+        if (event.target.checked) {
+          visibleIds.forEach(function (id) { if (current.indexOf(id) === -1) current.push(id); });
+        } else {
+          current = current.filter(function (id) { return visibleIds.indexOf(id) === -1; });
+        }
+        state.selected[schema.collection] = current;
+        refreshTable(schema);
+      });
+    }
+    var bulkArchiveBtn = document.querySelector("[data-bulk-archive]");
+    if (bulkArchiveBtn) bulkArchiveBtn.addEventListener("click", function () { bulkArchive(schema); });
+    var bulkDeleteBtn = document.querySelector("[data-bulk-delete]");
+    if (bulkDeleteBtn) bulkDeleteBtn.addEventListener("click", function () { bulkDelete(schema); });
+    var bulkClearBtn = document.querySelector("[data-bulk-clear]");
+    if (bulkClearBtn) bulkClearBtn.addEventListener("click", function () { state.selected[schema.collection] = []; refreshTable(schema); });
   }
 
   function pdfLetterhead(doc, title) {
@@ -892,6 +974,17 @@
     }).catch(function (error) {
       console.error(error);
       statusEl.textContent = "Upload failed: " + (error.message || "please try again.");
+    });
+  }
+
+  function deleteFromMediaIfOwned(url) {
+    if (!url) return;
+    var marker = "/storage/v1/object/public/media/";
+    var idx = url.indexOf(marker);
+    if (idx === -1) return;
+    var path = url.slice(idx + marker.length);
+    supabaseClient.storage.from("media").remove([path]).catch(function (error) {
+      console.error("Failed to remove replaced file:", error);
     });
   }
 
@@ -1023,6 +1116,47 @@
       deleteRecordRemote(schema.collection, recordId);
       logActivity("Deleted " + singular(schema.title) + ' "' + recordLabel + '"');
       toast("Record deleted.");
+      render();
+    });
+  }
+
+  function recordWord(count) {
+    return count === 1 ? "record" : "records";
+  }
+
+  function bulkArchive(schema) {
+    var ids = (state.selected[schema.collection] || []).slice();
+    if (!ids.length) return;
+    var word = recordWord(ids.length);
+    confirmDialog("These " + ids.length + " " + word + " will be hidden from active views but kept in the database.", { title: "Archive " + ids.length + " " + word + "?", confirmLabel: "Archive", danger: false }).then(function (confirmed) {
+      if (!confirmed) return;
+      ids.forEach(function (recordId) {
+        var record = byId(schema.collection, recordId);
+        if (!record) return;
+        record.archived = true;
+        if (schema.status) record[schema.status] = "Archived";
+        persistRecord(schema.collection, record);
+      });
+      logActivity("Archived " + ids.length + " " + schema.title.toLowerCase() + " " + word);
+      toast(ids.length + " " + word + " archived.");
+      state.selected[schema.collection] = [];
+      render();
+    });
+  }
+
+  function bulkDelete(schema) {
+    var ids = (state.selected[schema.collection] || []).slice();
+    if (!ids.length) return;
+    var word = recordWord(ids.length);
+    confirmDialog("This will permanently remove " + ids.length + " " + word + " from the studio database. This cannot be undone.", { title: "Delete " + ids.length + " " + word + "?", confirmLabel: "Delete" }).then(function (confirmed) {
+      if (!confirmed) return;
+      ids.forEach(function (recordId) {
+        data[schema.collection] = data[schema.collection].filter(function (r) { return r.id !== recordId; });
+        deleteRecordRemote(schema.collection, recordId);
+      });
+      logActivity("Deleted " + ids.length + " " + schema.title.toLowerCase() + " " + word);
+      toast(ids.length + " " + word + " deleted.");
+      state.selected[schema.collection] = [];
       render();
     });
   }
@@ -1439,12 +1573,28 @@
         initTheme();
         initPopovers();
         chromeInitialized = true;
+        startAutoRefresh();
       }
       render();
     }).catch(function (error) {
       console.error(error);
       showAuthGate("Failed to load studio data. Please refresh.");
     });
+  }
+
+  function startAutoRefresh() {
+    setInterval(function () {
+      var modal = document.querySelector("[data-modal]");
+      if (modal && modal.classList.contains("is-open")) return;
+      var active = document.activeElement;
+      if (active && ["INPUT", "TEXTAREA", "SELECT"].indexOf(active.tagName) > -1) return;
+      loadRemoteData().then(function (remoteData) {
+        data = remoteData;
+        render();
+      }).catch(function (error) {
+        console.error("Background refresh failed:", error);
+      });
+    }, 60000);
   }
 
   function initAuth() {
@@ -1491,6 +1641,16 @@
     state.query = "";
     state.filter = "all";
     render();
+    document.body.classList.remove("mobile-nav-open");
+    var toggle = document.querySelector("[data-mobile-nav-toggle]");
+    if (toggle) toggle.setAttribute("aria-expanded", "false");
+  });
+
+  document.addEventListener("click", function (event) {
+    var toggle = event.target.closest("[data-mobile-nav-toggle]");
+    if (!toggle) return;
+    var isOpen = document.body.classList.toggle("mobile-nav-open");
+    toggle.setAttribute("aria-expanded", isOpen ? "true" : "false");
   });
 
   function recordDisplayName(record) {
@@ -1587,7 +1747,9 @@
     var removeBtn = event.target.closest("[data-imagelist-remove]");
     if (removeBtn) {
       var field = removeBtn.closest("[data-imagelist-field]");
-      removeBtn.closest("[data-imagelist-item]").remove();
+      var removedItem = removeBtn.closest("[data-imagelist-item]");
+      deleteFromMediaIfOwned(removedItem.getAttribute("data-url"));
+      removedItem.remove();
       syncImagelistValue(field);
       return;
     }
@@ -1597,17 +1759,33 @@
     }
   });
 
+  document.querySelector("[data-modal]").addEventListener("input", function (event) {
+    if (event.target.matches('[name="slug"]')) {
+      event.target.dataset.userEdited = "true";
+      return;
+    }
+    if (event.target.matches('[name="title"]') && state.editing && state.editing.schema.collection === "journal") {
+      var slugField = document.querySelector('[name="slug"]');
+      var isUntouched = slugField && (slugField.value === "" || slugField.value === slugField.getAttribute("placeholder"));
+      if (slugField && isUntouched && slugField.dataset.userEdited !== "true") {
+        slugField.value = event.target.value.trim().toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-+|-+$/g, "");
+      }
+    }
+  });
+
   document.querySelector("[data-modal]").addEventListener("change", function (event) {
     var imageInput = event.target.closest("[data-image-input]");
     if (imageInput) {
       var ifield = imageInput.closest("[data-image-field]");
       var ifile = imageInput.files[0];
       if (!ifile) return;
+      var previousImageUrl = ifield.querySelector("[data-image-value]").value;
       startUpload(ifile, ifield.querySelector("[data-image-status]"), function (url) {
         ifield.querySelector("[data-image-value]").value = url;
         ifield.querySelector("[data-image-preview]").outerHTML = '<img class="image-field__preview" src="' + esc(url) + '" data-image-preview>';
         var trig = ifield.querySelector("[data-image-trigger]");
         if (trig) trig.textContent = "Replace Image";
+        deleteFromMediaIfOwned(previousImageUrl);
       });
       return;
     }
@@ -1634,11 +1812,13 @@
       var ffield = fileInput.closest("[data-file-field]");
       var ffile = fileInput.files[0];
       if (!ffile) return;
+      var previousFileUrl = ffield.querySelector("[data-file-value]").value;
       startUpload(ffile, ffield.querySelector("[data-file-status]"), function (url) {
         ffield.querySelector("[data-file-value]").value = url;
         ffield.querySelector("[data-file-current]").innerHTML = '<a href="' + esc(url) + '" target="_blank" rel="noopener">' + esc(ffile.name) + "</a>";
         var trig = ffield.querySelector("[data-file-trigger]");
         if (trig) trig.textContent = "Replace File";
+        deleteFromMediaIfOwned(previousFileUrl);
       });
     }
   });
@@ -1664,11 +1844,13 @@
     var file = event.dataTransfer.files && event.dataTransfer.files[0];
     if (!file) return;
     var field = dropzone.closest("[data-image-field]");
+    var previousDropUrl = field.querySelector("[data-image-value]").value;
     startUpload(file, field.querySelector("[data-image-status]"), function (url) {
       field.querySelector("[data-image-value]").value = url;
       field.querySelector("[data-image-preview]").outerHTML = '<img class="image-field__preview" src="' + esc(url) + '" data-image-preview>';
       var trig = field.querySelector("[data-image-trigger]");
       if (trig) trig.textContent = "Replace Image";
+      deleteFromMediaIfOwned(previousDropUrl);
     });
   });
 
