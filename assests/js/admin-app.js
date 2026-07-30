@@ -50,7 +50,14 @@
       subtitle: "Manage studio relationships, histories, assets, documents and brand notes.",
       collection: "clients", display: "name", status: "status",
       columns: ["name", "type", "contact", "email", "status"],
-      fields: [f("name", "Client name", "text", true), f("type", "Client type", "select", true, ["Individual", "Company"]), f("contact", "Contact person", "text", true), f("email", "Email", "email", true), f("phone", "Phone number", "tel"), f("image", "Logo / image URL"), f("status", "Status", "select", true, ["Lead", "Active", "Returning", "Archived"]), f("guidelines", "Brand guidelines", "textarea"), f("notes", "Notes", "textarea")]
+      fields: [
+        h("Contact"),
+        f("name", "Client name", "text", true), f("type", "Client type", "select", true, ["Individual", "Company"]), f("contact", "Contact person", "text", true), f("email", "Email", "email", true), f("phone", "Phone number", "tel"),
+        h("Branding"),
+        f("image", "Logo", "image"), f("guidelines", "Brand guidelines", "textarea"),
+        h("Status & Notes"),
+        f("status", "Status", "select", true, ["Lead", "Active", "Returning", "Archived"]), f("notes", "Notes", "textarea")
+      ]
     },
     practice: {
       title: "Practice",
@@ -64,7 +71,16 @@
       subtitle: "Schedule shoots, connect them to clients and generate projects when confirmed.",
       collection: "bookings", display: "service", status: "status",
       columns: ["client", "service", "date", "status", "deposit"],
-      fields: [rel("client", "Client", "clients", true), f("service", "Service", "text", true), f("date", "Date", "date", true), f("start", "Start time", "time"), f("end", "End time", "time"), f("location", "Location"), f("type", "Booking type", "select", true, ["Enquiry", "Campaign", "Portrait", "Product", "Partnership", "Collection"]), f("photographer", "Assigned photographer"), f("status", "Status", "select", true, ["Enquiry", "Awaiting Deposit", "Confirmed", "Scheduled", "Completed", "Delivered", "Cancelled"]), f("deposit", "Deposit status", "select", true, ["Not Requested", "Requested", "Paid", "Waived"]), rel("project", "Related project", "projects"), f("shotList", "Shot list", "textarea"), f("notes", "Notes", "textarea")],
+      fields: [
+        h("Booking"),
+        rel("client", "Client", "clients", true), f("service", "Service", "text", true), f("type", "Booking type", "select", true, ["Enquiry", "Campaign", "Portrait", "Product", "Partnership", "Collection"]), f("photographer", "Assigned photographer"),
+        h("Date & Location"),
+        f("date", "Date", "date", true), f("start", "Start time", "time"), f("end", "End time", "time"), f("location", "Location"),
+        h("Status"),
+        f("status", "Status", "select", true, ["Enquiry", "Awaiting Deposit", "Confirmed", "Scheduled", "Completed", "Delivered", "Cancelled"]), f("deposit", "Deposit status", "select", true, ["Not Requested", "Requested", "Paid", "Waived"]), rel("project", "Related project", "projects"),
+        h("Notes"),
+        f("shotList", "Shot list", "textarea"), f("notes", "Notes", "textarea")
+      ],
       actions: ["generateProject"]
     },
     projects: {
@@ -72,28 +88,60 @@
       subtitle: "Track briefs, timelines, tasks, files, comments and deliverables from planning to archive.",
       collection: "projects", display: "name", status: "status",
       columns: ["name", "client", "type", "status", "timeline"],
-      fields: [f("name", "Project name", "text", true), f("image", "Cover image URL"), rel("client", "Client", "clients", true), rel("booking", "Booking", "bookings"), f("type", "Project type", "text", true), f("brief", "Brief", "textarea"), f("moodboard", "Moodboard links / uploads", "textarea"), f("shotList", "Shot list", "textarea"), f("deliverables", "Deliverables", "textarea"), f("timeline", "Timeline"), f("tasks", "Tasks", "textarea"), f("files", "Files", "textarea"), f("comments", "Comments", "textarea"), f("status", "Workflow status", "select", true, ["Planning", "Shoot Scheduled", "Editing", "Client Review", "Delivered", "Archived"])]
+      fields: [
+        h("Project"),
+        f("name", "Project name", "text", true), f("image", "Cover image", "image"), rel("client", "Client", "clients", true), rel("booking", "Booking", "bookings"), f("type", "Project type", "text", true), f("status", "Workflow status", "select", true, ["Planning", "Shoot Scheduled", "Editing", "Client Review", "Delivered", "Archived"]), f("timeline", "Timeline"),
+        h("Creative Brief"),
+        f("brief", "Brief", "textarea"), f("moodboard", "Moodboard links / uploads", "textarea"), f("shotList", "Shot list", "textarea"), f("deliverables", "Deliverables", "textarea"),
+        h("Workflow"),
+        f("tasks", "Tasks", "textarea"), f("files", "Files", "textarea"), f("comments", "Comments", "textarea")
+      ]
     },
     partnerships: {
       title: "Brand Partnerships",
       subtitle: "Move prospects from application to active annual creative partnerships.",
       collection: "partnerships", display: "company", status: "status",
       columns: ["company", "contact", "status", "sessionsRemaining", "end"],
-      fields: [rel("client", "Client", "clients"), f("company", "Company / client", "text", true), f("contact", "Contact person", "text", true), f("application", "Application details", "textarea"), f("duration", "Contract duration", "text", false, null, "Annual Creative Partnership - minimum 12-month term"), f("start", "Contract start date", "date"), f("end", "Contract end date", "date"), f("deliverables", "Monthly deliverables", "textarea"), f("allowance", "Monthly shoot allowance", "number"), f("sessionsRemaining", "Remaining sessions", "number"), f("proposal", "Proposal link / notes", "textarea"), f("contract", "Contract link / notes", "textarea"), f("review", "Quarterly review notes", "textarea"), f("status", "Pipeline stage", "select", true, ["Applied", "Discovery Call", "Proposal", "Negotiation", "Signed", "Onboarding", "Active", "Renewal", "Lost"])]
+      fields: [
+        h("Brand"),
+        rel("client", "Client", "clients"), f("company", "Company / client", "text", true), f("contact", "Contact person", "text", true), f("status", "Pipeline stage", "select", true, ["Applied", "Discovery Call", "Proposal", "Negotiation", "Signed", "Onboarding", "Active", "Renewal", "Lost"]),
+        h("Application"),
+        f("application", "Application details", "textarea"),
+        h("Contract Terms"),
+        f("duration", "Contract duration", "text", false, null, "Annual Creative Partnership - minimum 12-month term"), f("start", "Contract start date", "date"), f("end", "Contract end date", "date"), f("deliverables", "Monthly deliverables", "textarea"), f("allowance", "Monthly shoot allowance", "number"), f("sessionsRemaining", "Remaining sessions", "number"),
+        h("Documents & Notes"),
+        f("proposal", "Proposal link / notes", "textarea"), f("contract", "Contract link / notes", "textarea"), f("review", "Quarterly review notes", "textarea")
+      ]
     },
     collection: {
       title: "Collection",
       subtitle: "Manage art listings, editions, sales, certificates and delivery tracking.",
       collection: "collection", display: "title", status: "availability",
       columns: ["title", "collectionName", "price", "remaining", "availability"],
-      fields: [f("title", "Artwork title", "text", true), f("collectionName", "Collection name", "text", true), f("category", "Category", "select", true, ["Art Print", "Studio Art", "Limited Edition"]), f("year", "Year", "number"), f("description", "Description / story", "textarea"), f("image", "Main image", "image", true), f("images", "Additional images (optional)", "imagelist"), f("seriesLabel", "Medium / series line (shown under 'available' count)", "text", true), f("sizes", "Print sizes offered (one per line)", "textarea", true), f("price", "Price", "number", true), f("editionSize", "Edition size", "number", true), f("sold", "Editions sold", "number", true), f("remaining", "Editions remaining", "number"), f("availability", "Availability", "select", true, ["Available", "Reserved", "Sold Out", "Hidden"]), f("customer", "Latest customer"), f("editionNumber", "Latest edition number", "number"), f("payment", "Payment status", "select", false, ["Pending In Person", "Paid In Person", "Reserved", "Cancelled"]), f("shipping", "Shipping status", "select", false, ["Not Started", "Preparing", "Shipped", "Delivered", "Collected"]), f("tracking", "Tracking number"), f("certificate", "Certificate status", "select", false, ["Not Issued", "Issued", "Archived"])]
+      fields: [
+        h("Artwork"),
+        f("title", "Artwork title", "text", true), f("collectionName", "Collection name", "text", true), f("category", "Category", "select", true, ["Art Print", "Studio Art", "Limited Edition"]), f("year", "Year", "number"), f("description", "Description / story", "textarea"),
+        h("Photos"),
+        f("image", "Main image", "image", true), f("images", "Additional images (optional)", "imagelist"),
+        h("Pricing & Availability"),
+        f("seriesLabel", "Print description (e.g. 'Archival Pigment Print' or 'A series of 3 images')", "text", true), f("sizes", "Print sizes offered (one per line)", "textarea", true), f("price", "Price", "number", true), f("editionSize", "Edition size", "number", true), f("sold", "Editions sold", "number", true), f("remaining", "Editions remaining", "number"), f("availability", "Availability", "select", true, ["Available", "Reserved", "Sold Out", "Hidden"]),
+        h("Sale & Delivery"),
+        f("customer", "Latest customer"), f("editionNumber", "Latest edition number", "number"), f("payment", "Payment status", "select", false, ["Pending In Person", "Paid In Person", "Reserved", "Cancelled"]), f("shipping", "Shipping status", "select", false, ["Not Started", "Preparing", "Shipped", "Delivered", "Collected"]), f("tracking", "Tracking number"), f("certificate", "Certificate status", "select", false, ["Not Issued", "Issued", "Archived"])
+      ]
     },
     invoices: {
       title: "Invoices & Payments",
       subtitle: "Create quotes, invoices and receipts linked to clients, shoots, projects and orders.",
       collection: "invoices", display: "number", status: "status",
       columns: ["number", "client", "type", "amount", "status"],
-      fields: [f("number", "Document number", "text", true), f("type", "Document type", "select", true, ["Quote", "Invoice", "Receipt"]), rel("client", "Client", "clients", true), rel("project", "Project / booking / order", "projects"), f("items", "Line items (one per line, e.g. 'Brand Shoot — R5,000')", "textarea", true), f("amount", "Amount", "number", true), f("vat", "VAT", "number"), f("due", "Due date", "date"), f("status", "Payment status", "select", true, ["Draft", "Sent", "Paid", "Partially Paid", "Overdue", "Cancelled"]), f("paidAt", "Payment date", "date")],
+      fields: [
+        h("Document"),
+        f("number", "Document number", "text", true), f("type", "Document type", "select", true, ["Quote", "Invoice", "Receipt"]), rel("client", "Client", "clients", true), rel("project", "Project / booking / order", "projects"),
+        h("Line Items & Amount"),
+        f("items", "Line items (one per line, e.g. 'Brand Shoot — R5,000')", "textarea", true), f("amount", "Amount", "number", true), f("vat", "VAT", "number"), f("due", "Due date", "date"),
+        h("Payment"),
+        f("status", "Payment status", "select", true, ["Draft", "Sent", "Paid", "Partially Paid", "Overdue", "Cancelled"]), f("paidAt", "Payment date", "date")
+      ],
       actions: ["downloadPdf"]
     },
     galleries: {
@@ -116,7 +164,16 @@
       subtitle: "Plan, schedule and publish editorial stories for the website.",
       collection: "journal", display: "title", status: "status",
       columns: ["title", "slug", "category", "status", "published"],
-      fields: [f("title", "Title", "text", true), f("slug", "Slug", "text", true), f("image", "Featured image", "image"), f("category", "Category"), f("body", "Body content", "textarea"), f("seoTitle", "SEO title"), f("seoDescription", "SEO description", "textarea"), f("published", "Published date", "date"), f("status", "Status", "select", true, ["Draft", "Scheduled", "Published", "Archived"])]
+      fields: [
+        h("Story"),
+        f("title", "Title", "text", true), f("category", "Category"), f("image", "Featured image", "image"),
+        h("Content"),
+        f("body", "Body content", "textarea"),
+        h("Publishing"),
+        f("slug", "Web address", "text", true, null, "e.g. slowing-down-to-see"), f("published", "Published date", "date"), f("status", "Status", "select", true, ["Draft", "Scheduled", "Published", "Archived"]),
+        h("Search Engine Details"),
+        f("seoTitle", "Search engine title"), f("seoDescription", "Search engine description", "textarea")
+      ]
     },
     cms: {
       title: "Website CMS",
@@ -130,7 +187,7 @@
       subtitle: "Control the budget range options shown on the booking, contact and partnership forms.",
       collection: "budgets", display: "label", status: "visibility",
       columns: ["form", "label", "position", "visibility"],
-      fields: [f("form", "Form", "select", true, ["Booking", "Contact", "Partnership"]), f("label", "Budget range label", "text", true), f("position", "Order", "number", true), f("visibility", "Website visibility", "select", true, ["Visible", "Hidden", "Archived"])]
+      fields: [f("form", "Applies to which form", "select", true, ["Booking", "Contact", "Partnership"]), f("label", "Budget range label", "text", true), f("position", "Order", "number", true), f("visibility", "Website visibility", "select", true, ["Visible", "Hidden", "Archived"])]
     },
     documents: {
       title: "Documents",
@@ -152,6 +209,10 @@
 
   function rel(name, label, collection, required) {
     return { name: name, label: label, type: "relation", collection: collection, required: !!required };
+  }
+
+  function h(label) {
+    return { name: "", label: label, type: "heading" };
   }
 
   function id() {
@@ -850,6 +911,9 @@
   }
 
   function renderField(field, value) {
+    if (field.type === "heading") {
+      return '<div class="form-section-heading form-field--wide"><span>' + esc(field.label) + "</span></div>";
+    }
     var wide = ["textarea", "image", "imagelist", "file"].indexOf(field.type) > -1 || ["notes", "brief", "copy", "body", "deliverables", "tasks", "files", "comments"].indexOf(field.name) > -1;
     var safeValue = (value === undefined || value === null) ? "" : value;
     var control = "";
@@ -909,6 +973,7 @@
     var next = state.editing.record ? Object.assign({}, state.editing.record) : { id: newUuid() };
     var ok = true;
     schema.fields.forEach(function (field) {
+      if (field.type === "heading") return;
       var input = form.elements[field.name];
       var value = input ? input.value.trim() : "";
       var error = document.querySelector('[data-error="' + field.name + '"]');
