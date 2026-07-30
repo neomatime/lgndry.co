@@ -1,0 +1,214 @@
+/* Shared custom date picker — replaces the native calendar popup on every
+   input[type="date"] across the admin system and public site. See
+   assests/js/date-picker.js for the behavior; this file is theme-adaptive:
+   light (public site) values are the defaults, .ops-app-shell overrides
+   them for the admin's dark theme. */
+
+:root {
+  --dp-bg: #fcfbf9;
+  --dp-border: #e5e0d9;
+  --dp-text: #1d1d1d;
+  --dp-muted: #7a746e;
+  --dp-accent: #1d1d1d;
+  --dp-accent-text: #fcfbf9;
+  --dp-hover: #f1eee9;
+  --dp-radius: 4px;
+  --dp-shadow: 0 20px 60px rgba(29, 29, 27, 0.16);
+}
+
+.ops-app-shell {
+  --dp-bg: var(--panel, #161513);
+  --dp-border: var(--line, rgba(255, 255, 255, 0.12));
+  --dp-text: var(--text, #f7f3ec);
+  --dp-muted: var(--muted, rgba(247, 243, 236, 0.66));
+  --dp-accent: #f7f3ec;
+  --dp-accent-text: #16150f;
+  --dp-hover: rgba(255, 255, 255, 0.06);
+  --dp-shadow: 0 24px 70px rgba(0, 0, 0, 0.5);
+}
+
+.datepicker-wrap {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+}
+
+.form-field .datepicker-wrap {
+  display: flex;
+  width: 100%;
+}
+
+.date-filter .datepicker-wrap {
+  width: auto;
+}
+
+.datepicker-display {
+  cursor: pointer;
+  padding-right: 34px !important;
+}
+
+.date-filter .datepicker-display {
+  height: 28px;
+  width: 108px;
+  padding: 0 30px 0 6px !important;
+  border: 0 !important;
+  background: transparent !important;
+  color: var(--dp-text);
+  font-size: inherit;
+}
+
+.datepicker-icon {
+  position: absolute;
+  right: 10px;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 16px;
+  height: 16px;
+  color: var(--dp-muted);
+  pointer-events: none;
+  display: flex;
+}
+
+.datepicker-icon svg {
+  width: 100%;
+  height: 100%;
+}
+
+.datepicker-popup {
+  position: absolute;
+  z-index: 9999;
+  width: 296px;
+  padding: 16px;
+  background: var(--dp-bg);
+  border: 1px solid var(--dp-border);
+  border-radius: var(--dp-radius);
+  box-shadow: var(--dp-shadow);
+  font-family: "Inter", sans-serif;
+  color: var(--dp-text);
+}
+
+.datepicker-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 12px;
+}
+
+.datepicker-title {
+  font-size: 0.82rem;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+}
+
+.datepicker-nav {
+  display: flex;
+  gap: 4px;
+}
+
+.datepicker-nav-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 26px;
+  height: 26px;
+  border: 1px solid var(--dp-border);
+  border-radius: var(--dp-radius);
+  background: transparent;
+  color: var(--dp-text);
+  cursor: pointer;
+}
+
+.datepicker-nav-btn svg {
+  width: 14px;
+  height: 14px;
+}
+
+.datepicker-nav-btn:hover {
+  background: var(--dp-hover);
+}
+
+.datepicker-weekdays,
+.datepicker-grid {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  gap: 2px;
+}
+
+.datepicker-weekdays {
+  margin-bottom: 4px;
+}
+
+.datepicker-weekdays span {
+  display: block;
+  text-align: center;
+  font-size: 0.62rem;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--dp-muted);
+  padding: 4px 0;
+}
+
+.datepicker-cell {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 32px;
+  border: 0;
+  border-radius: var(--dp-radius);
+  background: transparent;
+  color: var(--dp-text);
+  font-size: 0.78rem;
+  font-family: inherit;
+  cursor: pointer;
+}
+
+.datepicker-cell:hover {
+  background: var(--dp-hover);
+}
+
+.datepicker-cell--muted {
+  color: var(--dp-muted);
+  opacity: 0.5;
+  cursor: default;
+}
+
+.datepicker-cell--muted:hover {
+  background: transparent;
+}
+
+.datepicker-cell--today {
+  box-shadow: inset 0 0 0 1px var(--dp-accent);
+}
+
+.datepicker-cell--selected,
+.datepicker-cell--selected:hover {
+  background: var(--dp-accent);
+  color: var(--dp-accent-text);
+}
+
+.datepicker-footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-top: 12px;
+  padding-top: 12px;
+  border-top: 1px solid var(--dp-border);
+}
+
+.datepicker-link {
+  border: 0;
+  background: transparent;
+  padding: 0;
+  color: var(--dp-text);
+  font-size: 0.72rem;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  text-decoration: underline;
+  text-underline-offset: 2px;
+  cursor: pointer;
+}
+
+.datepicker-link:hover {
+  color: var(--dp-muted);
+}
