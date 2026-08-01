@@ -9,7 +9,7 @@
   var VAPID_PUBLIC_KEY = "BM_IQFlZnwcu7g4r34KumlYmAJWP0sH4O2_3SNhvqT2gF4hP3enZGP9vgnxZN-FTIpRrXyKByvyb0gMhEA7h4es";
   var chromeInitialized = false;
   var TABLES = ["clients", "practice", "bookings", "projects", "partnerships", "collection", "galleries", "content", "journal", "cms", "budgets", "invoices", "documents"];
-  var state = { route: "dashboard", query: "", filter: "all", editing: null, columnFilters: {}, selected: {} };
+  var state = { route: "dashboard", query: "", filter: "all", editing: null, detail: null, columnFilters: {}, selected: {} };
   var data = { activity: [] };
   window.LgndryOpsSnapshot = function () { return data; };
 
@@ -43,6 +43,8 @@
     ["cms", "Website CMS"], ["budgets", "Form Pricing"], ["invoices", "Invoices"], ["analytics", "Analytics"],
     ["documents", "Documents"], ["settings", "Settings"]
   ];
+
+  var DETAIL_ROUTES = ["clients", "bookings", "projects", "partnerships", "collection"];
 
   var schemas = {
     clients: {
@@ -481,6 +483,17 @@
 
   function render() {
     renderNav();
+    if (state.detail) {
+      var detailSchema = schemas[state.detail.route];
+      var detailRecord = detailSchema && byId(detailSchema.collection, state.detail.id);
+      if (detailSchema && detailRecord && supportsDetail(detailSchema)) {
+        setTitle("View " + detailType(detailSchema), "Manage the complete record, related work and activity.");
+        view().innerHTML = detailView(detailSchema, detailRecord);
+        bindDetail(detailSchema, detailRecord);
+        return;
+      }
+      state.detail = null;
+    }
     if (state.route === "dashboard") {
       setTitle("Welcome back, Dan.", "Here is what is happening with LGNDRY.Co today.");
       view().innerHTML = dashboard();
@@ -563,7 +576,7 @@
       var progress = PROJECT_PROGRESS[project.status] != null ? PROJECT_PROGRESS[project.status] : 10;
       var statusCls = statusClass(project.status);
       var dotClass = statusCls === "warn" || statusCls === "bad" ? "dot dot--warn" : "dot";
-      return '<div class="project"><img src="' + esc(project.image || "assests/images/hero-image.JPG") + '" alt="">' +
+      return '<div class="project record-preview--clickable" data-dashboard-detail="projects" data-record-id="' + project.id + '" tabindex="0"><img src="' + esc(project.image || "assests/images/hero-image.JPG") + '" alt="">' +
         "<div><h3>" + esc(project.name) + "</h3><p>" + esc(label("clients", project.client)) + "</p></div>" +
         '<span class="project__status"><span class="' + dotClass + '"></span>' + esc(project.status) + "</span>" +
         '<span class="project__progress">' + progress + '%</span>' +
@@ -599,7 +612,8 @@
       var status = record.status || record.visibility || record.availability || "Open";
       var name = record.name || record.title || record.service || record.number || record.company || record.section;
       var meta = [record.date || record.due || record.timeline || record.published, relationMeta(record)].filter(Boolean).join(" / ");
-      return '<div class="snapshot-item"><span class="status-pill ' + statusClass(status) + '">' + esc(status) + '</span><div><strong>' + esc(name) + '</strong><p class="record-meta">' + esc(meta) + '</p></div><button class="table-action" data-route-jump="' + route + '">Open</button></div>';
+      var targetRoute = DETAIL_ROUTES.find(function (candidate) { return byId(schemas[candidate].collection, record.id); }) || route;
+      return '<div class="snapshot-item record-preview--clickable" data-dashboard-detail="' + targetRoute + '" data-record-id="' + record.id + '" tabindex="0"><span class="status-pill ' + statusClass(status) + '">' + esc(status) + '</span><div><strong>' + esc(name) + '</strong><p class="record-meta">' + esc(meta) + '</p></div><button class="table-action" type="button">Open</button></div>';
     }).join("");
     return '<article class="panel"><div class="panel__header"><span class="panel__label">' + esc(title) + '</span></div><div class="snapshot-list">' + (rows || '<p class="empty-state">No records yet.</p>') + "</div></article>";
   }
@@ -614,7 +628,7 @@
     var stages = ["Applied", "Discovery Call", "Proposal", "Negotiation", "Signed", "Onboarding", "Active", "Renewal", "Lost"];
     return '<article class="panel"><div class="panel__header"><span class="panel__label">Brand Partnership Pipeline</span></div><div class="pipeline">' + stages.map(function (stage) {
       var cards = active("partnerships").filter(function (p) { return p.status === stage; }).map(function (p) {
-        return '<div class="pipeline-card"><strong>' + esc(p.company) + '</strong><p class="record-meta">' + esc(p.contact) + " / " + esc(p.sessionsRemaining || 0) + " sessions</p></div>";
+        return '<div class="pipeline-card record-preview--clickable" data-dashboard-detail="partnerships" data-record-id="' + p.id + '" tabindex="0"><strong>' + esc(p.company) + '</strong><p class="record-meta">' + esc(p.contact) + " / " + esc(p.sessionsRemaining || 0) + " sessions</p></div>";
       }).join("");
       return '<div class="pipeline-stage"><h3>' + esc(stage) + "</h3>" + (cards || '<p class="empty-state">Empty</p>') + "</div>";
     }).join("") + "</div></article>";
@@ -623,9 +637,195 @@
   function calendar(items) {
     var rows = items.slice(0, 5).map(function (booking) {
       var date = new Date(booking.date + "T00:00:00");
-      return '<div class="calendar-item"><div class="calendar-date">' + date.getDate() + "<span>" + date.toLocaleDateString("en-ZA", { month: "short" }) + "</span></div><div><strong>" + esc(booking.service) + '</strong><p class="record-meta">' + esc(label("clients", booking.client)) + " / " + esc((booking.start || "") + " - " + (booking.end || "")) + "</p></div></div>";
+      return '<div class="calendar-item record-preview--clickable" data-dashboard-detail="bookings" data-record-id="' + booking.id + '" tabindex="0"><div class="calendar-date">' + date.getDate() + "<span>" + date.toLocaleDateString("en-ZA", { month: "short" }) + "</span></div><div><strong>" + esc(booking.service) + '</strong><p class="record-meta">' + esc(label("clients", booking.client)) + " / " + esc((booking.start || "") + " - " + (booking.end || "")) + "</p></div></div>";
     }).join("");
     return '<article class="panel"><div class="panel__header"><span class="panel__label">Calendar Snapshot</span></div><div class="calendar-list">' + (rows || '<p class="empty-state">No upcoming bookings.</p>') + "</div></article>";
+  }
+
+
+  function supportsDetail(schema) {
+    return !!schema && DETAIL_ROUTES.indexOf(schema.collection) > -1;
+  }
+
+  function routeForSchema(schema) {
+    return Object.keys(schemas).find(function (route) { return schemas[route] === schema; }) || schema.collection;
+  }
+
+  function detailType(schema) {
+    var value = singular(schema.title);
+    return value.charAt(0).toUpperCase() + value.slice(1);
+  }
+
+  function detailStatus(schema, record) {
+    return record[schema.status] || record.status || record.visibility || record.availability || "Active";
+  }
+
+  function detailNavigate(route, recordId, replace) {
+    var schema = schemas[route];
+    if (!schema || !supportsDetail(schema) || !byId(schema.collection, recordId)) return;
+    state.route = route;
+    state.detail = { route: route, id: recordId };
+    state.query = "";
+    state.filter = "all";
+    var method = replace ? "replaceState" : "pushState";
+    if (window.history && window.history[method]) window.history[method]({ route: route, id: recordId }, "", "#" + route + "/" + encodeURIComponent(recordId));
+    render();
+    window.scrollTo({ top: 0, behavior: "smooth" });
+  }
+
+  function detailBack(schema) {
+    var route = routeForSchema(schema);
+    state.route = route;
+    state.detail = null;
+    if (window.history && window.history.pushState) window.history.pushState({ route: route }, "", "#" + route);
+    render();
+    window.scrollTo({ top: 0, behavior: "smooth" });
+  }
+
+  function syncDetailFromHash() {
+    var parts = window.location.hash.replace(/^#/, "").split("/");
+    var route = parts[0];
+    if (!schemas[route]) return;
+    state.route = route;
+    state.detail = parts[1] && supportsDetail(schemas[route]) ? { route: route, id: decodeURIComponent(parts.slice(1).join("/")) } : null;
+  }
+
+  function detailSummary(schema, record) {
+    return schema.columns.slice(0, 4).map(function (column) {
+      var value = displayValue(schema, record, column);
+      return '<div class="detail-stat"><span>' + esc(titleCase(column)) + '</span><strong>' + esc(value || "-") + "</strong></div>";
+    }).join("");
+  }
+
+  function relatedRecords(schema, record) {
+    var currentRoute = routeForSchema(schema);
+    var found = [];
+    var seen = {};
+    schema.fields.forEach(function (field) {
+      if (field.type !== "relation" || !record[field.name]) return;
+      var linkedSchema = schemas[field.collection];
+      var linked = byId(field.collection, record[field.name]);
+      if (!linked || !linkedSchema) return;
+      var key = field.collection + ":" + linked.id;
+      if (!seen[key]) found.push({ route: field.collection, schema: linkedSchema, record: linked, context: field.label });
+      seen[key] = true;
+    });
+    Object.keys(schemas).forEach(function (route) {
+      var linkedSchema = schemas[route];
+      if (!linkedSchema || !linkedSchema.fields) return;
+      linkedSchema.fields.filter(function (field) {
+        return field.type === "relation" && field.collection === schema.collection;
+      }).forEach(function (field) {
+        active(linkedSchema.collection).filter(function (item) { return item[field.name] === record.id; }).slice(0, 6).forEach(function (item) {
+          var key = linkedSchema.collection + ":" + item.id;
+          if (!seen[key]) found.push({ route: route, schema: linkedSchema, record: item, context: linkedSchema.title });
+          seen[key] = true;
+        });
+      });
+    });
+    return found.filter(function (item) { return !(item.route === currentRoute && item.record.id === record.id); });
+  }
+
+  function detailRelatedMarkup(schema, record) {
+    var items = relatedRecords(schema, record);
+    if (!items.length) return '<p class="detail-empty">No linked records yet.</p>';
+    return items.slice(0, 10).map(function (item) {
+      var canOpen = supportsDetail(item.schema);
+      return '<button class="detail-link-card" type="button" data-related-route="' + esc(item.route) + '" data-related-id="' + esc(item.record.id) + '" data-related-detail="' + (canOpen ? "true" : "false") + '"><span>' + esc(item.context) + '</span><strong>' + esc(recordDisplayName(item.record)) + '</strong><small>' + esc(detailStatus(item.schema, item.record)) + '</small></button>';
+    }).join("");
+  }
+
+  function detailActivityMarkup(record) {
+    var name = recordDisplayName(record).toLowerCase();
+    var related = (data.activity || []).filter(function (item) {
+      return String(item.message || "").toLowerCase().indexOf(name) > -1;
+    });
+    var items = (related.length ? related : (data.activity || [])).slice(0, 6);
+    if (!items.length) return '<p class="detail-empty">No activity recorded yet.</p>';
+    return items.map(function (item) {
+      var date = item.at ? new Date(item.at) : null;
+      return '<div class="detail-activity"><span class="detail-activity__dot"></span><div><strong>' + esc(item.message || "Record updated") + '</strong><small>' + esc(date && !isNaN(date) ? date.toLocaleString("en-ZA", { dateStyle: "medium", timeStyle: "short" }) : "") + "</small></div></div>";
+    }).join("");
+  }
+
+  function detailDocumentsMarkup(schema, record) {
+    var docs = active("documents").filter(function (doc) {
+      if (schema.collection === "clients") return doc.client === record.id;
+      if (schema.collection === "projects") return doc.project === record.id;
+      return (record.client && doc.client === record.client) || (record.project && doc.project === record.project);
+    }).slice(0, 6);
+    if (!docs.length) return '<p class="detail-empty">No related documents yet.</p>';
+    return docs.map(function (doc) {
+      return '<button class="detail-document" type="button" data-related-route="documents" data-related-id="' + esc(doc.id) + '" data-related-detail="false"><span>' + icons.documents + '</span><div><strong>' + esc(doc.title) + '</strong><small>' + esc((doc.type || "Document") + " / " + (doc.status || "")) + "</small></div></button>";
+    }).join("");
+  }
+
+  function detailView(schema, record) {
+    var status = detailStatus(schema, record);
+    var image = record.image ? '<div class="detail-hero__image"><img src="' + esc(record.image) + '" alt=""></div>' : "";
+    var bookingAction = schema.collection === "bookings" ? '<button class="secondary-action" type="button" data-detail-generate>Generate Project</button>' : "";
+    return '<section class="record-detail">' +
+      '<button class="detail-back" type="button" data-detail-back><span>&larr;</span> Back to ' + esc(schema.title) + '</button>' +
+      '<header class="detail-hero">' + image + '<div class="detail-hero__content"><span class="eyebrow">' + esc(detailType(schema)) + ' record</span><div class="detail-hero__title"><div><h2>' + esc(recordDisplayName(record)) + '</h2><p>Created for the LGNDRY.Co studio workflow</p></div><span class="status-pill ' + statusClass(status) + '">' + esc(status) + '</span></div><div class="detail-stats">' + detailSummary(schema, record) + '</div></div></header>' +
+      '<div class="detail-layout"><main class="detail-main"><form class="detail-editor" data-detail-form><div class="detail-section-head"><div><span class="eyebrow">Record information</span><h3>Edit ' + esc(detailType(schema)) + '</h3></div><span>Changes sync to the studio database</span></div><div class="form-grid detail-form-grid">' + schema.fields.map(function (field) { return renderField(field, record[field.name]); }).join("") + '</div><div class="detail-savebar"><span data-detail-save-status>Review changes before saving.</span><button class="primary-action" type="submit">Save Changes</button></div></form></main>' +
+      '<aside class="detail-aside"><section class="detail-panel"><div class="detail-panel__head"><span class="eyebrow">Linked records</span><h3>Related work</h3></div><div class="detail-link-list">' + detailRelatedMarkup(schema, record) + '</div></section>' +
+      '<section class="detail-panel"><div class="detail-panel__head"><span class="eyebrow">Documents</span><h3>Files & agreements</h3></div>' + detailDocumentsMarkup(schema, record) + '</section>' +
+      '<section class="detail-panel"><div class="detail-panel__head"><span class="eyebrow">Activity</span><h3>Recent history</h3></div><div class="detail-activity-list">' + detailActivityMarkup(record) + '</div></section>' +
+      '<section class="detail-panel detail-actions"><div class="detail-panel__head"><span class="eyebrow">Actions</span><h3>Manage record</h3></div>' + bookingAction + '<button class="secondary-action" type="button" data-detail-archive>Archive Record</button><button class="danger-btn" type="button" data-detail-delete>Delete Record</button></section></aside></div></section>';
+  }
+
+  function submitDetailForm(event, schema, record) {
+    event.preventDefault();
+    var form = event.currentTarget;
+    var next = Object.assign({}, record);
+    var valid = true;
+    schema.fields.forEach(function (field) {
+      if (field.type === "heading") return;
+      var input = form.elements[field.name];
+      var value = input ? input.value.trim() : "";
+      var error = form.querySelector('[data-error="' + field.name + '"]');
+      if (field.required && !value) {
+        valid = false;
+        if (error) error.textContent = "Required";
+      } else if (error) error.textContent = "";
+      next[field.name] = field.type === "number" && value !== "" ? Number(value) : value;
+    });
+    if (!valid) {
+      toast("Please complete the required fields.");
+      return;
+    }
+    var list = data[schema.collection];
+    var index = list.findIndex(function (item) { return item.id === record.id; });
+    if (index > -1) list[index] = next;
+    persistRecord(schema.collection, next);
+    logActivity('Updated ' + singular(schema.title) + ' "' + recordDisplayName(next) + '"');
+    toast("Changes saved.");
+    render();
+  }
+
+  function bindDetail(schema, record) {
+    document.querySelector("[data-detail-back]").addEventListener("click", function () { detailBack(schema); });
+    document.querySelector("[data-detail-form]").addEventListener("submit", function (event) { submitDetailForm(event, schema, record); });
+    document.querySelectorAll("[data-related-route]").forEach(function (button) {
+      button.addEventListener("click", function () {
+        var route = button.dataset.relatedRoute;
+        if (button.dataset.relatedDetail === "true") {
+          detailNavigate(route, button.dataset.relatedId);
+        } else {
+          state.route = route;
+          state.detail = null;
+          state.query = recordDisplayName(byId(schemas[route].collection, button.dataset.relatedId) || record);
+          render();
+        }
+      });
+    });
+    var generate = document.querySelector("[data-detail-generate]");
+    if (generate) generate.addEventListener("click", function () {
+      state.detail = null;
+      generateProject(record.id);
+    });
+    document.querySelector("[data-detail-archive]").addEventListener("click", function () { archiveRecord(schema, record.id); });
+    document.querySelector("[data-detail-delete]").addEventListener("click", function () { deleteRecord(schema, record.id); });
   }
 
   function moduleView(schema) {
@@ -729,14 +929,17 @@
     if (!rows.length) return bar + '<div class="loading">No matching records. Add one to begin.</div>';
     var selected = state.selected[schema.collection] || [];
     var allSelected = rows.length > 0 && rows.every(function (record) { return selected.indexOf(record.id) > -1; });
-    return bar + '<table class="records-table"><thead><tr><th class="records-table__check"><input type="checkbox" data-select-all ' + (allSelected ? "checked" : "") + " aria-label=\"Select all\"></th>" + schema.columns.map(function (column) { return "<th>" + esc(titleCase(column)) + "</th>"; }).join("") + "<th>Actions</th></tr></thead><tbody>" + rows.map(function (record) {
+    var hasDetail = supportsDetail(schema);
+    return bar + '<table class="records-table"><thead><tr><th class="records-table__check"><input type="checkbox" data-select-all ' + (allSelected ? "checked" : "") + ' aria-label="Select all"></th>' + schema.columns.map(function (column) { return "<th>" + esc(titleCase(column)) + "</th>"; }).join("") + "<th>Actions</th></tr></thead><tbody>" + rows.map(function (record) {
       var isChecked = selected.indexOf(record.id) > -1;
-      return '<tr><td class="records-table__check"><input type="checkbox" data-select-row="' + record.id + '" ' + (isChecked ? "checked" : "") + ' aria-label="Select row"></td>' + schema.columns.map(function (column, index) {
+      var rowAttrs = hasDetail ? ' class="record-row--clickable" data-view-record="' + record.id + '" tabindex="0" aria-label="View ' + esc(recordDisplayName(record)) + '"' : "";
+      var primaryAction = hasDetail ? '<button class="table-action table-action--view" data-open-record="' + record.id + '" type="button">View</button>' : '<button class="table-action" data-edit="' + record.id + '" type="button">Edit</button>';
+      return "<tr" + rowAttrs + '><td class="records-table__check"><input type="checkbox" data-select-row="' + record.id + '" ' + (isChecked ? "checked" : "") + ' aria-label="Select row"></td>' + schema.columns.map(function (column, index) {
         var value = displayValue(schema, record, column);
         if (index === 0) return '<td><strong>' + esc(value) + '</strong><div class="record-meta">' + esc(record.notes || record.brief || record.description || "") + "</div></td>";
         if (column === schema.status || ["status", "visibility", "availability", "deposit"].indexOf(column) > -1) return '<td><span class="status-pill ' + statusClass(value) + '">' + esc(value) + "</span></td>";
         return "<td>" + esc(value || "-") + "</td>";
-      }).join("") + '<td><div class="row-actions"><button class="table-action" data-edit="' + record.id + '" type="button">Edit</button>' + (schema.actions && schema.actions.indexOf("generateProject") > -1 ? '<button class="table-action" data-generate="' + record.id + '" type="button">Project</button>' : "") + (schema.actions && schema.actions.indexOf("copyLink") > -1 ? '<button class="table-action" data-copy-link="' + record.id + '" type="button">Copy Link</button>' : "") + (schema.actions && schema.actions.indexOf("downloadPdf") > -1 ? '<button class="table-action" data-download-pdf="' + record.id + '" type="button">PDF</button>' : "") + '<button class="table-action" data-archive="' + record.id + '" type="button">Archive</button><button class="table-action" data-delete="' + record.id + '" type="button">Delete</button></div></td></tr>';
+      }).join("") + '<td><div class="row-actions">' + primaryAction + (schema.actions && schema.actions.indexOf("generateProject") > -1 ? '<button class="table-action" data-generate="' + record.id + '" type="button">Project</button>' : "") + (schema.actions && schema.actions.indexOf("copyLink") > -1 ? '<button class="table-action" data-copy-link="' + record.id + '" type="button">Copy Link</button>' : "") + (schema.actions && schema.actions.indexOf("downloadPdf") > -1 ? '<button class="table-action" data-download-pdf="' + record.id + '" type="button">PDF</button>' : "") + '<button class="table-action" data-archive="' + record.id + '" type="button">Archive</button><button class="table-action" data-delete="' + record.id + '" type="button">Delete</button></div></td></tr>';
     }).join("") + "</tbody></table>";
   }
 
@@ -814,6 +1017,19 @@
 
   function bindTableRows(schema) {
     document.querySelectorAll("[data-edit]").forEach(function (button) { button.addEventListener("click", function () { openModal(schema, byId(schema.collection, button.dataset.edit)); }); });
+    document.querySelectorAll("[data-open-record]").forEach(function (button) {
+      button.addEventListener("click", function () { detailNavigate(routeForSchema(schema), button.dataset.openRecord); });
+    });
+    document.querySelectorAll("[data-view-record]").forEach(function (row) {
+      function openFromRow(event) {
+        if (event.type === "keydown" && event.key !== "Enter" && event.key !== " ") return;
+        if (event.target.closest("button,input,a,select,label")) return;
+        event.preventDefault();
+        detailNavigate(routeForSchema(schema), row.dataset.viewRecord);
+      }
+      row.addEventListener("click", openFromRow);
+      row.addEventListener("keydown", openFromRow);
+    });
     document.querySelectorAll("[data-archive]").forEach(function (button) { button.addEventListener("click", function () { archiveRecord(schema, button.dataset.archive); }); });
     document.querySelectorAll("[data-delete]").forEach(function (button) { button.addEventListener("click", function () { deleteRecord(schema, button.dataset.delete); }); });
     document.querySelectorAll("[data-generate]").forEach(function (button) { button.addEventListener("click", function () { generateProject(button.dataset.generate); }); });
@@ -1432,9 +1648,19 @@
   }
 
   function bindDashboard() {
+    document.querySelectorAll("[data-dashboard-detail]").forEach(function (item) {
+      function openDetail(event) {
+        if (event.type === "keydown" && event.key !== "Enter" && event.key !== " ") return;
+        event.preventDefault();
+        detailNavigate(item.dataset.dashboardDetail, item.dataset.recordId);
+      }
+      item.addEventListener("click", openDetail);
+      item.addEventListener("keydown", openDetail);
+    });
     document.querySelectorAll("[data-route-jump]").forEach(function (button) {
       button.addEventListener("click", function () {
         state.route = button.dataset.routeJump;
+        state.detail = null;
         state.query = "";
         state.filter = "all";
         render();
@@ -1575,6 +1801,7 @@
         chromeInitialized = true;
         startAutoRefresh();
       }
+      syncDetailFromHash();
       render();
     }).catch(function (error) {
       console.error(error);
@@ -1638,6 +1865,8 @@
     var route = event.target.closest("[data-route]");
     if (!route) return;
     state.route = route.dataset.route;
+    state.detail = null;
+    if (window.history && window.history.pushState) window.history.pushState({ route: state.route }, "", "#" + state.route);
     state.query = "";
     state.filter = "all";
     render();
@@ -1702,7 +1931,8 @@
         document.querySelector("[data-global-search]").value = "";
         panel.classList.remove("is-open");
         render();
-        openModal(match.schema, match.record);
+        if (supportsDetail(match.schema)) detailNavigate(match.route, match.record.id);
+        else openModal(match.schema, match.record);
       });
     });
   }
@@ -1724,11 +1954,11 @@
     button.addEventListener("click", closeModal);
   });
 
-  document.querySelector("[data-modal]").addEventListener("click", function (event) {
+  document.addEventListener("click", function (event) {
     if (event.target.matches("[data-modal]")) closeModal();
   });
 
-  document.querySelector("[data-modal]").addEventListener("click", function (event) {
+  document.addEventListener("click", function (event) {
     var imageTrigger = event.target.closest("[data-image-trigger]");
     if (imageTrigger) {
       imageTrigger.closest("[data-image-field]").querySelector("[data-image-input]").click();
@@ -1759,7 +1989,7 @@
     }
   });
 
-  document.querySelector("[data-modal]").addEventListener("input", function (event) {
+  document.addEventListener("input", function (event) {
     if (event.target.matches('[name="slug"]')) {
       event.target.dataset.userEdited = "true";
       return;
@@ -1773,7 +2003,7 @@
     }
   });
 
-  document.querySelector("[data-modal]").addEventListener("change", function (event) {
+  document.addEventListener("change", function (event) {
     var imageInput = event.target.closest("[data-image-input]");
     if (imageInput) {
       var ifield = imageInput.closest("[data-image-field]");
@@ -1823,20 +2053,20 @@
     }
   });
 
-  document.querySelector("[data-modal]").addEventListener("dragover", function (event) {
+  document.addEventListener("dragover", function (event) {
     var dropzone = event.target.closest("[data-image-dropzone]");
     if (!dropzone) return;
     event.preventDefault();
     dropzone.classList.add("is-dragover");
   });
 
-  document.querySelector("[data-modal]").addEventListener("dragleave", function (event) {
+  document.addEventListener("dragleave", function (event) {
     var dropzone = event.target.closest("[data-image-dropzone]");
     if (!dropzone) return;
     dropzone.classList.remove("is-dragover");
   });
 
-  document.querySelector("[data-modal]").addEventListener("drop", function (event) {
+  document.addEventListener("drop", function (event) {
     var dropzone = event.target.closest("[data-image-dropzone]");
     if (!dropzone) return;
     event.preventDefault();
@@ -1857,6 +2087,11 @@
   document.querySelector("[data-form]").addEventListener("submit", submitForm);
   window.addEventListener("keydown", function (event) {
     if (event.key === "Escape") closeModal();
+  });
+
+  window.addEventListener("popstate", function () {
+    syncDetailFromHash();
+    render();
   });
 
   initAuth();
