@@ -4531,3 +4531,11 @@ body {
 .showroom-page>.showroom-back{display:inline-flex;align-items:center;margin:0 auto 24px;max-width:1540px;color:var(--text-primary);font:400 .62rem 'Inter',sans-serif;letter-spacing:.12em;text-transform:uppercase;text-decoration:none;transition:opacity .2s ease}
 .showroom-page>.showroom-back:hover{opacity:.55}
 @media(max-width:680px){.showroom-page>.showroom-back{margin-bottom:18px;font-size:.58rem}}
+
+/* Premium collection acquisition action */
+.commerce-work .work__acquire:is(button){min-height:48px;margin-top:22px;padding:0 18px;display:flex;align-items:center;justify-content:space-between;border:1px solid var(--primary);background:var(--primary);color:var(--secondary);transition:background .25s ease,color .25s ease,transform .25s ease}
+.commerce-work .work__acquire:is(button) span{font-size:.61rem;letter-spacing:.2em}
+.commerce-work .work__acquire:is(button) svg{width:34px;transition:transform .25s ease}
+.commerce-work .work__acquire:is(button):hover{background:transparent;color:var(--primary)}
+.commerce-work .work__acquire:is(button):hover svg{transform:translateX(4px)}
+.commerce-work .work__acquire:is(button):focus-visible{outline:2px solid var(--primary);outline-offset:4px}
