@@ -4546,3 +4546,9 @@ body {
 .showroom-body::after{content:"Preparing the showroom";position:fixed;inset:50% auto auto 50%;z-index:20;transform:translate(-50%,-50%);font:400 .6rem 'Inter',sans-serif;letter-spacing:.2em;text-transform:uppercase;color:var(--text-secondary);transition:opacity .18s ease}
 .showroom-body.showroom-loaded::after{opacity:0;pointer-events:none}
 @media(prefers-reduced-motion:reduce){.showroom-body .showroom-page{transition:none}}
+
+/* Quiet collection selection action */
+.commerce-work .work__acquire:is(button){min-height:44px;padding:0 14px;border-color:var(--divider);background:transparent;color:var(--text-primary)}
+.commerce-work .work__acquire:is(button) span{font-size:.57rem;letter-spacing:.18em}
+.commerce-work .work__acquire:is(button) svg{width:29px;opacity:.65}
+.commerce-work .work__acquire:is(button):hover{border-color:var(--text-primary);background:var(--surface-elevated);color:var(--text-primary)}
