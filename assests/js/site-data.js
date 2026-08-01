@@ -165,13 +165,23 @@
       itemSummary: itemSummary,
       quantity: items.reduce(function (sum, item) { return sum + Number(item.quantity || 1); }, 0),
       subtotal: Number(fields.subtotal || 0),
+      deliveryFee: Number(fields.deliveryFee || 0),
+      grandTotal: Number(fields.grandTotal != null ? fields.grandTotal : Number(fields.subtotal || 0) + Number(fields.deliveryFee || 0)),
+      orderType: fields.orderType || "Order Request",
+      paymentMethod: fields.paymentMethod || "EFT",
+      paymentStatus: fields.paymentStatus || "Awaiting Payment",
+      fulfilmentStatus: fields.fulfilmentStatus || "Awaiting Confirmation",
       deliveryMethod: fields.deliveryMethod || "",
       deliveryAddress: fields.deliveryAddress || "",
       deliveryCity: fields.deliveryCity || "",
       postalCode: fields.postalCode || "",
+      billingName: fields.billingName || fields.customerName || "",
+      billingAddress: fields.billingAddress || fields.deliveryAddress || "",
+      billingCity: fields.billingCity || fields.deliveryCity || "",
+      billingPostalCode: fields.billingPostalCode || fields.postalCode || "",
       notes: fields.notes || "",
       submittedAt: submittedAt,
-      status: "New Request"
+      status: fields.status || "New"
     };
     return client.auth.getUser().then(function (authResult) {
       var user = authResult.data && authResult.data.user;
@@ -183,7 +193,7 @@
       return client.from("orders").insert(payload);
     }).then(function (result) {
       if (result.error) throw result.error;
-      logActivity('New order request ' + orderNumber + ' from ' + (payload.customerName || "website visitor"));
+      logActivity('New ' + payload.orderType.toLowerCase() + ' ' + orderNumber + ' from ' + (payload.customerName || "website visitor"));
       return payload;
     });
   }
@@ -228,7 +238,7 @@
   /* Collection page: render live artwork grid */
   (function () {
     var grid = document.querySelector(".collection-grid");
-    if (!grid) return;
+    if (!grid || grid.hasAttribute("data-commerce-catalog")) return;
 
     function categoryToFilter(category) {
       if (category === "Studio Art" || category === "Limited Edition") return "studio";

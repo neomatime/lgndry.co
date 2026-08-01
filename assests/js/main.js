@@ -411,7 +411,7 @@
 /* Collection cart and delivery journey */
 (function () {
   var grid = document.querySelector('.collection-grid');
-  if (!grid) return;
+  if (!grid || grid.hasAttribute('data-commerce-catalog')) return;
 
   var cart = [];
   var drawer;

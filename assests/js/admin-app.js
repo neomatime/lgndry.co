@@ -122,11 +122,11 @@
       columns: ["title", "collectionName", "price", "remaining", "availability"],
       fields: [
         h("Artwork"),
-        f("title", "Artwork title", "text", true), f("collectionName", "Collection name", "text", true), f("category", "Category", "select", true, ["Art Print", "Studio Art", "Limited Edition"]), f("year", "Year", "number"), f("description", "Description / story", "textarea"), f("position", "Display order on the website (lower shows first)", "number", true),
+        f("title", "Artwork title", "text", true), f("artist", "Artist / creator", "text", true, null, "Dan Mokgwadi"), f("collectionName", "Collection name", "text", true), f("category", "Category", "select", true, ["Art Print", "Studio Art", "Limited Edition"]), f("year", "Year", "number"), f("description", "Artwork story", "textarea"), f("medium", "Medium", "text", true, null, "Archival Pigment Print"), f("dimensions", "Dimensions / installation notes", "textarea"), f("position", "Display order on the website (lower shows first)", "number", true), f("featured", "Featured work", "select", false, ["true", "false"]), f("popularity", "Popularity score", "number"),
         h("Photos"),
         f("image", "Main image", "image", true), f("images", "Additional images (optional)", "imagelist"),
         h("Pricing & Availability"),
-        f("seriesLabel", "Print description (e.g. 'Archival Pigment Print' or 'A series of 3 images')", "text", true), f("sizes", "Print sizes offered (one per line)", "textarea", true), f("price", "Price", "number", true), f("editionSize", "Edition size", "number", true), f("sold", "Editions sold", "number", true), f("remaining", "Editions remaining", "number"), f("availability", "Availability", "select", true, ["Available", "Reserved", "Sold Out", "Hidden"]),
+        f("seriesLabel", "Edition / print description", "text", true), f("sizes", "Print sizes offered (one per line)", "textarea", true), f("framingOptions", "Framing / presentation options (one per line)", "textarea"), f("deliveryEstimate", "Estimated delivery", "text"), f("requiresConfirmation", "Requires confirmation or quotation", "select", false, ["true", "false"]), f("price", "Price", "number", true), f("editionSize", "Edition size", "number", true), f("sold", "Editions sold", "number", true), f("remaining", "Editions remaining", "number"), f("availability", "Availability", "select", true, ["Available", "Reserved", "Sold Out", "Hidden"]),
         h("Sale & Delivery"),
         f("customer", "Latest customer"), f("editionNumber", "Latest edition number", "number"), f("payment", "Payment status", "select", false, ["Pending In Person", "Paid In Person", "Reserved", "Cancelled"]), f("shipping", "Shipping status", "select", false, ["Not Started", "Preparing", "Shipped", "Delivered", "Collected"]), f("tracking", "Tracking number"), f("certificate", "Certificate status", "select", false, ["Not Issued", "Issued", "Archived"])
       ]
@@ -150,18 +150,22 @@
       title: "Orders",
       subtitle: "Review collection requests, confirm availability and manage fulfilment through completion.",
       collection: "orders", display: "orderNumber", status: "status",
-      columns: ["orderNumber", "customerName", "itemSummary", "quantity", "submittedAt", "status"],
+      columns: ["orderNumber", "customerName", "orderType", "grandTotal", "paymentStatus", "status"],
       fields: [
         h("Order"),
-        f("orderNumber", "Order number", "text", true), f("status", "Order status", "select", true, ["New Request", "Contacted", "Confirmed", "Preparing", "Ready for Collection", "Out for Delivery", "Completed", "Cancelled"]), f("submittedAt", "Date and time submitted", "datetime-local", true),
+        f("orderNumber", "Order number", "text", true), f("orderType", "Order type", "select", true, ["Direct Purchase", "Order Request"]), f("status", "Customer-visible status", "select", true, ["New", "New Request", "Contacted", "Confirmed", "Preparing", "Ready for Collection", "Out for Delivery", "Completed", "Cancelled"]), f("fulfilmentStatus", "Fulfilment status", "select", true, ["Awaiting Confirmation", "Confirmed", "Preparing", "Ready for Collection", "Out for Delivery", "Completed", "Cancelled"]), f("submittedAt", "Date and time submitted", "datetime-local", true),
         h("Customer"),
         f("customerName", "Customer name", "text", true), f("customerEmail", "Email address", "email", true), f("customerPhone", "Phone / WhatsApp", "tel", true),
         h("Items"),
-        f("itemSummary", "Selected artwork or gallery items", "textarea", true), f("quantity", "Total quantity", "number", true), f("subtotal", "Order subtotal", "number", true),
+        f("itemSummary", "Selected artwork and options", "textarea", true), f("quantity", "Total quantity", "number", true), f("subtotal", "Order subtotal", "number", true), f("deliveryFee", "Delivery fee", "number", true), f("grandTotal", "Order total", "number", true),
+        h("Payment"),
+        f("paymentMethod", "Payment method", "select", true, ["EFT", "Payment in person"]), f("paymentStatus", "Payment status", "select", true, ["Awaiting Payment", "Payment Instructions Sent", "Partially Paid", "Paid", "Not Required", "Refunded", "Cancelled"]),
         h("Delivery"),
         f("deliveryMethod", "Delivery method", "select", true, ["Deliver to my address", "Collect in person"]), f("deliveryAddress", "Delivery address", "textarea", true), f("deliveryCity", "City / town", "text", true), f("postalCode", "Postal code", "text", true),
+        h("Billing"),
+        f("billingName", "Billing name"), f("billingAddress", "Billing address", "textarea"), f("billingCity", "Billing city"), f("billingPostalCode", "Billing postal code"),
         h("Notes"),
-        f("notes", "Order notes or special instructions", "textarea")
+        f("notes", "Customer notes or special instructions", "textarea"), f("internalNotes", "Internal studio notes", "textarea")
       ]
     },
     content: {
@@ -840,12 +844,14 @@
         valid = false;
         if (error) error.textContent = "Required";
       } else if (error) error.textContent = "";
-      next[field.name] = field.type === "number" && value !== "" ? Number(value) : value;
+      if (["featured", "requiresConfirmation"].indexOf(field.name) > -1 && value !== "") next[field.name] = value === "true";
+      else next[field.name] = field.type === "number" && value !== "" ? Number(value) : value;
     });
     if (!valid) {
       toast("Please complete the required fields.");
       return;
     }
+    if (schema.collection === "orders" && ["Confirmed", "Preparing", "Ready for Collection", "Out for Delivery", "Completed", "Cancelled"].indexOf(next.fulfilmentStatus) > -1) next.status = next.fulfilmentStatus;
     var list = data[schema.collection];
     var index = list.findIndex(function (item) { return item.id === record.id; });
     if (index > -1) list[index] = next;
@@ -1415,7 +1421,8 @@
       } else if (error) {
         error.textContent = "";
       }
-      next[field.name] = field.type === "number" && value !== "" ? Number(value) : value;
+      if (["featured", "requiresConfirmation"].indexOf(field.name) > -1 && value !== "") next[field.name] = value === "true";
+      else next[field.name] = field.type === "number" && value !== "" ? Number(value) : value;
     });
     if (!ok) {
       toast("Please complete the required fields.");

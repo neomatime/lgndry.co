@@ -10,7 +10,7 @@
   <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@300;400&family=Inter:wght@300;400;500&display=swap" rel="stylesheet">
   <link rel="icon" type="image/png" href="assests/logos/LGNDRY.CO Final.png">
   <link rel="apple-touch-icon" href="assests/logos/LGNDRY.CO Final white.png">
-  <link rel="stylesheet" href="assests/css/style.css?v=20260801-customer-accounts">
+  <link rel="stylesheet" href="assests/css/style.css?v=20260801-commerce">
   <link rel="stylesheet" href="assests/css/date-picker.css">
 </head>
 <body>
@@ -83,13 +83,25 @@
       </figure>
     </section>
 
-    <div class="collection-filters reveal" data-collection-filters>
-      <button class="collection-filter collection-filter--active" data-filter="all">All Works</button>
-      <button class="collection-filter" data-filter="prints">Art Prints</button>
-      <button class="collection-filter" data-filter="studio">Studio Art</button>
-    </div>
+    <section class="catalogue-controls reveal" data-commerce-filters aria-label="Filter and sort the collection">
+      <div class="catalogue-controls__primary">
+        <label class="catalogue-search"><span>Search the collection</span><input type="search" data-catalogue-search placeholder="Artwork or artist"></label>
+        <label><span>Sort by</span><select data-catalogue-sort><option value="featured">Featured</option><option value="newest">Newest</option><option value="price-low">Price: low to high</option><option value="price-high">Price: high to low</option><option value="popular">Popularity</option></select></label>
+        <button class="catalogue-filter-toggle" type="button" data-filter-toggle aria-expanded="false">Refine</button>
+      </div>
+      <div class="catalogue-controls__refine" data-filter-panel>
+        <label><span>Category</span><select data-filter-category><option value="">All categories</option></select></label>
+        <label><span>Collection</span><select data-filter-collection><option value="">All collections</option></select></label>
+        <label><span>Artist</span><select data-filter-artist><option value="">All artists</option></select></label>
+        <label><span>Availability</span><select data-filter-availability><option value="">All availability</option><option value="Available">Available</option><option value="Reserved">Reserved</option><option value="Sold Out">Sold out</option></select></label>
+        <label><span>Minimum price</span><input type="number" min="0" step="500" data-filter-min-price placeholder="R 0"></label>
+        <label><span>Maximum price</span><input type="number" min="0" step="500" data-filter-max-price placeholder="Any"></label>
+        <button type="button" class="catalogue-clear" data-filter-clear>Clear filters</button>
+      </div>
+      <p class="catalogue-results" data-catalogue-results aria-live="polite"></p>
+    </section>
 
-    <section class="collection-grid reveal">
+    <section class="collection-grid reveal" data-commerce-catalog>
 
       <article class="work" data-category="prints">
         <figure class="work__media">
@@ -476,7 +488,9 @@
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
   <script src="assests/js/site-data.js?v=20260801-customer-accounts"></script>
   <script src="assests/js/customer-auth.js?v=20260801-customer-accounts"></script>
-  <script src="assests/js/main.js?v=20260801-orders"></script>
+  <script src="assests/js/commerce-core.js?v=20260801-commerce"></script>
+  <script src="assests/js/main.js?v=20260801-commerce"></script>
+  <script src="assests/js/collection-commerce.js?v=20260801-commerce"></script>
   <script src="assests/js/date-picker.js"></script>
 </body>
 </html>
