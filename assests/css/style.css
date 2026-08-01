@@ -4561,3 +4561,9 @@ body {
 .checkout-payment-card.is-disabled input{opacity:.45}
 .checkout-payment-card.is-disabled strong{font-weight:400}
 @media(max-width:520px){.checkout-payment-card em{position:static;grid-column:2;justify-self:start;margin-top:5px}}
+
+/* End-to-end showroom navigation curtain */
+html.showroom-leaving::after{content:"";position:fixed;inset:0;z-index:5000;background:var(--bg-primary);animation:showroomCurtainIn .12s ease both}
+.showroom-body::before{transition:opacity .18s ease}
+.showroom-body.showroom-loaded::before{opacity:0;pointer-events:none}
+@keyframes showroomCurtainIn{from{opacity:0}to{opacity:1}}
