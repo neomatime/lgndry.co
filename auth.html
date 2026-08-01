@@ -1,4 +1,4 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="en">
 <head>
   <meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1">
@@ -32,10 +32,10 @@
         <span class="account-eyebrow">Choose a new password</span><h1>Secure your account.</h1><p class="auth-card__intro">Use at least eight characters for your new password.</p>
         <form class="auth-form" data-reset-form><label class="auth-field"><span>New password</span><input name="password" type="password" minlength="8" autocomplete="new-password" required></label><label class="auth-field"><span>Confirm password</span><input name="confirm_password" type="password" minlength="8" autocomplete="new-password" required></label><p class="auth-feedback" data-reset-feedback></p><button class="auth-button" type="submit">Update Password</button></form>
       </div>
-      <div class="auth-card auth-hidden" data-auth-view="verify"><span class="account-eyebrow">One final step</span><h1>Verify your email.</h1><p class="auth-card__intro">We sent a verification link to <strong data-verify-email>your email address</strong>. Open it to activate your account and securely link matching orders.</p><a class="auth-button" href="auth.html?mode=login" style="display:inline-block;text-decoration:none">Return to Log In</a></div>
+      <div class="auth-card auth-hidden" data-auth-view="verify"><span class="account-eyebrow">One final step</span><h1>Verify your email.</h1><p class="auth-card__intro">We sent a verification link to <strong data-verify-email>your email address</strong>. Open the newest email to activate your account and securely link matching orders.</p><form class="auth-form" data-resend-form><label class="auth-field"><span>Email address</span><input name="email" type="email" autocomplete="email" required></label><p class="auth-feedback" data-resend-feedback></p><button class="auth-button auth-button--light" type="submit">Resend Verification Email</button></form><div class="auth-links"><a href="auth.html?mode=login">Return to Log In</a></div></div>
     </section>
   </main>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
-  <script src="assests/js/customer-auth.js?v=20260801-customer-accounts"></script>
-  <script src="assests/js/auth-page.js?v=20260801-customer-accounts"></script>
+  <script src="assests/js/customer-auth.js?v=20260801-auth-callback"></script>
+  <script src="assests/js/auth-page.js?v=20260801-auth-callback"></script>
 </body></html>
