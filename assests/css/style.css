@@ -4552,3 +4552,4 @@ body {
 .commerce-work .work__acquire:is(button) span{font-size:.57rem;letter-spacing:.18em}
 .commerce-work .work__acquire:is(button) svg{width:29px;opacity:.65}
 .commerce-work .work__acquire:is(button):hover{border-color:var(--text-primary);background:var(--surface-elevated);color:var(--text-primary)}
+.commerce-work .work__acquire:is(button):hover{border-color:var(--divider);background:var(--surface-elevated)}
