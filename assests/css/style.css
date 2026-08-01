@@ -4414,3 +4414,11 @@ body {
     margin-top: 0;
   }
 }
+
+
+.collection-cart__submit{display:grid;max-width:440px;justify-items:end;gap:8px}
+.collection-cart__feedback{display:none;margin:0;font-family:'Inter',sans-serif;font-size:.72rem;line-height:1.45;text-align:right}
+.collection-cart__feedback--success,.collection-cart__feedback--error{display:block}
+.collection-cart__feedback--success{color:#356b45}
+.collection-cart__feedback--error{color:#a43d35}
+@media(max-width:639px){.collection-cart__submit{width:100%;max-width:none;justify-items:stretch}.collection-cart__feedback{text-align:left}}

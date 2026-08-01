@@ -8,7 +8,7 @@
   var supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
   var VAPID_PUBLIC_KEY = "BM_IQFlZnwcu7g4r34KumlYmAJWP0sH4O2_3SNhvqT2gF4hP3enZGP9vgnxZN-FTIpRrXyKByvyb0gMhEA7h4es";
   var chromeInitialized = false;
-  var TABLES = ["clients", "practice", "bookings", "projects", "partnerships", "collection", "galleries", "content", "journal", "cms", "budgets", "invoices", "documents"];
+  var TABLES = ["clients", "practice", "bookings", "projects", "partnerships", "collection", "orders", "galleries", "content", "journal", "cms", "budgets", "invoices", "documents"];
   var state = { route: "dashboard", query: "", filter: "all", editing: null, detail: null, columnFilters: {}, selected: {} };
   var data = { activity: [] };
   window.LgndryOpsSnapshot = function () { return data; };
@@ -20,7 +20,7 @@
     projects: svg('<path d="M3 7h18v13H3z"/><path d="M8 7V4h8v3"/>'),
     partnerships: svg('<path d="M8 12h8M12 8v8"/><circle cx="12" cy="12" r="9"/>'),
     collection: svg('<path d="M6 8h12l1 13H5z"/><path d="M9 8a3 3 0 0 1 6 0"/>'),
-    galleries: svg('<rect x="3" y="5" width="18" height="14" rx="1"/><path d="M7 15l3-3 3 3 2-2 3 4"/><circle cx="8" cy="9" r="1.4"/>'),
+    orders: svg('<rect x="3" y="5" width="18" height="14" rx="1"/><path d="M7 15l3-3 3 3 2-2 3 4"/><circle cx="8" cy="9" r="1.4"/>'),
     content: svg('<path d="M4 5h16M4 12h16M4 19h10"/>'),
     practice: svg('<path d="m4 20 4-1 10-10-3-3L5 16z"/><path d="m14 6 3 3"/>'),
     journal: svg('<path d="M7 3h10v18H7z"/><path d="M9 7h6M9 11h6M9 15h4"/>'),
@@ -38,13 +38,13 @@
   var modules = [
     ["dashboard", "Dashboard"], ["clients", "Clients"], ["bookings", "Bookings"],
     ["projects", "Projects"], ["partnerships", "Brand Partnerships"],
-    ["collection", "Collection"], ["galleries", "Gallery Delivery"],
+    ["collection", "Collection"], ["orders", "Orders"],
     ["content", "Content Library"], ["practice", "Practice"], ["journal", "Journal"],
     ["cms", "Website CMS"], ["budgets", "Form Pricing"], ["invoices", "Invoices"], ["analytics", "Analytics"],
     ["documents", "Documents"], ["settings", "Settings"]
   ];
 
-  var DETAIL_ROUTES = ["clients", "bookings", "projects", "partnerships", "collection"];
+  var DETAIL_ROUTES = ["clients", "bookings", "projects", "partnerships", "collection", "orders"];
 
   var schemas = {
     clients: {
@@ -146,17 +146,27 @@
       ],
       actions: ["downloadPdf"]
     },
-    galleries: {
-      title: "Gallery Delivery",
-      subtitle: "Build delivery links, monitor viewed/downloaded status and manage expiries.",
-      collection: "galleries", display: "title", status: "status",
-      columns: ["title", "client", "project", "expiry", "status"],
-      fields: [f("title", "Gallery title", "text", true), rel("client", "Client", "clients", true), rel("project", "Project", "projects"), f("files", "Gallery images", "imagelist"), f("expiry", "Expiry date", "date"), f("downloads", "Downloads enabled", "select", true, ["Enabled", "Disabled"]), f("password", "Password protection (optional)"), f("status", "Gallery status", "select", true, ["Draft", "Sent", "Viewed", "Downloaded", "Expired"])],
-      actions: ["copyLink"]
+    orders: {
+      title: "Orders",
+      subtitle: "Review collection requests, confirm availability and manage fulfilment through completion.",
+      collection: "orders", display: "orderNumber", status: "status",
+      columns: ["orderNumber", "customerName", "itemSummary", "quantity", "submittedAt", "status"],
+      fields: [
+        h("Order"),
+        f("orderNumber", "Order number", "text", true), f("status", "Order status", "select", true, ["New Request", "Contacted", "Confirmed", "Preparing", "Ready for Collection", "Out for Delivery", "Completed", "Cancelled"]), f("submittedAt", "Date and time submitted", "datetime-local", true),
+        h("Customer"),
+        f("customerName", "Customer name", "text", true), f("customerEmail", "Email address", "email", true), f("customerPhone", "Phone / WhatsApp", "tel", true),
+        h("Items"),
+        f("itemSummary", "Selected artwork or gallery items", "textarea", true), f("quantity", "Total quantity", "number", true), f("subtotal", "Order subtotal", "number", true),
+        h("Delivery"),
+        f("deliveryMethod", "Delivery method", "select", true, ["Deliver to my address", "Collect in person"]), f("deliveryAddress", "Delivery address", "textarea", true), f("deliveryCity", "City / town", "text", true), f("postalCode", "Postal code", "text", true),
+        h("Notes"),
+        f("notes", "Order notes or special instructions", "textarea")
+      ]
     },
     content: {
       title: "Content Library",
-      subtitle: "Search, tag and connect assets to clients, projects, galleries and campaigns.",
+      subtitle: "Search, tag and connect assets to clients, projects, orders and campaigns.",
       collection: "content", display: "title", status: "status",
       columns: ["title", "client", "project", "category", "status"],
       fields: [f("title", "Asset title", "text", true), rel("client", "Client", "clients"), rel("project", "Project", "projects"), f("shootDate", "Shoot date", "date"), f("category", "Category", "select", true, ["Raw", "Edited", "Social", "Campaign", "Archive", "Website"]), f("tags", "Tags"), f("fileType", "File type", "select", true, ["Image", "Video", "PDF", "Document", "Link"]), f("file", "File", "file"), f("status", "Status", "select", true, ["Active", "Linked", "Archived"])]
@@ -262,6 +272,7 @@
         { id: id(), number: "INV-032", type: "Invoice", client: c1, project: p1, items: "Brand campaign shoot and edits", amount: 18500, vat: 0, due: "2026-07-18", status: "Sent", paidAt: "" },
         { id: id(), number: "INV-028", type: "Invoice", client: c3, project: p2, items: "Product photography", amount: 8950, vat: 0, due: "2026-06-20", status: "Paid", paidAt: "2026-06-18" }
       ],
+      orders: [],
       galleries: [{ id: id(), title: "Rituals Campaign Selects", client: c1, project: p1, files: "24 edited previews", expiry: "2026-08-01", downloads: "Enabled", share: "https://lgndry.co/gallery/rituals", password: "rituals24", status: "Sent" }],
       content: [{ id: id(), title: "Rituals Hero Still", client: c1, project: p1, shootDate: "2026-07-10", category: "Campaign", tags: "rituals,product,shadow", fileType: "Image", file: "assests/images/collection/thumbs/still-point.jpg", status: "Linked" }],
       journal: [{ id: id(), title: "Slowing Down To See", slug: "slowing-down-to-see", image: "assests/images/hero-image.JPG", category: "Manifesto", body: "A short studio reflection on intentional image making.", seoTitle: "Slowing Down To See", seoDescription: "LGNDRY.Co manifesto note.", published: "2026-07-15", status: "Scheduled" }],
@@ -297,7 +308,13 @@
   function loadRemoteData() {
     var queries = TABLES.map(function (table) {
       return supabaseClient.from(table).select("*").then(function (result) {
-        if (result.error) throw result.error;
+        if (result.error) {
+          if (table === "orders" && (result.error.code === "42P01" || result.error.code === "PGRST205")) {
+            console.warn("Orders table is not available yet. Apply the bundled Supabase migration.");
+            return { table: table, rows: [] };
+          }
+          throw result.error;
+        }
         return { table: table, rows: result.data };
       });
     });
@@ -375,7 +392,7 @@
       if (failed.length) throw failed[0].error;
     }
     var independentTables = ["collection", "practice", "journal", "cms", "clients"];
-    var laterTables = ["partnerships", "invoices", "galleries", "content", "documents"];
+    var laterTables = ["partnerships", "invoices", "orders", "galleries", "content", "documents"];
 
     return Promise.all(independentTables.map(function (table) { return write(table, rowsByTable[table]); })).then(function (results) {
       checkAll(results);
@@ -478,7 +495,7 @@
   function label(collection, recordId) {
     var record = byId(collection, recordId);
     if (!record) return recordId || "Unlinked";
-    return record.name || record.title || record.service || record.number || record.company || record.section || "Record";
+    return record.name || record.title || record.service || record.orderNumber || record.number || record.company || record.section || "Record";
   }
 
   function render() {
@@ -771,15 +788,39 @@
     }).join("");
   }
 
+
+  function parseOrderItems(record) {
+    if (Array.isArray(record.items)) return record.items;
+    if (!record.items) return [];
+    try {
+      var parsed = JSON.parse(record.items);
+      return Array.isArray(parsed) ? parsed : [];
+    } catch (error) {
+      return [];
+    }
+  }
+
+  function orderItemsMarkup(record) {
+    var items = parseOrderItems(record);
+    if (!items.length) return emptyState("No item data", "The selected works were not included with this order.", icons.collection, "", "", true);
+    return '<div class="order-items">' + items.map(function (item) {
+      var image = item.image ? '<img src="' + esc(item.image) + '" alt="">' : '<span class="order-item__placeholder">' + icons.collection + '</span>';
+      var artwork = item.artworkId && byId("collection", item.artworkId);
+      var open = artwork ? ' data-related-route="collection" data-related-id="' + esc(artwork.id) + '" data-related-detail="true"' : "";
+      return '<button class="order-item" type="button"' + open + '>' + image + '<div><strong>' + esc(item.title || "Artwork") + '</strong><span>' + esc((item.quantity || 1) + " x " + (item.size || "Size not specified")) + '</span><small>' + money(item.lineTotal || (Number(item.unitPrice || 0) * Number(item.quantity || 1))) + "</small></div></button>";
+    }).join("") + "</div>";
+  }
+
   function detailView(schema, record) {
     var status = detailStatus(schema, record);
     var image = record.image ? '<div class="detail-hero__image"><img src="' + esc(record.image) + '" alt=""></div>' : "";
+    var orderPanel = schema.collection === "orders" ? '<section class="detail-panel"><div class="detail-panel__head"><span class="eyebrow">Requested works</span><h3>Order items</h3></div>' + orderItemsMarkup(record) + "</section>" : "";
     var bookingAction = schema.collection === "bookings" ? '<button class="secondary-action" type="button" data-detail-generate>Generate Project</button>' : "";
     return '<section class="record-detail">' +
       '<button class="detail-back" type="button" data-detail-back><span>&larr;</span> Back to ' + esc(schema.title) + '</button>' +
       '<header class="detail-hero">' + image + '<div class="detail-hero__content"><span class="eyebrow">' + esc(detailType(schema)) + ' record</span><div class="detail-hero__title"><div><h2>' + esc(recordDisplayName(record)) + '</h2><p>Created for the LGNDRY.Co studio workflow</p></div><span class="status-pill ' + statusClass(status) + '">' + esc(status) + '</span></div><div class="detail-stats">' + detailSummary(schema, record) + '</div></div></header>' +
       '<div class="detail-layout"><main class="detail-main"><form class="detail-editor" data-detail-form><div class="detail-section-head"><div><span class="eyebrow">Record information</span><h3>Edit ' + esc(detailType(schema)) + '</h3></div><span>Changes sync to the studio database</span></div><div class="form-grid detail-form-grid">' + schema.fields.map(function (field) { return renderField(field, record[field.name]); }).join("") + '</div><div class="detail-savebar"><span data-detail-save-status>Review changes before saving.</span><button class="primary-action" type="submit">Save Changes</button></div></form></main>' +
-      '<aside class="detail-aside"><section class="detail-panel"><div class="detail-panel__head"><span class="eyebrow">Linked records</span><h3>Related work</h3></div><div class="detail-link-list">' + detailRelatedMarkup(schema, record) + '</div></section>' +
+      '<aside class="detail-aside">' + orderPanel + '<section class="detail-panel"><div class="detail-panel__head"><span class="eyebrow">Linked records</span><h3>Related work</h3></div><div class="detail-link-list">' + detailRelatedMarkup(schema, record) + '</div></section>' +
       '<section class="detail-panel"><div class="detail-panel__head"><span class="eyebrow">Documents</span><h3>Files & agreements</h3></div>' + detailDocumentsMarkup(schema, record) + '</section>' +
       '<section class="detail-panel"><div class="detail-panel__head"><span class="eyebrow">Activity</span><h3>Recent history</h3></div><div class="detail-activity-list">' + detailActivityMarkup(record) + '</div></section>' +
       '<section class="detail-panel detail-actions"><div class="detail-panel__head"><span class="eyebrow">Actions</span><h3>Manage record</h3></div>' + bookingAction + '<button class="secondary-action" type="button" data-detail-archive>Archive Record</button><button class="danger-btn" type="button" data-detail-delete>Delete Record</button></section></aside></div></section>';
@@ -861,7 +902,7 @@
   }
 
   function singular(title) {
-    return title.replace("Brand Partnerships", "partnership").replace("Gallery Delivery", "gallery").replace("Content Library", "asset").replace("Invoices & Payments", "invoice").replace("Form Pricing", "budget option").replace(/s$/, "").toLowerCase();
+    return title.replace("Brand Partnerships", "partnership").replace("Content Library", "asset").replace("Invoices & Payments", "invoice").replace("Form Pricing", "budget option").replace(/s$/, "").toLowerCase();
   }
 
   function filtered(schema) {
@@ -965,7 +1006,8 @@
     var field = schema.fields.find(function (item) { return item.name === column; });
     var value = record[column];
     if (field && field.type === "relation") return label(field.collection, value);
-    if (column === "price" || column === "amount") return money(value);
+    if (column === "price" || column === "amount" || column === "subtotal") return money(value);
+    if (column === "submittedAt" && value) { var submitted = new Date(value); return isNaN(submitted) ? value : submitted.toLocaleString("en-ZA", { dateStyle: "medium", timeStyle: "short" }); }
     if (column === "remaining" && record.editionSize) return value === "" || value == null ? Number(record.editionSize || 0) - Number(record.sold || 0) : value;
     return value;
   }
@@ -977,7 +1019,7 @@
   function statusClass(value) {
     var text = String(value || "").toLowerCase();
     if (/paid|active|confirmed|scheduled|visible|published|delivered|available|signed|sent|ready|downloaded|viewed/.test(text)) return "good";
-    if (/awaiting|review|proposal|draft|reserved|scheduled|partially|preparing|requested|editing/.test(text)) return "warn";
+    if (/awaiting|review|proposal|draft|reserved|scheduled|partially|preparing|request|editing/.test(text)) return "warn";
     if (/overdue|cancel|lost|expired|sold out|hidden|archived/.test(text)) return "bad";
     return "";
   }
@@ -1254,6 +1296,7 @@
     }
     var wide = ["textarea", "image", "imagelist", "file"].indexOf(field.type) > -1 || ["notes", "brief", "copy", "body", "deliverables", "tasks", "files", "comments"].indexOf(field.name) > -1;
     var safeValue = (value === undefined || value === null) ? "" : value;
+    if (field.type === "datetime-local" && safeValue) safeValue = String(safeValue).slice(0, 16);
     var control = "";
     if (field.type === "select") {
       control = '<select name="' + field.name + '" ' + (field.required ? "required" : "") + '><option value="">Select</option>' + field.options.map(function (option) { return '<option ' + (String(safeValue) === option ? "selected" : "") + ' value="' + esc(option) + '">' + esc(option) + "</option>"; }).join("") + "</select>";
@@ -1502,7 +1545,7 @@
   }
 
   function settings() {
-    return '<section class="split-grid"><article class="panel"><div class="panel__header"><div><span class="panel__label">Storage</span><h2 class="panel__title">Cloud Command Center Data</h2></div></div><p class="record-meta">All modules persist to the LGNDRY.Co Supabase database and sync across devices. Export a JSON backup any time, or import one to restore.</p><div class="toolbar" style="justify-content:flex-start;margin-top:18px"><button class="primary-btn" data-export type="button">Export JSON</button><button class="ghost-btn" data-import type="button">Import JSON</button><button class="danger-btn" data-reset type="button">Reset Demo Data</button></div></article><article class="panel"><div class="panel__header"><div><span class="panel__label">Alerts</span><h2 class="panel__title">Lead Notifications</h2></div></div><p class="record-meta">Get a push notification on this device the moment a booking, partnership application or contact-form lead comes in from the website - even when the Command Center isn\'t open.</p><p class="record-meta" data-push-status>Checking notification status...</p><div class="toolbar" style="justify-content:flex-start;margin-top:18px"><button class="primary-btn" data-push-toggle type="button" disabled>Enable Lead Alerts</button></div></article><article class="panel"><div class="panel__header"><div><span class="panel__label">Access</span><h2 class="panel__title">Team</h2></div></div><p class="record-meta">Give other people their own login to the Command Center.</p><div data-team-list class="record-meta">Loading team...</div><div class="toolbar" style="justify-content:flex-start;margin-top:18px;flex-wrap:wrap"><input type="email" placeholder="Email address" data-team-email style="flex:1;min-width:180px"><input type="password" placeholder="Temporary password (min 8 chars)" data-team-password style="flex:1;min-width:180px"><button class="primary-btn" data-team-add type="button">Add Team Member</button></div><p class="record-meta" data-team-error></p></article><article class="panel"><div class="panel__header"><span class="panel__label">Operational Lifecycle</span></div><p>Enquiry - Client - Booking - Project - Shoot - Gallery Delivery - Invoice - Payment - Archive</p><p>Application - Discovery Call - Proposal - Contract - Onboarding - Active Partnership - Renewal</p><p>Artwork Upload - Purchase - Edition Tracking - Certificate - Shipping - Completed Order</p></article></section>';
+    return '<section class="split-grid"><article class="panel"><div class="panel__header"><div><span class="panel__label">Storage</span><h2 class="panel__title">Cloud Command Center Data</h2></div></div><p class="record-meta">All modules persist to the LGNDRY.Co Supabase database and sync across devices. Export a JSON backup any time, or import one to restore.</p><div class="toolbar" style="justify-content:flex-start;margin-top:18px"><button class="primary-btn" data-export type="button">Export JSON</button><button class="ghost-btn" data-import type="button">Import JSON</button><button class="danger-btn" data-reset type="button">Reset Demo Data</button></div></article><article class="panel"><div class="panel__header"><div><span class="panel__label">Alerts</span><h2 class="panel__title">Lead Notifications</h2></div></div><p class="record-meta">Get a push notification on this device the moment a booking, order request, partnership application or contact-form lead comes in from the website - even when the Command Center isn\'t open.</p><p class="record-meta" data-push-status>Checking notification status...</p><div class="toolbar" style="justify-content:flex-start;margin-top:18px"><button class="primary-btn" data-push-toggle type="button" disabled>Enable Lead Alerts</button></div></article><article class="panel"><div class="panel__header"><div><span class="panel__label">Access</span><h2 class="panel__title">Team</h2></div></div><p class="record-meta">Give other people their own login to the Command Center.</p><div data-team-list class="record-meta">Loading team...</div><div class="toolbar" style="justify-content:flex-start;margin-top:18px;flex-wrap:wrap"><input type="email" placeholder="Email address" data-team-email style="flex:1;min-width:180px"><input type="password" placeholder="Temporary password (min 8 chars)" data-team-password style="flex:1;min-width:180px"><button class="primary-btn" data-team-add type="button">Add Team Member</button></div><p class="record-meta" data-team-error></p></article><article class="panel"><div class="panel__header"><span class="panel__label">Operational Lifecycle</span></div><p>Enquiry - Client - Booking - Project - Shoot - Orders - Invoice - Payment - Archive</p><p>Application - Discovery Call - Proposal - Contract - Onboarding - Active Partnership - Renewal</p><p>Artwork Upload - Purchase - Edition Tracking - Certificate - Shipping - Completed Order</p></article></section>';
   }
 
   function bindSettings() {
@@ -1912,7 +1955,7 @@
   });
 
   function recordDisplayName(record) {
-    return record.name || record.title || record.service || record.number || record.company || record.section || "Record";
+    return record.name || record.title || record.service || record.orderNumber || record.number || record.company || record.section || "Record";
   }
 
   function globalSearchMatches(query) {

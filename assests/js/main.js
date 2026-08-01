@@ -539,7 +539,7 @@
           '</div>' +
           '<div class="collection-cart__footer">' +
             '<p class="collection-cart__total"><span>Subtotal</span><strong data-collection-cart-total>R 0</strong></p>' +
-            '<button type="submit" data-collection-cart-submit>Send order request</button>' +
+            '<div class="collection-cart__submit"><p class="collection-cart__feedback" data-collection-cart-feedback role="status" aria-live="polite"></p><button type="submit" data-collection-cart-submit>Send order request</button></div>' +
           '</div>' +
         '</form>' +
       '</aside>';
@@ -749,10 +749,68 @@
       return;
     }
 
-    renderReview();
-    var subject = encodeURIComponent('Collection order request - LGNDRY.Co');
-    var body = encodeURIComponent(buildOrderBody());
-    window.location.href = 'mailto:' + orderEmail + '?subject=' + subject + '&body=' + body;
+    var submit = drawer.querySelector('[data-collection-cart-submit]');
+    var feedback = drawer.querySelector('[data-collection-cart-feedback]');
+    var items = cart.map(function (item) {
+      return {
+        artworkId: item.artworkId || null,
+        title: item.title,
+        year: item.year,
+        size: item.size,
+        quantity: item.quantity,
+        unitPrice: item.price,
+        lineTotal: item.price * item.quantity,
+        image: item.image,
+        details: item.details
+      };
+    });
+    var payload = {
+      customerName: getFormValue('customer_name'),
+      customerEmail: getFormValue('customer_email'),
+      customerPhone: getFormValue('customer_phone'),
+      items: items,
+      subtotal: getCartTotal(),
+      deliveryMethod: getFormValue('delivery_method'),
+      deliveryAddress: getFormValue('delivery_address'),
+      deliveryCity: getFormValue('delivery_city'),
+      postalCode: getFormValue('postal_code'),
+      notes: getFormValue('delivery_notes'),
+      submittedAt: new Date().toISOString()
+    };
+
+    if (!window.LgndrySiteData || !window.LgndrySiteData.submitOrder) {
+      if (feedback) {
+        feedback.className = 'collection-cart__feedback collection-cart__feedback--error';
+        feedback.textContent = 'Order requests are temporarily unavailable. Please contact info@lgndry-co.co.za.';
+      }
+      return;
+    }
+
+    submit.disabled = true;
+    submit.textContent = 'Sending request...';
+    if (feedback) {
+      feedback.className = 'collection-cart__feedback';
+      feedback.textContent = '';
+    }
+
+    window.LgndrySiteData.submitOrder(payload).then(function (order) {
+      cart = [];
+      form.reset();
+      renderCart();
+      submit.textContent = 'Request sent';
+      if (feedback) {
+        feedback.className = 'collection-cart__feedback collection-cart__feedback--success';
+        feedback.textContent = 'Thank you. Your order request ' + (order.orderNumber || '') + ' has been received. We will contact you to confirm availability.';
+      }
+    }).catch(function (error) {
+      console.error('Order request failed:', error);
+      submit.disabled = false;
+      submit.textContent = 'Send order request';
+      if (feedback) {
+        feedback.className = 'collection-cart__feedback collection-cart__feedback--error';
+        feedback.textContent = 'We could not send your request. Please try again or contact info@lgndry-co.co.za.';
+      }
+    });
   }
 
   function bindDrawer() {

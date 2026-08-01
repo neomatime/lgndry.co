@@ -1113,3 +1113,18 @@ body.ops-app-shell .auth-card h1{font-size:clamp(2rem,7vw,2.65rem);line-height:1
 
 .popover .empty-state-card--compact{min-height:120px;padding:17px 14px}
 .popover .empty-state-card--compact:before{display:none}
+
+
+/* Order details */
+.order-items{display:grid;gap:9px}
+.order-item{display:grid;width:100%;grid-template-columns:58px minmax(0,1fr);gap:12px;align-items:center;padding:9px;border:1px solid var(--line);border-radius:13px;color:var(--text);background:rgba(255,255,255,.018);text-align:left;cursor:default}
+.order-item[data-related-detail="true"]{cursor:pointer;transition:border-color 160ms ease,background 160ms ease,transform 160ms ease}
+.order-item[data-related-detail="true"]:hover{border-color:var(--accent-border);background:var(--accent-soft);transform:translateY(-1px)}
+.order-item img,.order-item__placeholder{width:58px;height:58px;border-radius:9px}
+.order-item img{object-fit:cover}
+.order-item__placeholder{display:grid;place-items:center;color:var(--accent);background:var(--accent-soft)}
+.order-item__placeholder svg{width:20px;height:20px}
+.order-item strong,.order-item span,.order-item small{display:block}
+.order-item strong{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:.76rem;font-weight:600}
+.order-item span{margin-top:4px;color:var(--muted);font-size:.63rem}
+.order-item small{margin-top:5px;color:var(--accent);font-size:.68rem}

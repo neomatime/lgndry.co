@@ -145,6 +145,40 @@
     });
   }
 
+
+  function submitOrder(fields) {
+    var submittedAt = fields.submittedAt || new Date().toISOString();
+    var suffix = String(Date.now()).slice(-6);
+    var orderNumber = fields.orderNumber || ("ORD-" + submittedAt.slice(0, 10).replace(/-/g, "") + "-" + suffix);
+    var items = Array.isArray(fields.items) ? fields.items : [];
+    var itemSummary = items.map(function (item) {
+      return (item.quantity || 1) + " x " + (item.title || "Artwork") + (item.size ? " (" + item.size + ")" : "");
+    }).join(", ");
+    var payload = {
+      id: newUuid(),
+      orderNumber: orderNumber,
+      customerName: fields.customerName || "",
+      customerEmail: fields.customerEmail || "",
+      customerPhone: fields.customerPhone || "",
+      items: items,
+      itemSummary: itemSummary,
+      quantity: items.reduce(function (sum, item) { return sum + Number(item.quantity || 1); }, 0),
+      subtotal: Number(fields.subtotal || 0),
+      deliveryMethod: fields.deliveryMethod || "",
+      deliveryAddress: fields.deliveryAddress || "",
+      deliveryCity: fields.deliveryCity || "",
+      postalCode: fields.postalCode || "",
+      notes: fields.notes || "",
+      submittedAt: submittedAt,
+      status: "New Request"
+    };
+    return client.from("orders").insert(payload).then(function (result) {
+      if (result.error) throw result.error;
+      logActivity('New order request ' + orderNumber + ' from ' + (payload.customerName || "website visitor"));
+      return payload;
+    });
+  }
+
   function submitContactLead(fields) {
     var notes = [
       "Assistance needed: " + (fields.assistance_needed || "-"),
@@ -172,7 +206,8 @@
     fetchBudgetOptions: fetchBudgetOptions,
     submitBooking: submitBooking,
     submitPartnership: submitPartnership,
-    submitContactLead: submitContactLead
+    submitContactLead: submitContactLead,
+    submitOrder: submitOrder
   };
 
   function escapeHtml(value) {
@@ -203,7 +238,7 @@
       var sizes = String(item.sizes || "").split("\n").map(function (line) { return line.trim(); }).filter(Boolean);
       if (!sizes.length) sizes = ["50 × 70 cm", "60 × 90 cm", "70 × 100 cm"];
       var sizeOptions = sizes.map(function (size) { return "<option>" + escapeHtml(size) + "</option>"; }).join("");
-      return '<article class="work" data-category="' + categoryToFilter(item.category) + '">' +
+      return '<article class="work" data-artwork-id="' + escapeHtml(item.id || "") + '" data-category="' + categoryToFilter(item.category) + '">' +
         '<figure class="work__media" data-images=\'' + escapeHtml(JSON.stringify(item.imageList || [item.image])) + '\'><img src="' + escapeHtml(item.image) + '" data-full-src="' + escapeHtml(item.image) + '" loading="lazy" decoding="async" alt="' + escapeHtml(item.title) + '"></figure>' +
         '<div class="work__body">' +
           "<h3 class=\"work__title\">" + escapeHtml(item.title) + "</h3>" +
