@@ -926,3 +926,79 @@
 }
 
 
+
+
+/* Admin visual elevation - August 2026 */
+:root{--radius:16px;--accent-soft:rgba(199,168,107,.13);--accent-border:rgba(199,168,107,.28);--surface-glass:rgba(22,22,20,.84);--shadow-soft:0 18px 48px rgba(0,0,0,.22);--shadow-card:0 12px 32px rgba(0,0,0,.16)}
+:root[data-theme="light"]{--accent-soft:rgba(145,110,46,.09);--accent-border:rgba(145,110,46,.2);--surface-glass:rgba(249,248,244,.9);--shadow-soft:0 18px 48px rgba(48,40,25,.09);--shadow-card:0 12px 30px rgba(48,40,25,.07)}
+body.ops-app-shell{background:radial-gradient(circle at 78% -8%,rgba(199,168,107,.1),transparent 31rem),radial-gradient(circle at 18% 92%,rgba(199,168,107,.045),transparent 34rem),var(--bg)}
+body.ops-app-shell .ops-shell{grid-template-columns:272px minmax(0,1fr)}
+body.ops-app-shell .ops-sidebar{padding:30px 20px 22px;border-right-color:rgba(199,168,107,.13);background:linear-gradient(180deg,rgba(199,168,107,.055),transparent 32%),rgba(12,12,11,.91);box-shadow:18px 0 55px rgba(0,0,0,.12);backdrop-filter:blur(22px)}
+:root[data-theme="light"] body.ops-app-shell .ops-sidebar{background:linear-gradient(180deg,rgba(145,110,46,.055),transparent 32%),rgba(245,243,237,.95)}
+body.ops-app-shell .brand{min-width:0;padding:0 10px 22px;border-bottom:1px solid var(--line)}
+body.ops-app-shell .brand__name,body.ops-app-shell .welcome h1,body.ops-app-shell .module-head h2,body.ops-app-shell .panel__title,body.ops-app-shell .metric__value,body.ops-app-shell .graph-panel__value,body.ops-app-shell .auth-card__brand,body.ops-app-shell .auth-card h1{font-family:"Cormorant Garamond",Georgia,serif;font-weight:500}
+body.ops-app-shell .brand__name{font-size:1.8rem;line-height:1;letter-spacing:.07em}
+body.ops-app-shell .brand__meta{margin-top:7px;color:var(--muted);font-size:.61rem;letter-spacing:.22em}
+body.ops-app-shell .sidebar-toggle,body.ops-app-shell .icon-btn,body.ops-app-shell .theme-toggle{border-color:var(--line-strong);border-radius:11px;background:rgba(255,255,255,.025);transition:all 180ms ease}
+body.ops-app-shell .sidebar-toggle:hover,body.ops-app-shell .icon-btn:hover,body.ops-app-shell .theme-toggle:hover{border-color:var(--accent-border);background:var(--accent-soft);transform:translateY(-1px)}
+body.ops-app-shell .side-nav{gap:5px;padding-top:22px}
+body.ops-app-shell .nav-item{min-height:46px;padding:0 12px;border:1px solid transparent;border-radius:12px;color:var(--muted);transition:all 180ms ease}
+body.ops-app-shell .nav-item:hover{color:var(--text);background:rgba(255,255,255,.035);transform:translateX(2px)}
+body.ops-app-shell .nav-item.active{color:var(--text);border-color:var(--accent-border);background:linear-gradient(90deg,var(--accent-soft),rgba(199,168,107,.035));box-shadow:inset 3px 0 0 var(--accent)}
+body.ops-app-shell .nav-item.active::after{display:none}
+body.ops-app-shell .nav-item__icon{display:inline-flex;width:24px;height:24px;align-items:center;justify-content:center;border-radius:8px;background:rgba(255,255,255,.025)}
+body.ops-app-shell .nav-item.active .nav-item__icon{color:var(--accent);background:var(--accent-soft)}
+body.ops-app-shell .nav-item__count{min-width:25px;padding:3px 7px;border:1px solid var(--line);border-radius:999px;background:rgba(255,255,255,.025);text-align:center}
+body.ops-app-shell .sidebar-card{overflow:hidden;border-color:var(--accent-border);border-radius:18px;background:linear-gradient(145deg,rgba(199,168,107,.1),rgba(255,255,255,.018));box-shadow:var(--shadow-card)}
+body.ops-app-shell .ops-main{width:100%;max-width:1680px;margin:0 auto;padding:20px clamp(22px,3vw,48px) 50px}
+body.ops-app-shell .topbar{position:sticky;top:14px;z-index:20;min-height:76px;margin-bottom:24px;padding:12px 14px 12px 20px;border:1px solid var(--line);border-radius:18px;background:var(--surface-glass);box-shadow:var(--shadow-soft);backdrop-filter:blur(22px) saturate(1.25)}
+body.ops-app-shell .welcome h1{font-size:clamp(1.42rem,2vw,1.85rem);line-height:1}
+body.ops-app-shell .welcome p{margin-top:5px;color:var(--muted);font-size:.7rem;letter-spacing:.07em}
+body.ops-app-shell .search input{height:43px;border-color:var(--line);border-radius:12px;background:rgba(255,255,255,.025)}
+body.ops-app-shell .search input:focus,body.ops-app-shell input:focus,body.ops-app-shell select:focus,body.ops-app-shell textarea:focus{border-color:var(--accent-border);box-shadow:0 0 0 4px var(--accent-soft)}
+body.ops-app-shell .profile{padding-left:14px;border-left:1px solid var(--line)}
+body.ops-app-shell .profile__avatar{width:44px;height:44px;border:2px solid var(--accent-border);box-shadow:0 0 0 4px var(--accent-soft)}
+body.ops-app-shell .view-stack{gap:20px}
+body.ops-app-shell .module-head{gap:20px;margin-bottom:0;padding:7px 2px 19px;border-bottom:1px solid var(--line)}
+body.ops-app-shell .module-head__eyebrow{color:var(--accent);font-size:.64rem;letter-spacing:.2em}
+body.ops-app-shell .module-head h2{margin-top:5px;font-size:clamp(1.65rem,2.4vw,2.2rem);line-height:1}
+body.ops-app-shell .dashboard-graphs,body.ops-app-shell .dashboard-metrics,body.ops-app-shell .metrics,body.ops-app-shell .panels-grid,body.ops-app-shell .panels{gap:16px}
+body.ops-app-shell .graph-panel,body.ops-app-shell .metric,body.ops-app-shell .panel,body.ops-app-shell .editor-card,body.ops-app-shell .records-wrap,body.ops-app-shell .focus-strip,body.ops-app-shell .record-card{border-color:var(--line);border-radius:18px;background:linear-gradient(145deg,rgba(255,255,255,.03),transparent 52%),var(--panel);box-shadow:var(--shadow-card)}
+body.ops-app-shell .graph-panel,body.ops-app-shell .metric,body.ops-app-shell .record-card{transition:border-color 180ms ease,transform 180ms ease,box-shadow 180ms ease}
+body.ops-app-shell .graph-panel{position:relative;min-height:238px;padding:23px;overflow:hidden}
+body.ops-app-shell .graph-panel:hover,body.ops-app-shell .metric:hover,body.ops-app-shell .record-card:hover{border-color:var(--accent-border);box-shadow:var(--shadow-soft);transform:translateY(-3px)}
+body.ops-app-shell .graph-panel::before{position:absolute;inset:0 auto 0 0;width:2px;border-radius:18px 0 0 18px;content:"";background:linear-gradient(180deg,transparent,var(--accent),transparent);opacity:.62}
+body.ops-app-shell .graph-panel__value{font-size:1.72rem}
+body.ops-app-shell .metric{position:relative;min-height:148px;overflow:hidden;padding:21px;background:radial-gradient(circle at 105% -10%,var(--accent-soft),transparent 50%),var(--panel)}
+body.ops-app-shell .metric::after{position:absolute;top:0;right:22px;left:22px;height:1px;content:"";background:linear-gradient(90deg,transparent,var(--accent),transparent);opacity:.55}
+body.ops-app-shell .metric__icon{border:1px solid var(--accent-border);border-radius:11px;color:var(--accent);background:var(--accent-soft)}
+body.ops-app-shell .metric__label{color:var(--muted);font-size:.64rem;letter-spacing:.13em}
+body.ops-app-shell .metric__value{margin-top:18px;font-size:clamp(2rem,3vw,2.6rem);line-height:.85}
+body.ops-app-shell .metric__hint{border-bottom:0;color:var(--muted)}
+body.ops-app-shell .panel{padding:25px}
+body.ops-app-shell .panel__head{padding-bottom:17px;border-bottom:1px solid var(--line)}
+body.ops-app-shell .panel__title{font-size:1.32rem;letter-spacing:.01em}
+body.ops-app-shell .records-wrap{overflow:hidden}
+body.ops-app-shell .records-table th{padding-top:15px;padding-bottom:15px;color:var(--muted);background:rgba(255,255,255,.022);font-size:.62rem;letter-spacing:.14em}
+body.ops-app-shell .records-table td{padding-top:16px;padding-bottom:16px}
+body.ops-app-shell .records-table tbody tr{transition:background 160ms ease}
+body.ops-app-shell .records-table tbody tr:hover{background:var(--accent-soft)}
+body.ops-app-shell .record-card{border-radius:16px}
+body.ops-app-shell .status-pill,body.ops-app-shell .stock-pill,body.ops-app-shell .pill{border:1px solid var(--line);border-radius:999px}
+body.ops-app-shell .btn,body.ops-app-shell .primary-action,body.ops-app-shell .secondary-action{min-height:42px;border-radius:11px;transition:all 180ms ease}
+body.ops-app-shell .btn:hover,body.ops-app-shell .primary-action:hover,body.ops-app-shell .secondary-action:hover{transform:translateY(-1px)}
+body.ops-app-shell .btn--primary,body.ops-app-shell .primary-action{border-color:#d6bb84;background:linear-gradient(135deg,#d3b77e,#ae8749);box-shadow:0 9px 24px rgba(174,135,73,.18)}
+body.ops-app-shell input,body.ops-app-shell select,body.ops-app-shell textarea{border-radius:11px;transition:border-color 180ms ease,box-shadow 180ms ease}
+body.ops-app-shell .modal{background:rgba(3,3,3,.76);backdrop-filter:blur(10px)}
+body.ops-app-shell .modal__panel{border-color:var(--accent-border);border-radius:22px;background:var(--panel-strong);box-shadow:0 32px 100px rgba(0,0,0,.48)}
+body.ops-app-shell .toast{border-color:var(--accent-border);border-radius:14px;background:var(--surface-glass);box-shadow:var(--shadow-soft);backdrop-filter:blur(18px)}
+body.ops-app-shell .auth-gate{background:radial-gradient(circle at 20% 20%,rgba(199,168,107,.12),transparent 28rem),radial-gradient(circle at 85% 80%,rgba(199,168,107,.06),transparent 32rem),var(--bg)}
+body.ops-app-shell .auth-card{width:min(440px,calc(100vw - 36px));padding:clamp(30px,5vw,48px);border-color:var(--accent-border);border-radius:24px;background:var(--surface-glass);box-shadow:0 34px 100px rgba(0,0,0,.4);backdrop-filter:blur(24px)}
+body.ops-app-shell .auth-card__brand{font-size:2rem;letter-spacing:.1em}
+body.ops-app-shell .auth-card__label{color:var(--accent);letter-spacing:.2em}
+body.ops-app-shell .auth-card h1{font-size:clamp(2rem,7vw,2.65rem);line-height:1}
+@media(max-width:1180px){body.ops-app-shell .ops-shell{grid-template-columns:238px minmax(0,1fr)}body.ops-app-shell .dashboard-metrics{grid-template-columns:repeat(3,minmax(0,1fr))}}
+@media(max-width:980px){body.ops-app-shell .ops-shell{display:block}body.ops-app-shell .ops-sidebar{border-right:0;border-bottom:1px solid var(--line)}}
+@media(max-width:720px){body.ops-app-shell .ops-main{padding:14px 14px 36px}body.ops-app-shell .topbar{position:relative;top:auto;padding:14px;border-radius:15px}body.ops-app-shell .profile{padding-left:0;border-left:0}body.ops-app-shell .dashboard-metrics,body.ops-app-shell .metrics{grid-template-columns:repeat(2,minmax(0,1fr))}}
+@media(max-width:480px){body.ops-app-shell .dashboard-metrics,body.ops-app-shell .metrics{grid-template-columns:1fr}}
+@media(prefers-reduced-motion:reduce){body.ops-app-shell *,body.ops-app-shell *::before,body.ops-app-shell *::after{transition-duration:.01ms!important}}
