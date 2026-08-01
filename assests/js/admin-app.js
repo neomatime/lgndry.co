@@ -1910,6 +1910,17 @@
     if (errorEl) errorEl.textContent = message || "";
   }
 
+  function verifyAdminAccess(session) {
+    return supabaseClient.from("admin_users").select("user_id").eq("user_id", session.user.id).maybeSingle().then(function (result) {
+      if (result.error || !result.data) {
+        return supabaseClient.auth.signOut().then(function () {
+          showAuthGate("This sign-in is for studio team members only. Customer accounts can use My Account on the website.");
+          return false;
+        });
+      }
+      return true;
+    });
+  }
   function bootAfterAuth() {
     showLoadingGate();
     loadRemoteData().then(function (remoteData) {
@@ -1979,7 +1990,7 @@
         return;
       }
       if ((event === "INITIAL_SESSION" || event === "SIGNED_IN") && session) {
-        bootAfterAuth();
+        verifyAdminAccess(session).then(function (allowed) { if (allowed) bootAfterAuth(); });
       }
     });
   }

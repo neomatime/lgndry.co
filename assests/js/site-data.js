@@ -5,7 +5,8 @@
 
   var SUPABASE_URL = "https://tscaluhtfrvwlwjybfsg.supabase.co";
   var SUPABASE_ANON_KEY = "sb_publishable_UAS3aUpb9Aj7lbVBPkWncA_l4ghKr4w";
-  var client = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+  var client = window.LgndryCustomerClient || window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+  window.LgndryCustomerClient = client;
 
   function fetchTable(table) {
     return client.from(table).select("*").then(function (result) {
@@ -172,7 +173,15 @@
       submittedAt: submittedAt,
       status: "New Request"
     };
-    return client.from("orders").insert(payload).then(function (result) {
+    return client.auth.getUser().then(function (authResult) {
+      var user = authResult.data && authResult.data.user;
+      if (user && user.email_confirmed_at) {
+        payload.customer_id = user.id;
+        payload.customerEmail = user.email || payload.customerEmail;
+        payload.customerName = (user.user_metadata && user.user_metadata.full_name) || payload.customerName;
+      }
+      return client.from("orders").insert(payload);
+    }).then(function (result) {
       if (result.error) throw result.error;
       logActivity('New order request ' + orderNumber + ' from ' + (payload.customerName || "website visitor"));
       return payload;

@@ -4422,3 +4422,18 @@ body {
 .collection-cart__feedback--success{color:#356b45}
 .collection-cart__feedback--error{color:#a43d35}
 @media(max-width:639px){.collection-cart__submit{width:100%;max-width:none;justify-items:stretch}.collection-cart__feedback{text-align:left}}
+
+.nav-panel__account-links {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  margin-top: 22px;
+  padding-top: 22px;
+  border-top: 1px solid rgba(255,255,255,.22);
+  text-transform: uppercase;
+  letter-spacing: .15em;
+  font-size: .68rem;
+}
+.nav-panel__account-links a { color: inherit; text-decoration: none; }
+.nav-panel__account-links span { width: 22px; height: 1px; background: currentColor; opacity: .45; }
+.nav-panel__item--account { margin-top: 10px; font-size: clamp(2rem,4vw,4rem) !important; opacity: 1; transform: none; }

@@ -1,0 +1,41 @@
+﻿<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>Customer Account — LGNDRY.Co</title>
+  <meta name="description" content="Create or access your secure LGNDRY.Co customer account.">
+  <link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@300;400&family=Inter:wght@300;400;500&display=swap" rel="stylesheet">
+  <link rel="icon" type="image/png" href="assests/logos/LGNDRY.CO Final.png">
+  <link rel="stylesheet" href="assests/css/account.css?v=20260801-customer-accounts">
+</head>
+<body class="account-body">
+  <header class="account-topbar"><a class="account-brand" href="index.html">LGNDRY.Co</a><a class="account-topbar__link" href="collection.html">Return to collection</a></header>
+  <main class="auth-layout">
+    <section class="auth-visual"><img src="assests/images/hero-image.JPG" alt="LGNDRY.Co visual artwork"><div class="auth-visual__copy"><span>Private client area</span><h1>Your work,<br>in one place.</h1><p>Review requests and follow each order from confirmation to completion.</p></div></section>
+    <section class="auth-panel">
+      <div class="auth-card" data-auth-view="login">
+        <span class="account-eyebrow">Welcome back</span><h1>Log in.</h1><p class="auth-card__intro">Access your orders and account details securely.</p>
+        <form class="auth-form" data-login-form><label class="auth-field"><span>Email address</span><input name="email" type="email" autocomplete="email" required></label><label class="auth-field"><span>Password</span><input name="password" type="password" autocomplete="current-password" required></label><p class="auth-feedback" data-login-feedback></p><button class="auth-button" type="submit">Log In</button></form>
+        <div class="auth-links"><a href="auth.html?mode=forgot">Forgot password?</a><a href="auth.html?mode=signup">Create an account</a></div>
+      </div>
+      <div class="auth-card auth-hidden" data-auth-view="signup">
+        <span class="account-eyebrow">Customer account</span><h1>Create account.</h1><p class="auth-card__intro">Your verified email securely connects existing and future orders to your account.</p>
+        <form class="auth-form" data-signup-form><label class="auth-field"><span>Full name</span><input name="full_name" autocomplete="name" required></label><label class="auth-field"><span>Email address</span><input name="email" type="email" autocomplete="email" required></label><label class="auth-field"><span>Password</span><input name="password" type="password" autocomplete="new-password" minlength="8" required></label><label class="auth-field"><span>Confirm password</span><input name="confirm_password" type="password" autocomplete="new-password" minlength="8" required></label><p class="auth-feedback" data-signup-feedback></p><button class="auth-button" type="submit">Create Account</button></form>
+        <div class="auth-links"><span>Already registered?</span><a href="auth.html?mode=login">Log in</a></div>
+      </div>
+      <div class="auth-card auth-hidden" data-auth-view="forgot">
+        <span class="account-eyebrow">Account recovery</span><h1>Reset password.</h1><p class="auth-card__intro">Enter your email and we will send you a secure password-reset link.</p>
+        <form class="auth-form" data-forgot-form><label class="auth-field"><span>Email address</span><input name="email" type="email" autocomplete="email" required></label><p class="auth-feedback" data-forgot-feedback></p><button class="auth-button" type="submit">Send Reset Link</button></form><div class="auth-links"><a href="auth.html?mode=login">Back to login</a></div>
+      </div>
+      <div class="auth-card auth-hidden" data-auth-view="reset">
+        <span class="account-eyebrow">Choose a new password</span><h1>Secure your account.</h1><p class="auth-card__intro">Use at least eight characters for your new password.</p>
+        <form class="auth-form" data-reset-form><label class="auth-field"><span>New password</span><input name="password" type="password" minlength="8" autocomplete="new-password" required></label><label class="auth-field"><span>Confirm password</span><input name="confirm_password" type="password" minlength="8" autocomplete="new-password" required></label><p class="auth-feedback" data-reset-feedback></p><button class="auth-button" type="submit">Update Password</button></form>
+      </div>
+      <div class="auth-card auth-hidden" data-auth-view="verify"><span class="account-eyebrow">One final step</span><h1>Verify your email.</h1><p class="auth-card__intro">We sent a verification link to <strong data-verify-email>your email address</strong>. Open it to activate your account and securely link matching orders.</p><a class="auth-button" href="auth.html?mode=login" style="display:inline-block;text-decoration:none">Return to Log In</a></div>
+    </section>
+  </main>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
+  <script src="assests/js/customer-auth.js?v=20260801-customer-accounts"></script>
+  <script src="assests/js/auth-page.js?v=20260801-customer-accounts"></script>
+</body></html>
