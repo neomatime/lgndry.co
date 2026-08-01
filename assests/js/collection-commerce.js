@@ -1,8 +1,10 @@
-﻿(function () {
+(function () {
   "use strict";
   var grid = document.querySelector("[data-commerce-catalog]");
   var controls = document.querySelector("[data-commerce-filters]");
-  if (!grid || !controls || !window.LgndrySiteData || !window.LgndryCommerce) return;
+  if (!grid || !controls || !window.LgndryCommerce) return;
+  window.LgndryCommerce.createCartLink();
+  if (!window.LgndrySiteData) return;
   var products = [];
 
   function esc(value) { return String(value == null ? "" : value).replace(/[&<>"']/g, function (m) { return { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[m]; }); }
@@ -28,8 +30,8 @@
       : '<a class="work__acquire" href="' + href + '"><span>View availability</span><svg width="40" height="8" viewBox="0 0 40 8" fill="none" aria-hidden="true"><path d="M0 4H38M38 4L34 1M38 4L34 7" stroke="currentColor" stroke-width="1"/></svg></a>';
     return '<article class="work commerce-work" data-product-id="' + esc(product.id) + '">' +
       '<a class="work__media" href="' + href + '" aria-label="View ' + esc(product.title) + '"><img src="' + esc(product.image) + '" loading="lazy" decoding="async" alt="' + esc(product.title) + ' by ' + esc(product.artist) + '"></a>' +
-      '<div class="work__body"><div class="commerce-work__heading"><div><a href="' + href + '" class="commerce-work__title"><h3 class="work__title">' + esc(product.title) + '</h3></a><p class="work__year">' + esc(product.artist) + ' · ' + esc(product.year || "") + '</p></div><p class="commerce-work__availability">' + esc(product.availability || "Available") + '</p></div>' +
-      '<div class="work__row"><div class="work__meta"><p>' + esc(product.collectionName) + '</p><p>' + esc(product.medium) + '</p><p>' + esc(product.editionSize ? "Edition of " + product.editionSize + " · " + Number(product.remaining || 0) + " available" : product.seriesLabel || "Open edition") + '</p><label class="work__size">Size:<select data-catalogue-size aria-label="Print size for ' + esc(product.title) + '">' + sizes.map(function (size) { return '<option>' + esc(size) + '</option>'; }).join("") + '</select></label></div><p class="work__price">' + esc(window.LgndryCommerce.money(product.price)) + '</p></div>' + action + '</div></article>';
+      '<div class="work__body"><div class="commerce-work__heading"><div><a href="' + href + '" class="commerce-work__title"><h3 class="work__title">' + esc(product.title) + '</h3></a><p class="work__year">' + esc(product.artist) + ' Â· ' + esc(product.year || "") + '</p></div><p class="commerce-work__availability">' + esc(product.availability || "Available") + '</p></div>' +
+      '<div class="work__row"><div class="work__meta"><p>' + esc(product.collectionName) + '</p><p>' + esc(product.medium) + '</p><p>' + esc(product.editionSize ? "Edition of " + product.editionSize + " Â· " + Number(product.remaining || 0) + " available" : product.seriesLabel || "Open edition") + '</p><label class="work__size">Size:<select data-catalogue-size aria-label="Print size for ' + esc(product.title) + '">' + sizes.map(function (size) { return '<option>' + esc(size) + '</option>'; }).join("") + '</select></label></div><p class="work__price">' + esc(window.LgndryCommerce.money(product.price)) + '</p></div>' + action + '</div></article>';
   }
 
   function values() {
@@ -62,6 +64,5 @@
   grid.addEventListener("click", function (event) { var button = event.target.closest("[data-catalogue-add]"); if (!button) return; var product = products.find(function (p) { return p.id === button.dataset.catalogueAdd; }); if (!product) return; var card = button.closest("[data-product-id]"); var size = card.querySelector("[data-catalogue-size]").value; window.LgndryCommerce.add(window.LgndryCommerce.itemFromProduct(product, { size: size })); button.querySelector("span").textContent = "Added"; setTimeout(function () { button.querySelector("span").textContent = "Add to cart"; }, 1200); });
   grid.addEventListener("click", function (event) { if (event.target.closest("[data-filter-clear]")) clear(); });
 
-  window.LgndryCommerce.createCartLink();
   window.LgndrySiteData.fetchCollection().then(function (items) { products = items.map(normalize); fillSelect("[data-filter-category]", optionValues("category")); fillSelect("[data-filter-collection]", optionValues("collectionName")); fillSelect("[data-filter-artist]", optionValues("artist")); apply(); }).catch(function (error) { console.error(error); grid.innerHTML = '<div class="catalogue-empty"><h2>The collection is temporarily unavailable.</h2><p>Please refresh or contact the studio.</p></div>'; });
 }());
