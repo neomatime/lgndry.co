@@ -4,7 +4,7 @@
   var STORAGE_KEY = "lgndry_ops_command_center_v2";
   var THEME_KEY = "lgndry_admin_theme";
   var SUPABASE_URL = "https://tscaluhtfrvwlwjybfsg.supabase.co";
-  var SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InRzY2FsdWh0ZnJ2d2x3anliZnNnIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODM0MjIwNTUsImV4cCI6MjA5ODk5ODA1NX0.dk7oFywIWf1xRTlYtfxHHe96VaQ6iFSPKMsCExy4e5A";
+  var SUPABASE_ANON_KEY = "sb_publishable_UAS3aUpb9Aj7lbVBPkWncA_l4ghKr4w";
   var supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
   var VAPID_PUBLIC_KEY = "BM_IQFlZnwcu7g4r34KumlYmAJWP0sH4O2_3SNhvqT2gF4hP3enZGP9vgnxZN-FTIpRrXyKByvyb0gMhEA7h4es";
   var chromeInitialized = false;
