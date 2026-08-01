@@ -1,4 +1,4 @@
-﻿(function () {
+(function () {
   "use strict";
   var CART_KEY = "lgndry_collection_cart_v2";
 
@@ -25,10 +25,11 @@
   }
   function createCartLink() {
     if (document.querySelector("[data-commerce-cart-link]")) return;
-    var link = document.createElement("a"); link.href = "cart.html"; link.className = "commerce-cart-link"; link.setAttribute("data-commerce-cart-link", ""); link.setAttribute("aria-label", "View shopping cart"); link.innerHTML = 'Cart <span data-commerce-cart-count></span>';
+    var link = document.createElement("a"); link.href = "cart.html"; link.className = "commerce-cart-link"; link.setAttribute("data-commerce-cart-link", ""); link.setAttribute("aria-label", "View shopping cart"); link.innerHTML = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 5h2l2.1 10.1a2 2 0 0 0 2 1.6h7.8a2 2 0 0 0 2-1.6L20.5 8H6"/><circle cx="10" cy="20" r="1"/><circle cx="17" cy="20" r="1"/></svg><span data-commerce-cart-count></span>';
     document.body.appendChild(link); updateCount();
   }
   function updateCount() { document.querySelectorAll("[data-commerce-cart-count]").forEach(function (el) { el.textContent = count() || "0"; }); }
   window.addEventListener("lgndry-cart-change", updateCount);
   window.LgndryCommerce = { getCart: read, add: add, update: update, remove: remove, clear: clear, subtotal: subtotal, count: count, deliveryFee: deliveryFee, money: money, itemFromProduct: itemFromProduct, createCartLink: createCartLink };
+  if (document.readyState === "loading") document.addEventListener("DOMContentLoaded", createCartLink); else createCartLink();
 }());
