@@ -15,6 +15,26 @@
 
   show(mode);
   var verifyEmail = document.querySelector("[data-verify-email]"); if (verifyEmail && params.get("email")) verifyEmail.textContent = params.get("email");
+  document.querySelectorAll("[data-google-auth]").forEach(function (button) {
+    button.addEventListener("click", function () {
+      var buttons = document.querySelectorAll("[data-google-auth]");
+      buttons.forEach(function (item) { item.disabled = true; });
+      var feedbackSelector = mode === "signup" ? "[data-signup-feedback]" : "[data-login-feedback]";
+      feedback(feedbackSelector, "Opening Google sign-in...");
+      client.auth.signInWithOAuth({
+        provider: "google",
+        options: {
+          redirectTo: AUTH_CALLBACK_URL,
+          queryParams: { prompt: "select_account" }
+        }
+      }).then(function (result) {
+        if (result.error) throw result.error;
+      }).catch(function (error) {
+        feedback(feedbackSelector, error.message);
+        buttons.forEach(function (item) { item.disabled = false; });
+      });
+    });
+  });
 
   var login = document.querySelector("[data-login-form]");
   login.addEventListener("submit", function (event) { event.preventDefault(); setBusy(login, true); feedback("[data-login-feedback]", ""); client.auth.signInWithPassword({ email: login.elements.email.value.trim(), password: login.elements.password.value }).then(function (result) { if (result.error) throw result.error; if (!result.data.user.email_confirmed_at) throw new Error("Please verify your email before logging in."); location.replace(destination()); }).catch(function (error) { feedback("[data-login-feedback]", error.message); setBusy(login, false); }); });

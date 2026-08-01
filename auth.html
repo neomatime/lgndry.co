@@ -7,7 +7,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@300;400&family=Inter:wght@300;400;500&display=swap" rel="stylesheet">
   <link rel="icon" type="image/png" href="assests/logos/LGNDRY.CO Final.png">
-  <link rel="stylesheet" href="assests/css/account.css?v=20260801-customer-accounts">
+  <link rel="stylesheet" href="assests/css/account.css?v=20260801-google-auth">
 </head>
 <body class="account-body">
   <header class="account-topbar"><a class="account-brand" href="index.html">LGNDRY.Co</a><a class="account-topbar__link" href="collection.html">Return to collection</a></header>
@@ -15,12 +15,12 @@
     <section class="auth-visual"><img src="assests/images/hero-image.JPG" alt="LGNDRY.Co visual artwork"><div class="auth-visual__copy"><span>Private client area</span><h1>Your work,<br>in one place.</h1><p>Review requests and follow each order from confirmation to completion.</p></div></section>
     <section class="auth-panel">
       <div class="auth-card" data-auth-view="login">
-        <span class="account-eyebrow">Welcome back</span><h1>Log in.</h1><p class="auth-card__intro">Access your orders and account details securely.</p>
+        <span class="account-eyebrow">Welcome back</span><h1>Log in.</h1><p class="auth-card__intro">Access your orders and account details securely.</p><button class="google-auth-button" type="button" data-google-auth><svg viewBox="0 0 24 24" aria-hidden="true"><path fill="#4285F4" d="M21.6 12.2c0-.7-.1-1.5-.2-2.2H12v4.3h5.4a4.6 4.6 0 0 1-2 3v2.8h3.3c1.9-1.8 2.9-4.4 2.9-7.9z"/><path fill="#34A853" d="M12 22c2.7 0 5-.9 6.7-2.4l-3.3-2.8c-.9.6-2.1 1-3.4 1a5.9 5.9 0 0 1-5.5-4.1H3.1v2.8A10 10 0 0 0 12 22z"/><path fill="#FBBC05" d="M6.5 13.7a6 6 0 0 1 0-3.4V7.5H3.1a10 10 0 0 0 0 9l3.4-2.8z"/><path fill="#EA4335" d="M12 6.2c1.5 0 2.8.5 3.9 1.5l2.9-2.9A9.7 9.7 0 0 0 12 2a10 10 0 0 0-8.9 5.5l3.4 2.8A5.9 5.9 0 0 1 12 6.2z"/></svg><span>Continue with Google</span></button><div class="auth-divider"><span>or continue with email</span></div>
         <form class="auth-form" data-login-form><label class="auth-field"><span>Email address</span><input name="email" type="email" autocomplete="email" required></label><label class="auth-field"><span>Password</span><input name="password" type="password" autocomplete="current-password" required></label><p class="auth-feedback" data-login-feedback></p><button class="auth-button" type="submit">Log In</button></form>
         <div class="auth-links"><a href="auth.html?mode=forgot">Forgot password?</a><a href="auth.html?mode=signup">Create an account</a></div>
       </div>
       <div class="auth-card auth-hidden" data-auth-view="signup">
-        <span class="account-eyebrow">Customer account</span><h1>Create account.</h1><p class="auth-card__intro">Your verified email securely connects existing and future orders to your account.</p>
+        <span class="account-eyebrow">Customer account</span><h1>Create account.</h1><p class="auth-card__intro">Your verified email securely connects existing and future orders to your account.</p><button class="google-auth-button" type="button" data-google-auth><svg viewBox="0 0 24 24" aria-hidden="true"><path fill="#4285F4" d="M21.6 12.2c0-.7-.1-1.5-.2-2.2H12v4.3h5.4a4.6 4.6 0 0 1-2 3v2.8h3.3c1.9-1.8 2.9-4.4 2.9-7.9z"/><path fill="#34A853" d="M12 22c2.7 0 5-.9 6.7-2.4l-3.3-2.8c-.9.6-2.1 1-3.4 1a5.9 5.9 0 0 1-5.5-4.1H3.1v2.8A10 10 0 0 0 12 22z"/><path fill="#FBBC05" d="M6.5 13.7a6 6 0 0 1 0-3.4V7.5H3.1a10 10 0 0 0 0 9l3.4-2.8z"/><path fill="#EA4335" d="M12 6.2c1.5 0 2.8.5 3.9 1.5l2.9-2.9A9.7 9.7 0 0 0 12 2a10 10 0 0 0-8.9 5.5l3.4 2.8A5.9 5.9 0 0 1 12 6.2z"/></svg><span>Continue with Google</span></button><div class="auth-divider"><span>or continue with email</span></div>
         <form class="auth-form" data-signup-form><label class="auth-field"><span>Full name</span><input name="full_name" autocomplete="name" required></label><label class="auth-field"><span>Email address</span><input name="email" type="email" autocomplete="email" required></label><label class="auth-field"><span>Password</span><input name="password" type="password" autocomplete="new-password" minlength="8" required></label><label class="auth-field"><span>Confirm password</span><input name="confirm_password" type="password" autocomplete="new-password" minlength="8" required></label><p class="auth-feedback" data-signup-feedback></p><button class="auth-button" type="submit">Create Account</button></form>
         <div class="auth-links"><span>Already registered?</span><a href="auth.html?mode=login">Log in</a></div>
       </div>
@@ -36,6 +36,6 @@
     </section>
   </main>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
-  <script src="assests/js/customer-auth.js?v=20260801-auth-callback"></script>
-  <script src="assests/js/auth-page.js?v=20260801-auth-callback"></script>
+  <script src="assests/js/customer-auth.js?v=20260801-google-auth"></script>
+  <script src="assests/js/auth-page.js?v=20260801-google-auth"></script>
 </body></html>

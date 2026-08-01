@@ -1,4 +1,4 @@
-﻿# LGNDRY.Co Supabase Auth configuration
+# LGNDRY.Co Supabase Auth configuration
 
 These dashboard settings are required for production customer email verification.
 
@@ -40,3 +40,16 @@ SPF and DKIM should be configured with the selected mail provider to improve del
 5. Confirm the page displays “Your account is verified.”
 6. Continue to My Account and confirm only the signed-in customer’s orders are visible.
 7. Use the resend button if a link expires; older links should not be reused.
+
+## Google sign-in
+
+1. In Google Cloud Console, create an OAuth 2.0 Web Client.
+2. Add this **Authorised redirect URI** exactly:
+   `https://tscaluhtfrvwlwjybfsg.supabase.co/auth/v1/callback`
+3. Add these **Authorised JavaScript origins**:
+   - `https://www.lgndry-co.co.za`
+   - `https://lgndry-co.co.za`
+4. In **Supabase Dashboard → Authentication → Providers → Google**, enable Google and paste the Google Client ID and Client Secret.
+5. Keep the website callback `https://www.lgndry-co.co.za/auth-callback.html` in Supabase's redirect allow list.
+
+Google-authenticated email addresses are treated as provider-verified by Supabase. The existing database trigger creates the customer profile and links matching orders by verified email; order access remains enforced using the permanent Supabase user ID.
