@@ -1,0 +1,222 @@
+/*
+ * LGNDRY.Co sharp editorial refinement
+ * Retains the premium system while replacing soft app-like geometry with
+ * a restrained, fashion-editorial visual language.
+ */
+
+:root {
+  --ui-radius-sm: 0;
+  --ui-radius: 0;
+  --ui-radius-lg: 0;
+  --ui-shadow-sm: 0 1px 0 rgba(24, 20, 16, 0.04);
+  --ui-shadow-md: 0 10px 28px rgba(24, 20, 16, 0.045);
+  --ui-shadow-lg: 0 18px 48px rgba(24, 20, 16, 0.06);
+}
+
+/* Media should read like an editorial spread, not an app tile. */
+:where(
+  .practice-hero__media,
+  .practice-row__media,
+  .about-hero__media,
+  .about-founder__portrait,
+  .contact-hero__media,
+  .collection-hero__media,
+  .booking-cta__media,
+  .showroom-page .showroom-gallery__main
+) {
+  border-radius: 0 !important;
+  box-shadow: var(--ui-shadow-lg) !important;
+}
+
+/* Flat, square content planes. */
+:where(
+  .about-card,
+  .contact-path,
+  .contact-studio,
+  .account-panel,
+  .auth-card,
+  .cart-summary,
+  .checkout-summary,
+  .confirmation-card,
+  .commerce-empty,
+  .commerce-work,
+  .curated-card,
+  .showroom-trust,
+  .showroom-page .showroom-details,
+  .contact-grid > *
+) {
+  border-radius: 0 !important;
+  box-shadow: none !important;
+}
+
+:where(
+  .about-card,
+  .contact-path,
+  .account-panel,
+  .auth-card,
+  .cart-summary,
+  .checkout-summary,
+  .confirmation-card,
+  .commerce-empty,
+  .commerce-work,
+  .curated-card,
+  .showroom-trust,
+  .showroom-page .showroom-details
+) {
+  border-color: var(--ui-line) !important;
+}
+
+/* About principles become one clean editorial row. */
+.about-principles__grid {
+  gap: 0 !important;
+  border-top: 1px solid var(--ui-line);
+  border-bottom: 1px solid var(--ui-line);
+}
+
+.about-principles .about-card {
+  border: 0 !important;
+  border-right: 1px solid var(--ui-line) !important;
+  background: transparent !important;
+  backdrop-filter: none;
+}
+
+.about-principles .about-card:last-child {
+  border-right: 0 !important;
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .about-card:hover,
+  .contact-path:hover,
+  .commerce-work:hover {
+    box-shadow: none !important;
+    transform: none !important;
+  }
+
+  .about-principles .about-card:hover {
+    background: rgba(255, 255, 255, 0.58) !important;
+  }
+
+  .commerce-work:hover {
+    border-color: var(--ui-line-strong) !important;
+  }
+}
+
+/* Collection controls: a horizontal editorial deck rather than a card. */
+.catalogue-controls {
+  padding: 22px 0 !important;
+  border: 0 !important;
+  border-top: 1px solid var(--ui-line) !important;
+  border-bottom: 1px solid var(--ui-line) !important;
+  border-radius: 0 !important;
+  background: rgba(251, 250, 248, 0.93) !important;
+  box-shadow: none !important;
+}
+
+.catalogue-filter-toggle,
+.catalogue-clear {
+  border-radius: 0 !important;
+  box-shadow: none !important;
+}
+
+/* Inputs, selects and dropdown menus use crisp, architectural edges. */
+body:not(.ops-app-shell) :where(
+  input,
+  select,
+  textarea,
+  .lgndry-select__trigger,
+  .lgndry-select__menu
+) {
+  border-radius: 0 !important;
+}
+
+.lgndry-select__menu {
+  box-shadow: 0 14px 36px rgba(24, 20, 16, 0.09) !important;
+}
+
+/* Buttons remain premium through proportion and typography, not pills. */
+:where(
+  .commerce-primary,
+  .auth-button,
+  .contact-form button[type='submit'],
+  .collection-cart__footer button,
+  .showroom-primary,
+  .google-auth-button,
+  .showroom-secondary,
+  .auth-button--light
+) {
+  border-radius: 0 !important;
+  box-shadow: none !important;
+}
+
+:where(
+  .commerce-primary,
+  .auth-button,
+  .contact-form button[type='submit'],
+  .collection-cart__footer button,
+  .showroom-primary
+):hover {
+  box-shadow: none !important;
+  filter: none;
+  transform: none;
+  background: #34322f !important;
+}
+
+:where(.google-auth-button, .showroom-secondary, .auth-button--light):hover {
+  transform: none;
+  background: #f5f3f0 !important;
+}
+
+/* Commerce cards remain image-led and quiet. */
+.commerce-work {
+  background: #fff;
+}
+
+.commerce-work .work__media {
+  border-radius: 0 !important;
+}
+
+.commerce-work .work__body {
+  border-top: 1px solid var(--ui-line);
+}
+
+/* Contact surfaces align as a sharp diptych. */
+.contact-grid {
+  gap: 1px !important;
+  background: var(--ui-line);
+}
+
+.contact-grid > * {
+  border: 0 !important;
+}
+
+/* Account and verification screens use framed editorial sheets. */
+.auth-card,
+.confirmation-card {
+  background: rgba(255, 255, 255, 0.9);
+}
+
+/* Curated-space previews and product panels stay visually subordinate. */
+.curated-card,
+.showroom-trust,
+.showroom-page .showroom-details {
+  background: rgba(255, 255, 255, 0.82) !important;
+}
+
+@media (max-width: 720px) {
+  .about-principles__grid {
+    border-bottom: 0;
+  }
+
+  .about-principles .about-card {
+    border-right: 0 !important;
+    border-bottom: 1px solid var(--ui-line) !important;
+  }
+
+  .catalogue-controls {
+    padding: 20px 0 !important;
+  }
+
+  .contact-grid {
+    gap: 1px !important;
+  }
+}
