@@ -4553,3 +4553,11 @@ body {
 .commerce-work .work__acquire:is(button) svg{width:29px;opacity:.65}
 .commerce-work .work__acquire:is(button):hover{border-color:var(--text-primary);background:var(--surface-elevated);color:var(--text-primary)}
 .commerce-work .work__acquire:is(button):hover{border-color:var(--divider);background:var(--surface-elevated)}
+
+/* Card checkout readiness */
+.checkout-payment-card{position:relative}
+.checkout-payment-card em{position:absolute;right:16px;top:16px;padding:4px 7px;border:1px solid var(--divider);font:400 .54rem 'Inter',sans-serif;font-style:normal;letter-spacing:.13em;text-transform:uppercase;color:var(--text-secondary)}
+.checkout-payment-card.is-disabled{background:var(--bg-secondary);color:var(--text-secondary);cursor:not-allowed}
+.checkout-payment-card.is-disabled input{opacity:.45}
+.checkout-payment-card.is-disabled strong{font-weight:400}
+@media(max-width:520px){.checkout-payment-card em{position:static;grid-column:2;justify-self:start;margin-top:5px}}

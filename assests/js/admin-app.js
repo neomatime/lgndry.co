@@ -159,7 +159,7 @@
         h("Items"),
         f("itemSummary", "Selected artwork and options", "textarea", true), f("quantity", "Total quantity", "number", true), f("subtotal", "Order subtotal", "number", true), f("deliveryFee", "Delivery fee", "number", true), f("grandTotal", "Order total", "number", true),
         h("Payment"),
-        f("paymentMethod", "Payment method", "select", true, ["EFT", "Payment in person"]), f("paymentStatus", "Payment status", "select", true, ["Awaiting Payment", "Payment Instructions Sent", "Partially Paid", "Paid", "Not Required", "Refunded", "Cancelled"]),
+        f("paymentMethod", "Payment method", "select", true, ["EFT", "Payment in person", "Debit / Credit Card"]), f("paymentStatus", "Payment status", "select", true, ["Awaiting Payment", "Payment Instructions Sent", "Partially Paid", "Paid", "Not Required", "Refunded", "Cancelled"]),
         h("Delivery"),
         f("deliveryMethod", "Delivery method", "select", true, ["Deliver to my address", "Collect in person"]), f("deliveryAddress", "Delivery address", "textarea", true), f("deliveryCity", "City / town", "text", true), f("postalCode", "Postal code", "text", true),
         h("Billing"),
