@@ -571,6 +571,17 @@
       focusStrip();
   }
 
+
+  function emptyState(title, message, icon, actionLabel, actionAttribute, compact) {
+    var action = actionLabel && actionAttribute
+      ? '<button class="empty-state-card__action" type="button" ' + actionAttribute + '>' + esc(actionLabel) + '<span>&rarr;</span></button>'
+      : "";
+    return '<section class="empty-state-card' + (compact ? " empty-state-card--compact" : "") + '">' +
+      '<span class="empty-state-card__icon">' + (icon || icons.dashboard) + '</span>' +
+      '<div class="empty-state-card__copy"><h3>' + esc(title) + '</h3><p>' + esc(message) + "</p></div>" +
+      action + "</section>";
+  }
+
   function recentProjects(projects) {
     var rows = projects.slice(0, 5).map(function (project) {
       var progress = PROJECT_PROGRESS[project.status] != null ? PROJECT_PROGRESS[project.status] : 10;
@@ -582,14 +593,14 @@
         '<span class="project__progress">' + progress + '%</span>' +
         '<div class="bar"><span style="--value:' + progress + '%"></span></div></div>';
     }).join("");
-    return '<article class="panel"><div class="panel__header"><span class="panel__label">Recent Projects</span></div><div class="project-list">' + (rows || '<p class="empty-state">No projects yet.</p>') + '</div><div class="panel__footer"><button class="panel__link" type="button" data-route-jump="projects">View all projects<span>&rarr;</span></button></div></article>';
+    return '<article class="panel"><div class="panel__header"><span class="panel__label">Recent Projects</span></div><div class="project-list">' + (rows || emptyState("No projects yet", "New projects will appear here once they are created.", icons.projects, "", "", true)) + '</div><div class="panel__footer"><button class="panel__link" type="button" data-route-jump="projects">View all projects<span>&rarr;</span></button></div></article>';
   }
 
   function recentActivity() {
     var rows = (data.activity || []).slice(0, 6).map(function (entry) {
       return '<div class="activity"><span class="activity__icon">' + icons.activity + "</span><p>" + esc(entry.message) + '</p><span class="activity__time">' + esc(timeAgo(entry.at)) + "</span></div>";
     }).join("");
-    return '<article class="panel"><div class="panel__header"><span class="panel__label">Recent Activity</span></div><div class="activity-list">' + (rows || '<p class="empty-state">No activity yet.</p>') + "</div></article>";
+    return '<article class="panel"><div class="panel__header"><span class="panel__label">Recent Activity</span></div><div class="activity-list">' + (rows || emptyState("No activity yet", "Updates and record changes will appear here.", icons.activity, "", "", true)) + "</div></article>";
   }
 
   function focusStrip() {
@@ -615,7 +626,7 @@
       var targetRoute = DETAIL_ROUTES.find(function (candidate) { return byId(schemas[candidate].collection, record.id); }) || route;
       return '<div class="snapshot-item record-preview--clickable" data-dashboard-detail="' + targetRoute + '" data-record-id="' + record.id + '" tabindex="0"><span class="status-pill ' + statusClass(status) + '">' + esc(status) + '</span><div><strong>' + esc(name) + '</strong><p class="record-meta">' + esc(meta) + '</p></div><button class="table-action" type="button">Open</button></div>';
     }).join("");
-    return '<article class="panel"><div class="panel__header"><span class="panel__label">' + esc(title) + '</span></div><div class="snapshot-list">' + (rows || '<p class="empty-state">No records yet.</p>') + "</div></article>";
+    return '<article class="panel"><div class="panel__header"><span class="panel__label">' + esc(title) + '</span></div><div class="snapshot-list">' + (rows || emptyState("Nothing here yet", "Records matching this view will appear here.", icons.dashboard, "", "", true)) + "</div></article>";
   }
 
   function relationMeta(record) {
@@ -630,7 +641,7 @@
       var cards = active("partnerships").filter(function (p) { return p.status === stage; }).map(function (p) {
         return '<div class="pipeline-card record-preview--clickable" data-dashboard-detail="partnerships" data-record-id="' + p.id + '" tabindex="0"><strong>' + esc(p.company) + '</strong><p class="record-meta">' + esc(p.contact) + " / " + esc(p.sessionsRemaining || 0) + " sessions</p></div>";
       }).join("");
-      return '<div class="pipeline-stage"><h3>' + esc(stage) + "</h3>" + (cards || '<p class="empty-state">Empty</p>') + "</div>";
+      return '<div class="pipeline-stage"><h3>' + esc(stage) + "</h3>" + (cards || emptyState("No records", "This pipeline stage is currently clear.", icons.partnerships, "", "", true)) + "</div>";
     }).join("") + "</div></article>";
   }
 
@@ -639,7 +650,7 @@
       var date = new Date(booking.date + "T00:00:00");
       return '<div class="calendar-item record-preview--clickable" data-dashboard-detail="bookings" data-record-id="' + booking.id + '" tabindex="0"><div class="calendar-date">' + date.getDate() + "<span>" + date.toLocaleDateString("en-ZA", { month: "short" }) + "</span></div><div><strong>" + esc(booking.service) + '</strong><p class="record-meta">' + esc(label("clients", booking.client)) + " / " + esc((booking.start || "") + " - " + (booking.end || "")) + "</p></div></div>";
     }).join("");
-    return '<article class="panel"><div class="panel__header"><span class="panel__label">Calendar Snapshot</span></div><div class="calendar-list">' + (rows || '<p class="empty-state">No upcoming bookings.</p>') + "</div></article>";
+    return '<article class="panel"><div class="panel__header"><span class="panel__label">Calendar Snapshot</span></div><div class="calendar-list">' + (rows || emptyState("No upcoming bookings", "Scheduled sessions will appear here.", icons.bookings, "", "", true)) + "</div></article>";
   }
 
 
@@ -728,7 +739,7 @@
 
   function detailRelatedMarkup(schema, record) {
     var items = relatedRecords(schema, record);
-    if (!items.length) return '<p class="detail-empty">No linked records yet.</p>';
+    if (!items.length) return emptyState("No linked records", "Connections to clients, bookings and projects will appear here.", icons.projects, "", "", true);
     return items.slice(0, 10).map(function (item) {
       var canOpen = supportsDetail(item.schema);
       return '<button class="detail-link-card" type="button" data-related-route="' + esc(item.route) + '" data-related-id="' + esc(item.record.id) + '" data-related-detail="' + (canOpen ? "true" : "false") + '"><span>' + esc(item.context) + '</span><strong>' + esc(recordDisplayName(item.record)) + '</strong><small>' + esc(detailStatus(item.schema, item.record)) + '</small></button>';
@@ -741,7 +752,7 @@
       return String(item.message || "").toLowerCase().indexOf(name) > -1;
     });
     var items = (related.length ? related : (data.activity || [])).slice(0, 6);
-    if (!items.length) return '<p class="detail-empty">No activity recorded yet.</p>';
+    if (!items.length) return emptyState("No activity recorded", "Changes to this record will build its history here.", icons.activity, "", "", true);
     return items.map(function (item) {
       var date = item.at ? new Date(item.at) : null;
       return '<div class="detail-activity"><span class="detail-activity__dot"></span><div><strong>' + esc(item.message || "Record updated") + '</strong><small>' + esc(date && !isNaN(date) ? date.toLocaleString("en-ZA", { dateStyle: "medium", timeStyle: "short" }) : "") + "</small></div></div>";
@@ -754,7 +765,7 @@
       if (schema.collection === "projects") return doc.project === record.id;
       return (record.client && doc.client === record.client) || (record.project && doc.project === record.project);
     }).slice(0, 6);
-    if (!docs.length) return '<p class="detail-empty">No related documents yet.</p>';
+    if (!docs.length) return emptyState("No related documents", "Contracts, briefs and agreements will appear here.", icons.documents, "", "", true);
     return docs.map(function (doc) {
       return '<button class="detail-document" type="button" data-related-route="documents" data-related-id="' + esc(doc.id) + '" data-related-detail="false"><span>' + icons.documents + '</span><div><strong>' + esc(doc.title) + '</strong><small>' + esc((doc.type || "Document") + " / " + (doc.status || "")) + "</small></div></button>";
     }).join("");
@@ -926,7 +937,14 @@
 
   function table(schema, rows) {
     var bar = bulkBar(schema, rows);
-    if (!rows.length) return bar + '<div class="loading">No matching records. Add one to begin.</div>';
+    if (!rows.length) {
+      var hasRecords = active(schema.collection).length > 0;
+      var emptyTitle = hasRecords ? "No matching records" : "No " + schema.title.toLowerCase() + " yet";
+      var emptyMessage = hasRecords ? "Try clearing the current search and filters to see more results." : "Create the first record to begin managing this area.";
+      var emptyAction = hasRecords ? "Clear filters" : "Create " + detailType(schema);
+      var emptyAttr = hasRecords ? "data-empty-clear" : "data-empty-new";
+      return bar + '<div class="records-empty-wrap">' + emptyState(emptyTitle, emptyMessage, icons[schema.collection] || icons.dashboard, emptyAction, emptyAttr, false) + "</div>";
+    }
     var selected = state.selected[schema.collection] || [];
     var allSelected = rows.length > 0 && rows.every(function (record) { return selected.indexOf(record.id) > -1; });
     var hasDetail = supportsDetail(schema);
@@ -1016,6 +1034,17 @@
   }
 
   function bindTableRows(schema) {
+    document.querySelectorAll("[data-empty-new]").forEach(function (button) {
+      button.addEventListener("click", function () { openModal(schema, null); });
+    });
+    document.querySelectorAll("[data-empty-clear]").forEach(function (button) {
+      button.addEventListener("click", function () {
+        state.query = "";
+        state.filter = "all";
+        state.columnFilters[schema.collection] = {};
+        render();
+      });
+    });
     document.querySelectorAll("[data-edit]").forEach(function (button) { button.addEventListener("click", function () { openModal(schema, byId(schema.collection, button.dataset.edit)); }); });
     document.querySelectorAll("[data-open-record]").forEach(function (button) {
       button.addEventListener("click", function () { detailNavigate(routeForSchema(schema), button.dataset.openRecord); });
@@ -1407,7 +1436,7 @@
     active("bookings").forEach(function (booking) { services[booking.service] = (services[booking.service] || 0) + 1; });
     var topServicesRows = Object.keys(services).map(function (name) { return barRow(name, services[name], Math.min(100, services[name] * 28)); }).join("");
     var revenueByClientRows = active("clients").map(function (client) { var sum = active("invoices").filter(function (invoice) { return invoice.client === client.id; }).reduce(sumAmount, 0); return barRow(client.name, money(sum), Math.min(100, sum / 250)); }).join("");
-    return '<section class="analytics-grid">' + metric("Monthly Revenue", money(paid), "Paid invoices", icons.invoices) + metric("Artwork Sales", money(art), "Edition value", icons.collection) + metric("Outstanding", money(outstanding), "Open invoices", icons.invoices) + metric("Average Project", money(avg), "Current project value", icons.analytics) + metric("Returning Clients", active("clients").filter(function (c) { return c.status === "Returning"; }).length, "Relationship health", icons.clients) + '</section><section class="split-grid"><article class="panel"><div class="panel__header"><span class="panel__label">Top Services</span></div><div class="bar-list">' + (topServicesRows || '<p class="empty-state">No bookings yet.</p>') + '</div></article><article class="panel"><div class="panel__header"><span class="panel__label">Revenue by Client</span></div><div class="bar-list">' + (revenueByClientRows || '<p class="empty-state">No clients yet.</p>') + "</div></article></section>";
+    return '<section class="analytics-grid">' + metric("Monthly Revenue", money(paid), "Paid invoices", icons.invoices) + metric("Artwork Sales", money(art), "Edition value", icons.collection) + metric("Outstanding", money(outstanding), "Open invoices", icons.invoices) + metric("Average Project", money(avg), "Current project value", icons.analytics) + metric("Returning Clients", active("clients").filter(function (c) { return c.status === "Returning"; }).length, "Relationship health", icons.clients) + '</section><section class="split-grid"><article class="panel"><div class="panel__header"><span class="panel__label">Top Services</span></div><div class="bar-list">' + (topServicesRows || emptyState("No booking data", "Service performance will appear after bookings are added.", icons.bookings, "", "", true)) + '</div></article><article class="panel"><div class="panel__header"><span class="panel__label">Revenue by Client</span></div><div class="bar-list">' + (revenueByClientRows || emptyState("No client revenue yet", "Paid invoices will build this report.", icons.clients, "", "", true)) + "</div></article></section>";
   }
 
   function barRow(labelText, value, width) {
@@ -1742,7 +1771,7 @@
       var popover = document.querySelector("[data-bell-popover]");
       popover.innerHTML = '<span class="popover-title">Recent Activity</span><div class="activity-list">' + ((data.activity || []).slice(0, 5).map(function (entry) {
         return '<div class="activity"><span class="activity__icon">' + icons.activity + "</span><p>" + esc(entry.message) + '</p><span class="activity__time">' + esc(timeAgo(entry.at)) + "</span></div>";
-      }).join("") || '<p class="empty-state">No activity yet.</p>') + "</div>";
+      }).join("") || emptyState("No activity yet", "Studio updates will appear here.", icons.activity, "", "", true)) + "</div>";
       togglePopover(popover);
     });
     document.querySelector("[data-profile-toggle]").addEventListener("click", function (event) {

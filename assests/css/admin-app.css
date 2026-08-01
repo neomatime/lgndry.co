@@ -1079,3 +1079,37 @@ body.ops-app-shell .auth-card h1{font-size:clamp(2rem,7vw,2.65rem);line-height:1
 
 .record-preview--clickable{cursor:pointer;outline:none;transition:border-color 160ms ease,background 160ms ease,transform 160ms ease}
 .record-preview--clickable:hover,.record-preview--clickable:focus-visible{border-color:var(--accent-border);background-color:var(--accent-soft);transform:translateY(-1px)}
+
+
+/* Unified empty states */
+.records-empty-wrap{padding:22px}
+.empty-state-card{position:relative;display:grid;min-height:300px;place-items:center;align-content:center;gap:17px;overflow:hidden;padding:40px;border:1px solid var(--line);border-radius:18px;background:radial-gradient(circle at 50% 12%,var(--accent-soft),transparent 38%),linear-gradient(145deg,rgba(255,255,255,.025),transparent 55%),var(--panel);text-align:center}
+.empty-state-card:before,.empty-state-card:after{position:absolute;content:"";pointer-events:none}
+.empty-state-card:before{inset:18px;border:1px solid rgba(199,168,107,.08);border-radius:13px}
+.empty-state-card:after{top:0;right:24%;left:24%;height:1px;background:linear-gradient(90deg,transparent,var(--accent),transparent);opacity:.7}
+.empty-state-card__icon{position:relative;display:grid;width:58px;height:58px;place-items:center;border:1px solid var(--accent-border);border-radius:18px;color:var(--accent);background:var(--accent-soft);box-shadow:0 12px 30px rgba(0,0,0,.14)}
+.empty-state-card__icon svg{width:24px;height:24px;stroke-width:1.35}
+.empty-state-card__copy{position:relative;max-width:440px}
+.empty-state-card__copy h3{margin:0;font-family:"Cormorant Garamond",Georgia,serif;font-size:clamp(1.55rem,2.4vw,2rem);font-weight:500;line-height:1;letter-spacing:-.01em}
+.empty-state-card__copy p{margin:9px 0 0;color:var(--muted);font-size:.76rem;line-height:1.65}
+.empty-state-card__action{position:relative;display:inline-flex;min-height:42px;align-items:center;gap:20px;padding:0 17px;border:1px solid var(--accent-border);border-radius:11px;color:var(--text);background:var(--accent-soft);font:inherit;font-size:.65rem;font-weight:600;text-transform:uppercase;letter-spacing:.12em;cursor:pointer;transition:border-color 160ms ease,background 160ms ease,transform 160ms ease}
+.empty-state-card__action span{color:var(--accent);font-size:1rem}
+.empty-state-card__action:hover{border-color:var(--accent);background:rgba(199,168,107,.18);transform:translateY(-2px)}
+.empty-state-card__action:focus-visible{outline:2px solid var(--accent);outline-offset:3px}
+.empty-state-card--compact{min-height:170px;gap:11px;padding:24px 18px;border-radius:14px}
+.empty-state-card--compact:before{inset:10px;border-radius:10px}
+.empty-state-card--compact .empty-state-card__icon{width:40px;height:40px;border-radius:12px;box-shadow:none}
+.empty-state-card--compact .empty-state-card__icon svg{width:18px;height:18px}
+.empty-state-card--compact .empty-state-card__copy h3{font-size:1.12rem}
+.empty-state-card--compact .empty-state-card__copy p{max-width:270px;margin-top:6px;font-size:.67rem;line-height:1.5}
+.detail-panel>.empty-state-card--compact,.detail-link-list>.empty-state-card--compact,.detail-activity-list>.empty-state-card--compact{min-height:150px}
+.pipeline-stage .empty-state-card--compact{min-height:112px;padding:17px 12px}
+.pipeline-stage .empty-state-card--compact:before{display:none}
+.pipeline-stage .empty-state-card--compact .empty-state-card__icon{width:30px;height:30px;border-radius:9px}
+.pipeline-stage .empty-state-card--compact .empty-state-card__icon svg{width:14px;height:14px}
+.pipeline-stage .empty-state-card--compact .empty-state-card__copy h3{font-family:inherit;font-size:.72rem;font-weight:600}
+.pipeline-stage .empty-state-card--compact .empty-state-card__copy p{font-size:.59rem}
+@media(max-width:680px){.records-empty-wrap{padding:12px}.empty-state-card{min-height:260px;padding:32px 22px}.empty-state-card:before{inset:11px}.empty-state-card__icon{width:52px;height:52px;border-radius:16px}.empty-state-card__action{width:100%;max-width:240px;justify-content:space-between}}
+
+.popover .empty-state-card--compact{min-height:120px;padding:17px 14px}
+.popover .empty-state-card--compact:before{display:none}
