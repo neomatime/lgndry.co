@@ -210,7 +210,7 @@
         h("Document"),
         f("title", "Document title", "text", true), f("type", "Document type", "select", true, ["Contract", "NDA", "Proposal", "Creative Brief", "Call Sheet", "Model Release", "Location Release"]), rel("client", "Client", "clients"), rel("project", "Project / booking / partnership", "projects"), f("status", "Status", "select", true, ["Draft", "Sent", "Signed", "Expired", "Archived"]),
         h("Content"),
-        f("body", "Document text", "textarea"),
+        f("body", "Document text", "textarea", true),
         h("Files"),
         f("template", "Template file", "file"), f("signed", "Signed copy", "file")
       ],
@@ -1282,12 +1282,63 @@
     field.querySelector("[data-imagelist-value]").value = urls.join("\n");
   }
 
+  function documentTemplateContext() {
+    var form = document.querySelector("[data-form]");
+    var clientId = form.elements.client ? form.elements.client.value : "";
+    var projectId = form.elements.project ? form.elements.project.value : "";
+    var client = byId("clients", clientId) || {};
+    var project = byId("projects", projectId) || {};
+    var booking = project.booking ? byId("bookings", project.booking) || {} : {};
+    var partnership = active("partnerships").find(function (item) { return item.client === clientId; }) || {};
+    var invoice = active("invoices").find(function (item) { return (projectId && item.project === projectId) || (clientId && item.client === clientId); }) || {};
+    var partnershipTimeline = partnership.start || "";
+    if (partnership.end) partnershipTimeline += (partnershipTimeline ? " to " : "") + partnership.end;
+    return {
+      date: new Date().toISOString().slice(0, 10),
+      client: client.name,
+      contact: client.contact,
+      email: client.email,
+      phone: client.phone,
+      project: project.name || booking.service || partnership.company,
+      scope: project.brief || booking.notes || partnership.application,
+      deliverables: project.deliverables || partnership.deliverables,
+      timeline: project.timeline || booking.date || partnershipTimeline,
+      location: booking.location,
+      callTime: booking.start,
+      wrapTime: booking.end,
+      fees: invoice.amount ? money(invoice.amount) : "",
+      payment: invoice.due ? "Payment due by " + invoice.due + "." : ""
+    };
+  }
+
+  function updateDocumentTemplate() {
+    if (!state.editing || state.editing.schema.collection !== "documents" || !window.LgndryDocumentTemplates) return;
+    var form = document.querySelector("[data-form]");
+    var type = form.elements.type ? form.elements.type.value : "";
+    var body = form.elements.body;
+    if (!body || !type) return;
+    var context = documentTemplateContext();
+    body.value = window.LgndryDocumentTemplates(type, context);
+    body.dataset.templateGenerated = "true";
+    var title = form.elements.title;
+    if (title && (!title.value || title.dataset.templateGenerated === "true")) {
+      title.value = type + " - " + (context.project || context.client || "New document");
+      title.dataset.templateGenerated = "true";
+    }
+  }
+
+  function initializeDocumentTemplate(record) {
+    var form = document.querySelector("[data-form]");
+    var body = form.elements.body;
+    if (body && (!record || !body.value.trim())) updateDocumentTemplate();
+  }
   function openModal(schema, record) {
     state.editing = { schema: schema, record: record };
     document.querySelector("[data-modal-title]").textContent = (record ? "Edit " : "New ") + singular(schema.title);
     document.querySelector("[data-form-fields]").innerHTML = schema.fields.map(function (field) { return renderField(field, record ? record[field.name] : field.placeholder); }).join("");
     document.querySelector("[data-modal]").classList.add("is-open");
     document.querySelector("[data-modal]").setAttribute("aria-hidden", "false");
+    if (schema.collection === "documents") initializeDocumentTemplate(record);
   }
 
   function renderField(field, value) {
@@ -2062,6 +2113,9 @@
   });
 
   document.addEventListener("input", function (event) {
+    if (event.target.matches('[name="title"]') && state.editing && state.editing.schema.collection === "documents") {
+      event.target.dataset.templateGenerated = "false";
+    }
     if (event.target.matches('[name="slug"]')) {
       event.target.dataset.userEdited = "true";
       return;
@@ -2075,6 +2129,16 @@
     }
   });
 
+  document.addEventListener("change", function (event) {
+    if (!state.editing || state.editing.schema.collection !== "documents") return;
+    if (!event.target.matches('[name="type"], [name="client"], [name="project"]')) return;
+    var form = document.querySelector("[data-form]");
+    if (event.target.matches('[name="project"]') && event.target.value) {
+      var linkedProject = byId("projects", event.target.value);
+      if (linkedProject && linkedProject.client && form.elements.client) form.elements.client.value = linkedProject.client;
+    }
+    updateDocumentTemplate();
+  });
   document.addEventListener("change", function (event) {
     var imageInput = event.target.closest("[data-image-input]");
     if (imageInput) {

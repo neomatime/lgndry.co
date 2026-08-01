@@ -671,6 +671,11 @@
   resize: vertical;
 }
 
+.form-field textarea[name="body"] {
+  min-height: 360px;
+  line-height: 1.55;
+}
+
 .error-text {
   display: block;
   margin-top: 6px;
