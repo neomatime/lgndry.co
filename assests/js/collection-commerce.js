@@ -6,6 +6,7 @@
   window.LgndryCommerce.createCartLink();
   if (!window.LgndrySiteData) return;
   var products = [];
+  grid.setAttribute("aria-busy", "true");
 
   function esc(value) { return String(value == null ? "" : value).replace(/[&<>"']/g, function (m) { return { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[m]; }); }
   function list(value) { return String(value || "").split("\n").map(function (v) { return v.trim(); }).filter(Boolean); }
@@ -56,14 +57,15 @@
     });
     grid.innerHTML = filtered.length ? filtered.map(renderProduct).join("") : '<div class="catalogue-empty"><h2>No works found.</h2><p>Adjust the filters to continue exploring the collection.</p><button type="button" data-filter-clear>Clear filters</button></div>';
     controls.querySelector("[data-catalogue-results]").textContent = filtered.length + (filtered.length === 1 ? " work" : " works");
+    grid.setAttribute("aria-busy", "false");
   }
   function clear() { controls.querySelectorAll("input").forEach(function (el) { el.value = ""; }); controls.querySelectorAll("select").forEach(function (el) { el.selectedIndex = 0; }); apply(); }
 
   controls.addEventListener("input", apply); controls.addEventListener("change", apply);
   controls.addEventListener("click", function (event) { var toggle = event.target.closest("[data-filter-toggle]"); if (toggle) { var panel = controls.querySelector("[data-filter-panel]"); var open = panel.classList.toggle("is-open"); toggle.setAttribute("aria-expanded", open ? "true" : "false"); } if (event.target.closest("[data-filter-clear]")) clear(); });
-  grid.addEventListener("click", function (event) { var button = event.target.closest("[data-catalogue-add]"); if (!button) return; var product = products.find(function (p) { return p.id === button.dataset.catalogueAdd; }); if (!product) return; var card = button.closest("[data-product-id]"); var size = card.querySelector("[data-catalogue-size]").value; window.LgndryCommerce.add(window.LgndryCommerce.itemFromProduct(product, { size: size })); button.querySelector("span").textContent = "Added"; setTimeout(function () { button.querySelector("span").textContent = "Add to selection"; }, 1200); });
+  grid.addEventListener("click", function (event) { var button = event.target.closest("[data-catalogue-add]"); if (!button) return; var product = products.find(function (p) { return p.id === button.dataset.catalogueAdd; }); if (!product) return; var card = button.closest("[data-product-id]"); var size = card.querySelector("[data-catalogue-size]").value; window.LgndryCommerce.add(window.LgndryCommerce.itemFromProduct(product, { size: size })); button.querySelector("span").textContent = "Added"; button.setAttribute("aria-label", product.title + " added to cart"); setTimeout(function () { button.querySelector("span").textContent = "Add to selection"; button.removeAttribute("aria-label"); }, 1200); });
   grid.addEventListener("click", function (event) { if (event.target.closest("[data-filter-clear]")) clear(); });
   grid.addEventListener("click", function (event) { var link = event.target.closest('a[href^="showroom.html"]'); if (!link) return; event.preventDefault(); document.documentElement.classList.add("showroom-leaving"); setTimeout(function () { window.location.href = link.href; }, 90); });
 
-  window.LgndrySiteData.fetchCollection().then(function (items) { products = items.map(normalize); fillSelect("[data-filter-category]", optionValues("category")); fillSelect("[data-filter-collection]", optionValues("collectionName")); fillSelect("[data-filter-artist]", optionValues("artist")); apply(); }).catch(function (error) { console.error(error); grid.innerHTML = '<div class="catalogue-empty"><h2>The collection is temporarily unavailable.</h2><p>Please refresh or contact the studio.</p></div>'; });
+  window.LgndrySiteData.fetchCollection().then(function (items) { products = items.map(normalize); fillSelect("[data-filter-category]", optionValues("category")); fillSelect("[data-filter-collection]", optionValues("collectionName")); fillSelect("[data-filter-artist]", optionValues("artist")); apply(); }).catch(function (error) { console.error(error); grid.setAttribute("aria-busy", "false"); grid.innerHTML = '<div class="catalogue-empty"><h2>The collection is temporarily unavailable.</h2><p>Please refresh or contact the studio.</p></div>'; });
 }());

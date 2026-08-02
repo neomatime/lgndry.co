@@ -34,19 +34,22 @@
       return;
     }
 
-    // Wait for wordmark animation to complete + hold (2200ms total)
-    // then lift curtain and start hero zoom simultaneously
+    // Keep the branded introduction brief so the artwork appears quickly.
     setTimeout(function () {
       startHeroZoom();
       loader.classList.add('loader--exit');
 
-      // Remove loader from paint tree after curtain transition ends
-      loader.addEventListener('transitionend', function onEnd() {
-        loader.removeEventListener('transitionend', onEnd);
+      var hasFinished = false;
+      function finishLoader() {
+        if (hasFinished) return;
+        hasFinished = true;
         hideLoader();
         sessionStorage.setItem(STORAGE_KEY, '1');
-      });
-    }, 2200);
+      }
+
+      loader.addEventListener('transitionend', finishLoader, { once: true });
+      setTimeout(finishLoader, 900);
+    }, 950);
   }
 
   if (sessionStorage.getItem(STORAGE_KEY)) {
@@ -65,11 +68,15 @@
   var isOpen   = false;
   var prefersReducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 
+  if (!trigger || !panel || !closeBtn) return;
+  panel.inert = true;
+
   function openNav() {
     if (isOpen) return;
     isOpen = true;
 
     panel.classList.add('nav-panel--open');
+    panel.inert = false;
     panel.setAttribute('aria-hidden', 'false');
     trigger.setAttribute('aria-expanded', 'true');
     trigger.style.opacity = '0';
@@ -101,6 +108,7 @@
 
     setTimeout(function () {
       panel.classList.remove('nav-panel--open');
+      panel.inert = true;
       panel.setAttribute('aria-hidden', 'true');
       trigger.setAttribute('aria-expanded', 'false');
       trigger.style.opacity = '';
@@ -116,7 +124,21 @@
   closeBtn.addEventListener('click', closeNav);
 
   document.addEventListener('keydown', function (e) {
-    if (e.key === 'Escape' && isOpen) { closeNav(); }
+    if (!isOpen) return;
+    if (e.key === 'Escape') { closeNav(); return; }
+    if (e.key !== 'Tab') return;
+
+    var focusable = panel.querySelectorAll('a[href], button:not([disabled]), input:not([disabled]), select:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex="-1"])');
+    if (!focusable.length) return;
+    var first = focusable[0];
+    var last = focusable[focusable.length - 1];
+    if (e.shiftKey && document.activeElement === first) {
+      e.preventDefault();
+      last.focus();
+    } else if (!e.shiftKey && document.activeElement === last) {
+      e.preventDefault();
+      first.focus();
+    }
   });
 
   document.addEventListener('click', function (e) {
