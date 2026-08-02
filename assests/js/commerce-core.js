@@ -26,7 +26,33 @@
   function createCartLink() {
     if (document.querySelector("[data-commerce-cart-link]")) return;
     var link = document.createElement("a"); link.href = "cart.html"; link.className = "commerce-cart-link"; link.setAttribute("data-commerce-cart-link", ""); link.setAttribute("aria-label", "View shopping cart"); link.innerHTML = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 5h2l2.1 10.1a2 2 0 0 0 2 1.6h7.8a2 2 0 0 0 2-1.6L20.5 8H6"/><circle cx="10" cy="20" r="1"/><circle cx="17" cy="20" r="1"/></svg><span data-commerce-cart-count></span>';
-    document.body.appendChild(link); updateCount();
+    var header = document.querySelector(".page-header");
+    if (header) {
+      var actions = header.querySelector(".page-header__actions");
+      var brand = header.querySelector(".page-header__brand");
+      if (!actions) {
+        actions = document.createElement("div");
+        actions.className = "page-header__actions";
+        header.appendChild(actions);
+      }
+      link.classList.add("commerce-cart-link--header");
+      if (brand) actions.appendChild(brand);
+      actions.appendChild(link);
+    } else {
+      var commerceHeader = document.querySelector(".commerce-header");
+      if (commerceHeader) {
+        var commerceActions = document.createElement("div");
+        var commerceLink = commerceHeader.querySelector("a:last-of-type");
+        commerceActions.className = "commerce-header__actions";
+        link.classList.add("commerce-cart-link--header");
+        commerceHeader.appendChild(commerceActions);
+        commerceActions.appendChild(link);
+        if (commerceLink) commerceActions.appendChild(commerceLink);
+      } else {
+        document.body.appendChild(link);
+      }
+    }
+    updateCount();
   }
   function updateCount() { document.querySelectorAll("[data-commerce-cart-count]").forEach(function (el) { el.textContent = count() || "0"; }); }
   window.addEventListener("lgndry-cart-change", updateCount);

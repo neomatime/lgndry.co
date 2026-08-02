@@ -356,3 +356,99 @@ body:not(.ops-app-shell) textarea {
     padding: 28px !important;
   }
 }
+
+/* Header cart and visually hidden showroom scrolling */
+.page-header__actions,
+.commerce-header__actions {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: clamp(14px, 1.8vw, 24px);
+  min-width: 0;
+}
+
+.page-header__actions {
+  margin-left: auto;
+}
+
+.page-header__actions .page-header__brand {
+  flex: 0 0 auto;
+}
+
+.page-header .commerce-cart-link--header,
+.commerce-header .commerce-cart-link--header {
+  position: relative !important;
+  inset: auto !important;
+  z-index: auto !important;
+  display: inline-grid !important;
+  width: 38px !important;
+  height: 38px !important;
+  flex: 0 0 38px;
+  place-items: center;
+  border: 0 !important;
+  border-radius: 0 !important;
+  background: transparent !important;
+  color: var(--ui-ink, #1d1c1a) !important;
+  box-shadow: none !important;
+  -webkit-backdrop-filter: none !important;
+  backdrop-filter: none !important;
+  transform: none !important;
+}
+
+.page-header .commerce-cart-link--header:hover,
+.commerce-header .commerce-cart-link--header:hover {
+  background: transparent !important;
+  box-shadow: none !important;
+  opacity: 0.55;
+  transform: none !important;
+}
+
+.page-header .commerce-cart-link--header > svg,
+.commerce-header .commerce-cart-link--header > svg {
+  width: 20px;
+  height: 20px;
+  stroke-width: 1.25;
+}
+
+.page-header .commerce-cart-link--header > span,
+.commerce-header .commerce-cart-link--header > span {
+  position: absolute;
+  top: 1px;
+  right: 0;
+  display: grid;
+  min-width: 15px;
+  height: 15px;
+  padding: 0 4px;
+  place-items: center;
+  border: 0;
+  border-radius: 50%;
+  background: #1d1c1a;
+  color: #fff;
+  font: 500 0.5rem/1 Inter, sans-serif;
+  letter-spacing: 0;
+}
+
+.showroom-page .showroom-details {
+  -ms-overflow-style: none;
+  scrollbar-width: none !important;
+}
+
+.showroom-page .showroom-details::-webkit-scrollbar {
+  display: none;
+  width: 0;
+  height: 0;
+}
+
+@media (max-width: 680px) {
+  .page-header__actions,
+  .commerce-header__actions {
+    gap: 10px;
+  }
+
+  .page-header .commerce-cart-link--header,
+  .commerce-header .commerce-cart-link--header {
+    width: 34px !important;
+    height: 34px !important;
+    flex-basis: 34px;
+  }
+}
