@@ -169,6 +169,76 @@ body:not(.ops-app-shell) :where(
 .lgndry-select__menu {
   box-shadow: 0 14px 36px rgba(24, 20, 16, 0.09) !important;
 }
+/* Keep copy and controls comfortably inside the sharp editorial geometry. */
+body:not(.ops-app-shell) :where(
+  input:not([type="checkbox"]):not([type="radio"]):not([type="hidden"]):not([type="file"]):not([type="range"]):not([type="color"]),
+  select:not(.lgndry-select__native),
+  textarea,
+  .lgndry-select__trigger
+) {
+  padding-inline: 16px !important;
+}
+
+body:not(.ops-app-shell) select:not(.lgndry-select__native) {
+  padding-right: 46px !important;
+}
+
+body:not(.ops-app-shell) .lgndry-select__trigger {
+  padding-right: 16px !important;
+}
+
+body:not(.ops-app-shell) select:not(.lgndry-select__native) {
+  -webkit-appearance: none;
+  appearance: none;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath d='M1 1.5 6 6.5l5-5' fill='none' stroke='%231d1d1d' stroke-width='1.35'/%3E%3C/svg%3E") !important;
+  background-repeat: no-repeat !important;
+  background-position: right 17px center !important;
+  background-size: 12px 8px !important;
+}
+
+body:not(.ops-app-shell) textarea {
+  padding-block: 14px !important;
+}
+
+.lgndry-select__trigger svg {
+  flex: 0 0 auto;
+  margin-left: auto;
+}
+
+.lgndry-select__menu {
+  padding: 8px !important;
+}
+
+.lgndry-select__option {
+  padding: 12px 14px !important;
+}
+
+.work__size .lgndry-select__trigger {
+  min-height: 28px;
+  padding: 2px 22px 2px 0 !important;
+}
+
+.catalogue-filter-toggle,
+.catalogue-clear {
+  padding-inline: 14px !important;
+}
+
+/* Bordered editorial cards need the same deliberate inset as form fields. */
+.contact-path,
+.about-principles .about-card {
+  min-width: 0;
+  padding: clamp(28px, 3vw, 42px) !important;
+}
+
+.contact-path {
+  display: flex;
+  flex-direction: column;
+}
+
+.contact-path .contact-link {
+  margin-top: auto;
+  padding-top: 34px;
+}
 
 /* Buttons remain premium through proportion and typography, not pills. */
 :where(
@@ -271,6 +341,7 @@ body:not(.ops-app-shell) :where(
   .about-principles .about-card {
     border-right: 0 !important;
     border-bottom: 1px solid var(--ui-line) !important;
+    padding: 28px !important;
   }
 
   .catalogue-controls {
@@ -279,5 +350,9 @@ body:not(.ops-app-shell) :where(
 
   .contact-grid {
     gap: 1px !important;
+  }
+
+  .contact-path {
+    padding: 28px !important;
   }
 }
