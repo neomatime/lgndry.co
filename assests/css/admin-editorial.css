@@ -1297,16 +1297,15 @@ body.ops-app-shell .toast {
 body.ops-app-shell .auth-gate {
   position: relative;
   display: grid;
-  grid-template-columns: 1fr 1fr;
-  padding: 0;
-  background: var(--admin-canvas) !important;
+  grid-template-columns: 1fr;
+  padding: clamp(24px, 5vw, 72px);
+  background:
+    linear-gradient(90deg, rgba(7, 7, 7, 0.72), rgba(7, 7, 7, 0.28)),
+    url("../images/founder-2.jpeg") center 28% / cover no-repeat !important;
 }
 
 body.ops-app-shell .auth-gate::after {
-  min-height: 100vh;
-  content: "";
-  background: linear-gradient(rgba(0, 0, 0, 0.08), rgba(0, 0, 0, 0.18)), url("../images/founder-2.jpeg") center 28% / cover no-repeat;
-  filter: grayscale(1) contrast(1.03);
+  display: none;
 }
 
 body.ops-app-shell .auth-card {
