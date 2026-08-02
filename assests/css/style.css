@@ -1083,13 +1083,16 @@ body {
 .footer__top {
   display: grid;
   grid-template-columns: 2fr 1fr 1fr 1fr;
+  align-items: start;
   gap: 40px;
   padding-top: 88px;
   padding-bottom: 64px;
 }
 
 .footer__logo {
+  display: block;
   width: 132px;
+  height: auto;
   margin-bottom: 24px;
 }
 
@@ -1130,6 +1133,25 @@ body {
 .footer__nav a:hover,
 .footer__col a:hover {
   opacity: 0.55;
+}
+
+.footer__social-link {
+  display: inline-flex;
+  width: fit-content;
+  align-items: center;
+  gap: 10px;
+}
+
+.footer__social-link::after {
+  content: '\2197';
+  font-size: 0.72em;
+  opacity: 0.55;
+  transition: transform 180ms ease;
+}
+
+.footer__social-link:hover::after,
+.footer__social-link:focus-visible::after {
+  transform: translate(2px, -2px);
 }
 
 .footer__bottom {
