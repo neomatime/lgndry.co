@@ -510,7 +510,7 @@
           '</div>' +
           '<button class="collection-cart__close" type="button" aria-label="Close cart" data-collection-cart-close>&times;</button>' +
         '</div>' +
-        '<form class="collection-cart__form" novalidate>' +
+        '<form class="collection-cart__form" action="https://www.lgndry-co.co.za/checkout.html" method="post" autocomplete="on" novalidate>' +
           '<div class="collection-cart__body">' +
             '<div class="collection-cart__items" data-collection-cart-items></div>' +
             '<section class="collection-cart__section">' +
@@ -1060,7 +1060,7 @@ function populateBudgetSelect(select, form) {
               '<li><button type="button" data-booking-step="2"><span>3</span><strong>Your Details</strong></button></li>' +
               '<li><button type="button" data-booking-step="3"><span>4</span><strong>Review & Confirm</strong></button></li>' +
             '</ol>' +
-            '<form class="booking-modal__form" action="mailto:info@lgndry-co.co.za" method="post" enctype="text/plain" novalidate>' +
+            '<form class="booking-modal__form" action="https://www.lgndry-co.co.za/contact.html" method="post" autocomplete="on" novalidate>' +
               '<div class="booking-modal__panels">' +
                 '<fieldset class="booking-modal__screen is-active" data-booking-panel="0">' +
                   '<label class="booking-modal__field booking-modal__field--wide">' +
@@ -1534,7 +1534,7 @@ function populateBudgetSelect(select, form) {
               '<li><button type="button" data-booking-step="2"><span>3</span><strong>Your Details</strong></button></li>' +
               '<li><button type="button" data-booking-step="3"><span>4</span><strong>Review & Confirm</strong></button></li>' +
             '</ol>' +
-            '<form class="booking-modal__form" action="mailto:info@lgndry-co.co.za" method="post" enctype="text/plain" novalidate>' +
+            '<form class="booking-modal__form" action="https://www.lgndry-co.co.za/contact.html" method="post" autocomplete="on" novalidate>' +
               '<div class="booking-modal__panels">' +
                 '<fieldset class="booking-modal__screen is-active" data-booking-panel="0">' +
                   '<label class="booking-modal__field booking-modal__field--wide">' +
