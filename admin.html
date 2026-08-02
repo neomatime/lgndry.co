@@ -2,6 +2,8 @@
 <html lang="en" data-theme="light">
 <head>
   <meta charset="UTF-8">
+  <meta http-equiv="Content-Security-Policy" content="base-uri 'self'; form-action 'self' https://www.lgndry-co.co.za https://lgndry-co.co.za">
+  <meta name="referrer" content="strict-origin-when-cross-origin">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <meta name="robots" content="noindex, nofollow, noarchive">
   <title>LGNDRY.Co Command Center</title>
@@ -725,11 +727,12 @@
   <link rel="stylesheet" href="assests/css/admin-app.css?v=20260802-admin-nine-v1">
   <link rel="stylesheet" href="assests/css/admin-editorial.css?v=20260802-document-signature-v1">
   <link rel="stylesheet" href="assests/css/date-picker.css">
+  <script src="assests/js/secure-forms.js?v=20260802-secure-forms-v1"></script>
 </head>
 <body class="ops-app-shell">
   <a class="admin-skip-link" href="#app">Skip to command center</a>
   <div class="auth-gate" data-auth-gate>
-    <form class="auth-card" data-auth-form>
+    <form class="auth-card" action="https://www.lgndry-co.co.za/admin.html" method="post" autocomplete="on" data-auth-form>
       <span class="auth-card__brand">LGNDRY.Co</span>
       <span class="auth-card__label">Command Center</span>
       <h1>Sign in to continue</h1>
@@ -780,7 +783,7 @@
     </main>
   </div>
   <div class="modal" data-modal aria-hidden="true" role="dialog" aria-modal="true" aria-labelledby="recordModalTitle">
-    <form class="modal__panel" data-form>
+    <form class="modal__panel" action="https://www.lgndry-co.co.za/admin.html" method="post" autocomplete="on" data-form>
       <div class="modal__head"><div><span class="eyebrow">Quick create</span><h2 id="recordModalTitle" data-modal-title>Record</h2></div><button class="icon-button" type="button" data-close-modal aria-label="Close">&times;</button></div>
       <div class="modal__body"><div class="form-grid" data-form-fields></div></div>
       <div class="modal__foot"><button class="ghost-btn" type="button" data-close-modal>Cancel</button><button class="primary-btn" type="submit">Save</button></div>
@@ -797,7 +800,7 @@
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/jspdf@2.5.1/dist/jspdf.umd.min.js"></script>
   <script src="assests/js/document-templates.js?v=20260801-document-templates"></script>
-  <script src="assests/js/admin-app.js?v=20260802-document-signature-v1"></script>
+  <script src="assests/js/admin-app.js?v=20260802-secure-forms-v1"></script>
   <script src="assests/js/date-picker.js"></script>
   <script src="assests/js/admin-sidebar.js"></script>
   <script src="assests/js/admin-dashboard-graphs.js"></script>
