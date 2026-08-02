@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="en" data-theme="dark">
+<html lang="en" data-theme="light">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -722,11 +722,12 @@
       .focus-strip__quote, .focus-strip__action { padding: 24px; }
     }
   </style>
-  <link rel="stylesheet" href="assests/css/admin-app.css?v=20260801-document-templates">
-  <link rel="stylesheet" href="assests/css/admin-editorial.css?v=20260802-zara-v1">
+  <link rel="stylesheet" href="assests/css/admin-app.css?v=20260802-admin-nine-v1">
+  <link rel="stylesheet" href="assests/css/admin-editorial.css?v=20260802-admin-nine-v1">
   <link rel="stylesheet" href="assests/css/date-picker.css">
 </head>
 <body class="ops-app-shell">
+  <a class="admin-skip-link" href="#app">Skip to command center</a>
   <div class="auth-gate" data-auth-gate>
     <form class="auth-card" data-auth-form>
       <span class="auth-card__brand">LGNDRY.Co</span>
@@ -735,10 +736,10 @@
       <label class="form-field"><span class="form-label">Email</span><input type="email" name="email" required autocomplete="username"></label>
       <label class="form-field"><span class="form-label">Password</span><input type="password" name="password" required autocomplete="current-password"></label>
       <button class="primary-btn" type="submit" data-auth-submit>Sign In</button>
-      <p class="auth-card__error" data-auth-error></p>
+      <p class="auth-card__error" data-auth-error role="alert" aria-live="polite"></p>
     </form>
   </div>
-  <div class="loading-gate" data-loading-gate style="display:none">
+  <div class="loading-gate" data-loading-gate style="display:none" role="status" aria-live="polite">
     <div class="loading-gate__mark">
       <span class="loading-gate__spinner" aria-hidden="true"></span>
       <p>Loading studio data&hellip;</p>
@@ -753,7 +754,7 @@
       <button class="mobile-nav-toggle" type="button" data-mobile-nav-toggle aria-expanded="false" aria-controls="opsNav">Menu</button>
       <nav class="side-nav" aria-label="Admin sections" id="opsNav" data-nav></nav>
       <article class="sidebar-card">
-        <img src="assests/images/hero-image.JPG" alt="LGNDRY.Co field artwork">
+        <img src="assests/images/optimized/home-hero.webp" alt="LGNDRY.Co field artwork" width="2400" height="1350" loading="lazy" decoding="async">
         <div class="sidebar-card__body"><h3>Found Beauty<br>in the Mundane.</h3><p>LGNDRY.Co</p></div>
       </article>
     </aside>
@@ -761,14 +762,14 @@
       <header class="topbar">
         <div class="welcome"><h1 data-view-title>Welcome back, Dan.</h1><p data-view-subtitle>Here is what is happening with LGNDRY.Co today.</p></div>
         <label class="search"><span class="sr-only">Search</span><input type="search" placeholder="Search anything..." data-global-search autocomplete="off"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><circle cx="11" cy="11" r="7"/><path d="M16.5 16.5L21 21"/></svg><div class="global-search__results" data-search-results></div></label>
-        <button class="theme-toggle" type="button" data-theme-toggle aria-label="Switch to light mode"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><circle cx="12" cy="12" r="4"/><path d="M12 2v3M12 19v3M2 12h3M19 12h3M4.9 4.9 7 7M17 17l2.1 2.1M19.1 4.9 17 7M7 17l-2.1 2.1"/></svg><span data-theme-label>Light mode</span></button>
+        <button class="theme-toggle" type="button" data-theme-toggle aria-label="Switch to dark mode"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" aria-hidden="true"><circle cx="12" cy="12" r="4"/><path d="M12 2v3M12 19v3M2 12h3M19 12h3M4.9 4.9 7 7M17 17l2.1 2.1M19.1 4.9 17 7M7 17l-2.1 2.1"/></svg><span data-theme-label>Dark mode</span></button>
         <div class="popover-anchor">
-          <button class="icon-button" type="button" aria-label="Notifications" data-bell-toggle><svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M6 10a6 6 0 0 1 12 0v4l2 3H4l2-3z"/><path d="M10 20a2 2 0 0 0 4 0"/></svg></button>
-          <div class="popover" data-bell-popover></div>
+          <button class="icon-button" type="button" aria-label="Notifications" aria-expanded="false" aria-controls="adminNotifications" data-bell-toggle><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" aria-hidden="true"><path d="M6 10a6 6 0 0 1 12 0v4l2 3H4l2-3z"/><path d="M10 20a2 2 0 0 0 4 0"/></svg></button>
+          <div class="popover" id="adminNotifications" data-bell-popover></div>
         </div>
         <div class="popover-anchor">
-          <button class="profile" type="button" aria-label="Signed in profile" data-profile-toggle><img src="assests/images/founder.jpeg" alt="Dan Mokgwadi"><div><strong>Dan Mokgwadi</strong><span>Founder &amp; Creative Director</span></div><svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M7 9l5 5 5-5"/></svg></button>
-          <div class="popover" data-profile-popover>
+          <button class="profile" type="button" aria-label="Signed in profile" aria-expanded="false" aria-controls="adminProfileMenu" data-profile-toggle><img src="assests/images/founder.jpeg" alt="Dan Mokgwadi" width="853" height="1280" decoding="async"><div><strong>Dan Mokgwadi</strong><span>Founder &amp; Creative Director</span></div><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" aria-hidden="true"><path d="M7 9l5 5 5-5"/></svg></button>
+          <div class="popover" id="adminProfileMenu" data-profile-popover>
             <span class="popover-title">Account</span>
             <button class="popover-item" type="button" data-popover-route="settings">Settings</button>
             <button class="popover-item" type="button" data-sign-out>Sign Out</button>
@@ -778,25 +779,25 @@
       <section class="view-stack" data-view></section>
     </main>
   </div>
-  <div class="modal" data-modal aria-hidden="true">
+  <div class="modal" data-modal aria-hidden="true" role="dialog" aria-modal="true" aria-labelledby="recordModalTitle">
     <form class="modal__panel" data-form>
-      <div class="modal__head"><h2 data-modal-title>Record</h2><button class="icon-button" type="button" data-close-modal aria-label="Close">X</button></div>
+      <div class="modal__head"><div><span class="eyebrow">Quick create</span><h2 id="recordModalTitle" data-modal-title>Record</h2></div><button class="icon-button" type="button" data-close-modal aria-label="Close">&times;</button></div>
       <div class="modal__body"><div class="form-grid" data-form-fields></div></div>
       <div class="modal__foot"><button class="ghost-btn" type="button" data-close-modal>Cancel</button><button class="primary-btn" type="submit">Save</button></div>
     </form>
   </div>
-  <div class="modal modal--confirm" data-confirm-modal aria-hidden="true">
+  <div class="modal modal--confirm" data-confirm-modal aria-hidden="true" role="alertdialog" aria-modal="true" aria-labelledby="confirmModalTitle">
     <div class="modal__panel">
-      <div class="modal__head"><h2 data-confirm-title>Are you sure?</h2></div>
+      <div class="modal__head"><h2 id="confirmModalTitle" data-confirm-title>Are you sure?</h2></div>
       <div class="modal__body"><p data-confirm-message></p></div>
       <div class="modal__foot"><button class="ghost-btn" type="button" data-confirm-cancel>Cancel</button><button class="danger-btn" type="button" data-confirm-ok>Confirm</button></div>
     </div>
   </div>
-  <div class="toast" data-toast></div>
+  <div class="toast" data-toast role="status" aria-live="polite" aria-atomic="true"></div>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/jspdf@2.5.1/dist/jspdf.umd.min.js"></script>
   <script src="assests/js/document-templates.js?v=20260801-document-templates"></script>
-  <script src="assests/js/admin-app.js?v=20260801-card-ready"></script>
+  <script src="assests/js/admin-app.js?v=20260802-admin-nine-v1"></script>
   <script src="assests/js/date-picker.js"></script>
   <script src="assests/js/admin-sidebar.js"></script>
   <script src="assests/js/admin-dashboard-graphs.js"></script>
