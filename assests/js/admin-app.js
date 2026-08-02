@@ -8,6 +8,7 @@
   var supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
   var VAPID_PUBLIC_KEY = "BM_IQFlZnwcu7g4r34KumlYmAJWP0sH4O2_3SNhvqT2gF4hP3enZGP9vgnxZN-FTIpRrXyKByvyb0gMhEA7h4es";
   var chromeInitialized = false;
+  var modalReturnFocus = null;
   var TABLES = ["clients", "practice", "bookings", "projects", "partnerships", "collection", "orders", "galleries", "content", "journal", "cms", "budgets", "invoices", "documents"];
   var state = { route: "dashboard", query: "", filter: "all", editing: null, detail: null, columnFilters: {}, selected: {} };
   var data = { activity: [] };
@@ -223,7 +224,7 @@
   };
 
   function svg(paths) {
-    return '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor">' + paths + "</svg>";
+    return '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" aria-hidden="true" focusable="false">' + paths + "</svg>";
   }
 
   function f(name, label, type, required, options, placeholder) {
@@ -552,7 +553,8 @@
       var schema = schemas[module[0]];
       var count = schema ? active(schema.collection).length : null;
       var countMarkup = count != null ? '<span class="nav-item__count">' + count + '</span>' : '';
-      return '<button type="button" class="nav-item ' + (state.route === module[0] ? "nav-item--active" : "") + '" data-route="' + module[0] + '">' + (icons[module[0]] || "") + "<span>" + module[1] + "</span>" + countMarkup + "</button>";
+      var current = state.route === module[0];
+      return '<button type="button" class="nav-item ' + (current ? "nav-item--active" : "") + '" data-route="' + module[0] + '"' + (current ? ' aria-current="page"' : "") + '>' + (icons[module[0]] || "") + "<span>" + module[1] + "</span>" + countMarkup + "</button>";
     }).join("");
   }
 
@@ -562,6 +564,8 @@
     var projects = active("projects");
     var partnerships = active("partnerships");
     var collection = active("collection");
+    var orders = active("orders");
+    var newOrders = orders.filter(function (order) { return ["New", "New Request"].indexOf(order.status) > -1; });
     var today = new Date().toISOString().slice(0, 10);
     var upcoming = bookings.filter(function (booking) { return booking.date >= today; });
     var outstanding = invoices.filter(function (invoice) { return ["Sent", "Partially Paid", "Overdue"].indexOf(invoice.status) > -1; }).reduce(sumAmount, 0);
@@ -571,6 +575,7 @@
       '<section class="dashboard-metrics">' +
       metric("Active Projects", projects.filter(function (p) { return p.status !== "Delivered"; }).length, "View all projects", icons.projects, "projects") +
       metric("Upcoming Bookings", upcoming.length, "View calendar", icons.bookings, "bookings") +
+      metric("New Orders", newOrders.length, "Requests awaiting review", icons.orders, "orders") +
       metric("Outstanding Invoices", money(outstanding), "Needs follow-up", icons.invoices, "invoices") +
       metric("Collection Sales", money(paid + artSales), "Paid and edition value", icons.collection, "collection") +
       metric("Partnership Pipeline", partnerships.length, "Prospects and retainers", icons.partnerships, "partnerships") +
@@ -608,7 +613,7 @@
       var progress = PROJECT_PROGRESS[project.status] != null ? PROJECT_PROGRESS[project.status] : 10;
       var statusCls = statusClass(project.status);
       var dotClass = statusCls === "warn" || statusCls === "bad" ? "dot dot--warn" : "dot";
-      return '<div class="project record-preview--clickable" data-dashboard-detail="projects" data-record-id="' + project.id + '" tabindex="0"><img src="' + esc(project.image || "assests/images/hero-image.JPG") + '" alt="">' +
+      return '<div class="project record-preview--clickable" data-dashboard-detail="projects" data-record-id="' + project.id + '" tabindex="0"><img src="' + esc(project.image || "assests/images/optimized/home-hero.webp") + '" alt="' + esc(project.name) + '" loading="lazy" decoding="async">' +
         "<div><h3>" + esc(project.name) + "</h3><p>" + esc(label("clients", project.client)) + "</p></div>" +
         '<span class="project__status"><span class="' + dotClass + '"></span>' + esc(project.status) + "</span>" +
         '<span class="project__progress">' + progress + '%</span>' +
@@ -808,22 +813,39 @@
     var items = parseOrderItems(record);
     if (!items.length) return emptyState("No item data", "The selected works were not included with this order.", icons.collection, "", "", true);
     return '<div class="order-items">' + items.map(function (item) {
-      var image = item.image ? '<img src="' + esc(item.image) + '" alt="">' : '<span class="order-item__placeholder">' + icons.collection + '</span>';
+      var image = item.image ? '<img src="' + esc(item.image) + '" alt="' + esc(item.title || "Artwork") + '" loading="lazy" decoding="async">' : '<span class="order-item__placeholder">' + icons.collection + '</span>';
       var artwork = item.artworkId && byId("collection", item.artworkId);
       var open = artwork ? ' data-related-route="collection" data-related-id="' + esc(artwork.id) + '" data-related-detail="true"' : "";
       return '<button class="order-item" type="button"' + open + '>' + image + '<div><strong>' + esc(item.title || "Artwork") + '</strong><span>' + esc((item.quantity || 1) + " x " + (item.size || "Size not specified")) + '</span><small>' + money(item.lineTotal || (Number(item.unitPrice || 0) * Number(item.quantity || 1))) + "</small></div></button>";
     }).join("") + "</div>";
   }
 
+  function orderProgressMarkup(record) {
+    var current = record.status === "New" ? "New Request" : (record.status || record.fulfilmentStatus || "New Request");
+    if (current === "Cancelled") {
+      return '<section class="order-progress order-progress--cancelled" aria-label="Order status"><span class="eyebrow">Fulfilment</span><div><strong>Order cancelled</strong><p>No further fulfilment actions are scheduled.</p></div></section>';
+    }
+    var isCollection = String(record.deliveryMethod || "").toLowerCase().indexOf("collect") > -1;
+    var stages = ["New Request", "Contacted", "Confirmed", "Preparing", isCollection ? "Ready for Collection" : "Out for Delivery", "Completed"];
+    var activeIndex = stages.indexOf(current);
+    if (activeIndex < 0 && record.fulfilmentStatus) activeIndex = stages.indexOf(record.fulfilmentStatus);
+    if (activeIndex < 0) activeIndex = 0;
+    return '<section class="order-progress" aria-label="Order progress"><div class="order-progress__head"><div><span class="eyebrow">Fulfilment</span><h3>Order progress</h3></div><span>' + esc(isCollection ? "Collection" : "Delivery") + '</span></div><ol>' + stages.map(function (stage, index) {
+      var stepClass = index < activeIndex ? "is-complete" : (index === activeIndex ? "is-current" : "");
+      return '<li class="' + stepClass + '"' + (index === activeIndex ? ' aria-current="step"' : "") + '><span>' + (index + 1) + '</span><strong>' + esc(stage) + "</strong></li>";
+    }).join("") + "</ol></section>";
+  }
+
   function detailView(schema, record) {
     var status = detailStatus(schema, record);
-    var image = record.image ? '<div class="detail-hero__image"><img src="' + esc(record.image) + '" alt=""></div>' : "";
+    var image = record.image ? '<div class="detail-hero__image"><img src="' + esc(record.image) + '" alt="' + esc(recordDisplayName(record)) + '" loading="lazy" decoding="async"></div>' : "";
     var orderPanel = schema.collection === "orders" ? '<section class="detail-panel"><div class="detail-panel__head"><span class="eyebrow">Requested works</span><h3>Order items</h3></div>' + orderItemsMarkup(record) + "</section>" : "";
+    var orderProgress = schema.collection === "orders" ? orderProgressMarkup(record) : "";
     var bookingAction = schema.collection === "bookings" ? '<button class="secondary-action" type="button" data-detail-generate>Generate Project</button>' : "";
     return '<section class="record-detail">' +
       '<button class="detail-back" type="button" data-detail-back><span>&larr;</span> Back to ' + esc(schema.title) + '</button>' +
       '<header class="detail-hero">' + image + '<div class="detail-hero__content"><span class="eyebrow">' + esc(detailType(schema)) + ' record</span><div class="detail-hero__title"><div><h2>' + esc(recordDisplayName(record)) + '</h2><p>Created for the LGNDRY.Co studio workflow</p></div><span class="status-pill ' + statusClass(status) + '">' + esc(status) + '</span></div><div class="detail-stats">' + detailSummary(schema, record) + '</div></div></header>' +
-      '<div class="detail-layout"><main class="detail-main"><form class="detail-editor" data-detail-form><div class="detail-section-head"><div><span class="eyebrow">Record information</span><h3>Edit ' + esc(detailType(schema)) + '</h3></div><span>Changes sync to the studio database</span></div><div class="form-grid detail-form-grid">' + schema.fields.map(function (field) { return renderField(field, record[field.name]); }).join("") + '</div><div class="detail-savebar"><span data-detail-save-status>Review changes before saving.</span><button class="primary-action" type="submit">Save Changes</button></div></form></main>' +
+      orderProgress + '<div class="detail-layout"><div class="detail-main"><form class="detail-editor" data-detail-form><div class="detail-section-head"><div><span class="eyebrow">Record information</span><h3>Edit ' + esc(detailType(schema)) + '</h3></div><span>Changes sync to the studio database</span></div><div class="form-grid detail-form-grid">' + schema.fields.map(function (field) { return renderField(field, record[field.name]); }).join("") + '</div><div class="detail-savebar"><span data-detail-save-status>Review changes before saving.</span><button class="primary-action" type="submit">Save Changes</button></div></form></div>' +
       '<aside class="detail-aside">' + orderPanel + '<section class="detail-panel"><div class="detail-panel__head"><span class="eyebrow">Linked records</span><h3>Related work</h3></div><div class="detail-link-list">' + detailRelatedMarkup(schema, record) + '</div></section>' +
       '<section class="detail-panel"><div class="detail-panel__head"><span class="eyebrow">Documents</span><h3>Files & agreements</h3></div>' + detailDocumentsMarkup(schema, record) + '</section>' +
       '<section class="detail-panel"><div class="detail-panel__head"><span class="eyebrow">Activity</span><h3>Recent history</h3></div><div class="detail-activity-list">' + detailActivityMarkup(record) + '</div></section>' +
@@ -888,25 +910,25 @@
 
   function moduleView(schema) {
     var records = filtered(schema);
+    var totalRecords = active(schema.collection).length;
     var statusOptions = statuses(schema);
     var currentExtra = state.columnFilters[schema.collection] || {};
     var extraFiltersHtml = filterableFields(schema).map(function (field) {
       var options = fieldFilterOptions(schema, field);
       var current = currentExtra[field.name] || "all";
-      return '<select data-column-filter="' + field.name + '"><option value="all">Any ' + esc(field.label) + '</option>' + options.map(function (option) {
+      return '<select data-column-filter="' + field.name + '" aria-label="Filter by ' + esc(field.label) + '"><option value="all">Any ' + esc(field.label) + '</option>' + options.map(function (option) {
         return '<option ' + (current === option.value ? "selected" : "") + ' value="' + esc(option.value) + '">' + esc(option.text) + "</option>";
       }).join("") + "</select>";
     }).join("");
     var dateFiltersHtml = dateFilterableFields(schema).map(function (field) {
       var fromVal = currentExtra[field.name + "_from"] || "";
       var toVal = currentExtra[field.name + "_to"] || "";
-      return '<span class="date-filter" data-date-filter-group="' + field.name + '"><span class="date-filter__label">' + esc(field.label) + '</span><input type="date" data-date-filter-from="' + field.name + '" value="' + esc(fromVal) + '" aria-label="' + esc(field.label) + ' from"><span class="date-filter__sep">&rarr;</span><input type="date" data-date-filter-to="' + field.name + '" value="' + esc(toVal) + '" aria-label="' + esc(field.label) + ' to"></span>';
+      return '<span class="date-filter" data-date-filter-group="' + field.name + '"><span class="date-filter__label">' + esc(field.label) + '</span><input type="date" data-date-filter-from="' + field.name + '" value="' + esc(fromVal) + '" aria-label="' + esc(field.label) + ' from"><span class="date-filter__sep" aria-hidden="true">&rarr;</span><input type="date" data-date-filter-to="' + field.name + '" value="' + esc(toVal) + '" aria-label="' + esc(field.label) + ' to"></span>';
     }).join("");
     var hasActiveFilters = state.filter !== "all" || Object.keys(currentExtra).some(function (key) { return currentExtra[key] && currentExtra[key] !== "all"; });
-    return '<div class="module-head"><div><span class="eyebrow">Operations Module</span><h2>' + esc(schema.title) + "</h2><p>" + esc(schema.subtitle) + '</p></div><div class="toolbar"><input type="search" placeholder="Search ' + esc(schema.title.toLowerCase()) + '" value="' + esc(state.query) + '" data-module-search><select data-filter><option value="all">All statuses</option>' + statusOptions.map(function (status) { return '<option ' + (state.filter === status ? "selected" : "") + ' value="' + esc(status) + '">' + esc(status) + "</option>"; }).join("") + "</select>" + extraFiltersHtml + dateFiltersHtml + (hasActiveFilters ? '<button class="ghost-btn" data-clear-filters type="button">Clear Filters</button>' : "") + '<button class="primary-btn" data-new type="button">New ' + esc(singular(schema.title)) + "</button></div></div>" +
+    return '<div class="module-head"><div class="module-head__intro"><span class="eyebrow">Operations Module</span><h2>' + esc(schema.title) + "</h2><p>" + esc(schema.subtitle) + '</p><div class="module-head__meta" aria-live="polite"><span data-result-count>' + records.length + ' shown</span><span>' + totalRecords + ' total</span></div></div><div class="toolbar" role="search" aria-label="Search and filter ' + esc(schema.title) + '"><input type="search" aria-label="Search ' + esc(schema.title.toLowerCase()) + '" placeholder="Search ' + esc(schema.title.toLowerCase()) + '" value="' + esc(state.query) + '" data-module-search><select data-filter aria-label="Filter by status"><option value="all">All statuses</option>' + statusOptions.map(function (status) { return '<option ' + (state.filter === status ? "selected" : "") + ' value="' + esc(status) + '">' + esc(status) + "</option>"; }).join("") + "</select>" + extraFiltersHtml + dateFiltersHtml + (hasActiveFilters ? '<button class="ghost-btn" data-clear-filters type="button">Clear Filters</button>' : "") + '<button class="primary-btn" data-new type="button">New ' + esc(singular(schema.title)) + "</button></div></div>" +
       '<div class="records-table-wrap">' + table(schema, records) + "</div>";
   }
-
   function singular(title) {
     return title.replace("Brand Partnerships", "partnership").replace("Content Library", "asset").replace("Invoices & Payments", "invoice").replace("Form Pricing", "budget option").replace(/s$/, "").toLowerCase();
   }
@@ -995,24 +1017,25 @@
     var selected = state.selected[schema.collection] || [];
     var allSelected = rows.length > 0 && rows.every(function (record) { return selected.indexOf(record.id) > -1; });
     var hasDetail = supportsDetail(schema);
-    return bar + '<table class="records-table"><thead><tr><th class="records-table__check"><input type="checkbox" data-select-all ' + (allSelected ? "checked" : "") + ' aria-label="Select all"></th>' + schema.columns.map(function (column) { return "<th>" + esc(titleCase(column)) + "</th>"; }).join("") + "<th>Actions</th></tr></thead><tbody>" + rows.map(function (record) {
+    return bar + '<table class="records-table"><caption class="sr-only">' + esc(schema.title) + ' records</caption><thead><tr><th class="records-table__check" scope="col"><input type="checkbox" data-select-all ' + (allSelected ? "checked" : "") + ' aria-label="Select all visible records"></th>' + schema.columns.map(function (column) { return '<th scope="col">' + esc(titleCase(column)) + "</th>"; }).join("") + '<th scope="col">Actions</th></tr></thead><tbody>' + rows.map(function (record) {
       var isChecked = selected.indexOf(record.id) > -1;
-      var rowAttrs = hasDetail ? ' class="record-row--clickable" data-view-record="' + record.id + '" tabindex="0" aria-label="View ' + esc(recordDisplayName(record)) + '"' : "";
-      var primaryAction = hasDetail ? '<button class="table-action table-action--view" data-open-record="' + record.id + '" type="button">View</button>' : '<button class="table-action" data-edit="' + record.id + '" type="button">Edit</button>';
-      return "<tr" + rowAttrs + '><td class="records-table__check"><input type="checkbox" data-select-row="' + record.id + '" ' + (isChecked ? "checked" : "") + ' aria-label="Select row"></td>' + schema.columns.map(function (column, index) {
+      var recordName = recordDisplayName(record);
+      var rowAttrs = hasDetail ? ' class="record-row--clickable" data-view-record="' + record.id + '" tabindex="0" aria-label="View ' + esc(recordName) + '"' : "";
+      var primaryAction = hasDetail ? '<button class="table-action table-action--view" data-open-record="' + record.id + '" type="button" aria-label="View ' + esc(recordName) + '">View</button>' : '<button class="table-action" data-edit="' + record.id + '" type="button" aria-label="Edit ' + esc(recordName) + '">Edit</button>';
+      return "<tr" + rowAttrs + '><td class="records-table__check" data-label="Select"><input type="checkbox" data-select-row="' + record.id + '" ' + (isChecked ? "checked" : "") + ' aria-label="Select ' + esc(recordName) + '"></td>' + schema.columns.map(function (column, index) {
         var value = displayValue(schema, record, column);
-        if (index === 0) return '<td><strong>' + esc(value) + '</strong><div class="record-meta">' + esc(record.notes || record.brief || record.description || "") + "</div></td>";
-        if (column === schema.status || ["status", "visibility", "availability", "deposit"].indexOf(column) > -1) return '<td><span class="status-pill ' + statusClass(value) + '">' + esc(value) + "</span></td>";
-        return "<td>" + esc(value || "-") + "</td>";
-      }).join("") + '<td><div class="row-actions">' + primaryAction + (schema.actions && schema.actions.indexOf("generateProject") > -1 ? '<button class="table-action" data-generate="' + record.id + '" type="button">Project</button>' : "") + (schema.actions && schema.actions.indexOf("copyLink") > -1 ? '<button class="table-action" data-copy-link="' + record.id + '" type="button">Copy Link</button>' : "") + (schema.actions && schema.actions.indexOf("downloadPdf") > -1 ? '<button class="table-action" data-download-pdf="' + record.id + '" type="button">PDF</button>' : "") + '<button class="table-action" data-archive="' + record.id + '" type="button">Archive</button><button class="table-action" data-delete="' + record.id + '" type="button">Delete</button></div></td></tr>';
+        var cellLabel = esc(titleCase(column));
+        if (index === 0) return '<td data-label="' + cellLabel + '"><strong>' + esc(value) + '</strong><div class="record-meta">' + esc(record.notes || record.brief || record.description || "") + "</div></td>";
+        if (column === schema.status || ["status", "visibility", "availability", "deposit", "paymentStatus"].indexOf(column) > -1) return '<td data-label="' + cellLabel + '"><span class="status-pill ' + statusClass(value) + '">' + esc(value) + "</span></td>";
+        return '<td data-label="' + cellLabel + '">' + esc(value || "-") + "</td>";
+      }).join("") + '<td data-label="Actions"><div class="row-actions">' + primaryAction + (schema.actions && schema.actions.indexOf("generateProject") > -1 ? '<button class="table-action" data-generate="' + record.id + '" type="button">Project</button>' : "") + (schema.actions && schema.actions.indexOf("copyLink") > -1 ? '<button class="table-action" data-copy-link="' + record.id + '" type="button">Copy Link</button>' : "") + (schema.actions && schema.actions.indexOf("downloadPdf") > -1 ? '<button class="table-action" data-download-pdf="' + record.id + '" type="button">PDF</button>' : "") + '<button class="table-action" data-archive="' + record.id + '" type="button">Archive</button><button class="table-action table-action--danger" data-delete="' + record.id + '" type="button">Delete</button></div></td></tr>';
     }).join("") + "</tbody></table>";
   }
-
   function displayValue(schema, record, column) {
     var field = schema.fields.find(function (item) { return item.name === column; });
     var value = record[column];
     if (field && field.type === "relation") return label(field.collection, value);
-    if (column === "price" || column === "amount" || column === "subtotal") return money(value);
+    if (["price", "amount", "subtotal", "deliveryFee", "grandTotal"].indexOf(column) > -1) return money(value);
     if (column === "submittedAt" && value) { var submitted = new Date(value); return isNaN(submitted) ? value : submitted.toLocaleString("en-ZA", { dateStyle: "medium", timeStyle: "short" }); }
     if (column === "remaining" && record.editionSize) return value === "" || value == null ? Number(record.editionSize || 0) - Number(record.sold || 0) : value;
     return value;
@@ -1077,7 +1100,10 @@
   function refreshTable(schema) {
     var wrap = document.querySelector(".records-table-wrap");
     if (!wrap) return;
-    wrap.innerHTML = table(schema, filtered(schema));
+    var records = filtered(schema);
+    wrap.innerHTML = table(schema, records);
+    var resultCount = document.querySelector("[data-result-count]");
+    if (resultCount) resultCount.textContent = records.length + " shown";
     bindTableRows(schema);
   }
 
@@ -1338,13 +1364,41 @@
     var body = form.elements.body;
     if (body && (!record || !body.value.trim())) updateDocumentTemplate();
   }
+  function modalFocusables(container) {
+    return Array.prototype.slice.call(container.querySelectorAll('button:not([disabled]), input:not([disabled]):not([type="hidden"]), select:not([disabled]), textarea:not([disabled]), a[href]')).filter(function (element) {
+      return element.offsetParent !== null;
+    });
+  }
+
+  function trapModalFocus(container, event) {
+    if (event.key !== "Tab") return;
+    var items = modalFocusables(container);
+    if (!items.length) return;
+    var first = items[0];
+    var last = items[items.length - 1];
+    if (event.shiftKey && document.activeElement === first) {
+      event.preventDefault();
+      last.focus();
+    } else if (!event.shiftKey && document.activeElement === last) {
+      event.preventDefault();
+      first.focus();
+    }
+  }
+
   function openModal(schema, record) {
     state.editing = { schema: schema, record: record };
+    modalReturnFocus = document.activeElement;
     document.querySelector("[data-modal-title]").textContent = (record ? "Edit " : "New ") + singular(schema.title);
     document.querySelector("[data-form-fields]").innerHTML = schema.fields.map(function (field) { return renderField(field, record ? record[field.name] : field.placeholder); }).join("");
-    document.querySelector("[data-modal]").classList.add("is-open");
-    document.querySelector("[data-modal]").setAttribute("aria-hidden", "false");
+    var modal = document.querySelector("[data-modal]");
+    modal.classList.add("is-open");
+    modal.setAttribute("aria-hidden", "false");
+    document.body.classList.add("modal-open");
     if (schema.collection === "documents") initializeDocumentTemplate(record);
+    window.requestAnimationFrame(function () {
+      var firstField = modal.querySelector('input:not([type="hidden"]), select, textarea');
+      (firstField || modal.querySelector("[data-close-modal]")).focus();
+    });
   }
 
   function renderField(field, value) {
@@ -1364,7 +1418,7 @@
     } else if (field.type === "image") {
       control = '<div class="image-field" data-image-field data-image-folder="' + esc(field.name) + '">' +
         '<div class="image-field__drop" data-image-dropzone>' +
-          (safeValue ? '<img class="image-field__preview" src="' + esc(safeValue) + '" data-image-preview>' : '<div class="image-field__placeholder" data-image-preview><svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="9" cy="9" r="1.5"/><path d="M21 15l-5-5L5 21"/></svg><span>Drop an image or click to choose</span></div>') +
+          (safeValue ? '<img class="image-field__preview" src="' + esc(safeValue) + '" alt="' + esc(field.label) + ' preview" loading="lazy" decoding="async" data-image-preview>' : '<div class="image-field__placeholder" data-image-preview><svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="9" cy="9" r="1.5"/><path d="M21 15l-5-5L5 21"/></svg><span>Drop an image or click to choose</span></div>') +
         "</div>" +
         '<div class="image-field__actions"><button type="button" class="ghost-btn" data-image-trigger>' + (safeValue ? "Replace Image" : "Choose Image") + '</button><span class="image-field__status" data-image-status></span></div>' +
         '<input type="file" accept="image/*" hidden data-image-input>' +
@@ -1375,7 +1429,7 @@
       control = '<div class="imagelist-field" data-imagelist-field>' +
         '<div class="imagelist-field__grid" data-imagelist-grid>' +
           listUrls.map(function (url) {
-            return '<div class="imagelist-field__item" data-imagelist-item data-url="' + esc(url) + '"><img src="' + esc(url) + '"><button type="button" class="imagelist-field__remove" data-imagelist-remove aria-label="Remove image">&times;</button></div>';
+            return '<div class="imagelist-field__item" data-imagelist-item data-url="' + esc(url) + '"><img src="' + esc(url) + '" alt="Additional image" loading="lazy" decoding="async"><button type="button" class="imagelist-field__remove" data-imagelist-remove aria-label="Remove image">&times;</button></div>';
           }).join("") +
           '<button type="button" class="imagelist-field__add" data-imagelist-trigger><svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M12 5v14M5 12h14"/></svg><span>Add</span></button>' +
         "</div>" +
@@ -1400,7 +1454,10 @@
   function closeModal() {
     document.querySelector("[data-modal]").classList.remove("is-open");
     document.querySelector("[data-modal]").setAttribute("aria-hidden", "true");
+    document.body.classList.remove("modal-open");
     state.editing = null;
+    if (modalReturnFocus && document.contains(modalReturnFocus)) modalReturnFocus.focus();
+    modalReturnFocus = null;
   }
 
   function submitForm(event) {
@@ -1815,8 +1872,11 @@
     modal.querySelector("[data-confirm-message]").textContent = message;
     okBtn.textContent = options.confirmLabel || "Confirm";
     okBtn.className = options.danger === false ? "primary-btn" : "danger-btn";
+    var returnFocus = document.activeElement;
     modal.classList.add("is-open");
     modal.setAttribute("aria-hidden", "false");
+    document.body.classList.add("modal-open");
+    window.requestAnimationFrame(function () { cancelBtn.focus(); });
 
     return new Promise(function (resolve) {
       function cleanup(result) {
@@ -1826,12 +1886,14 @@
         cancelBtn.removeEventListener("click", onCancel);
         modal.removeEventListener("click", onBackdrop);
         document.removeEventListener("keydown", onKeydown);
+        if (!document.querySelector("[data-modal]").classList.contains("is-open")) document.body.classList.remove("modal-open");
+        if (returnFocus && document.contains(returnFocus)) returnFocus.focus();
         resolve(result);
       }
       function onOk() { cleanup(true); }
       function onCancel() { cleanup(false); }
       function onBackdrop(event) { if (event.target === modal) cleanup(false); }
-      function onKeydown(event) { if (event.key === "Escape") cleanup(false); }
+      function onKeydown(event) { if (event.key === "Escape") cleanup(false); else trapModalFocus(modal, event); }
       okBtn.addEventListener("click", onOk);
       cancelBtn.addEventListener("click", onCancel);
       modal.addEventListener("click", onBackdrop);
@@ -1853,17 +1915,26 @@
 
   function syncTheme() {
     var isLight = document.documentElement.getAttribute("data-theme") === "light";
+    var toggle = document.querySelector("[data-theme-toggle]");
     document.querySelector("[data-theme-label]").textContent = isLight ? "Dark mode" : "Light mode";
+    toggle.setAttribute("aria-label", isLight ? "Switch to dark mode" : "Switch to light mode");
   }
 
   function closePopovers() {
-    document.querySelectorAll(".popover.is-open").forEach(function (popover) { popover.classList.remove("is-open"); });
+    document.querySelectorAll(".popover.is-open").forEach(function (popover) {
+      popover.classList.remove("is-open");
+      var trigger = popover.id ? document.querySelector('[aria-controls="' + popover.id + '"]') : null;
+      if (trigger) trigger.setAttribute("aria-expanded", "false");
+    });
   }
 
-  function togglePopover(popover) {
+  function togglePopover(popover, trigger) {
     var isOpen = popover.classList.contains("is-open");
     closePopovers();
-    if (!isOpen) popover.classList.add("is-open");
+    if (!isOpen) {
+      popover.classList.add("is-open");
+      if (trigger) trigger.setAttribute("aria-expanded", "true");
+    }
   }
 
   function initPopovers() {
@@ -1873,11 +1944,11 @@
       popover.innerHTML = '<span class="popover-title">Recent Activity</span><div class="activity-list">' + ((data.activity || []).slice(0, 5).map(function (entry) {
         return '<div class="activity"><span class="activity__icon">' + icons.activity + "</span><p>" + esc(entry.message) + '</p><span class="activity__time">' + esc(timeAgo(entry.at)) + "</span></div>";
       }).join("") || emptyState("No activity yet", "Studio updates will appear here.", icons.activity, "", "", true)) + "</div>";
-      togglePopover(popover);
+      togglePopover(popover, event.currentTarget);
     });
     document.querySelector("[data-profile-toggle]").addEventListener("click", function (event) {
       event.stopPropagation();
-      togglePopover(document.querySelector("[data-profile-popover]"));
+      togglePopover(document.querySelector("[data-profile-popover]"), event.currentTarget);
     });
     document.querySelectorAll("[data-popover-route]").forEach(function (button) {
       button.addEventListener("click", function () {
@@ -2099,6 +2170,17 @@
     if (event.target.matches("[data-modal]")) closeModal();
   });
 
+  document.addEventListener("keydown", function (event) {
+    var modal = document.querySelector("[data-modal]");
+    if (!modal || !modal.classList.contains("is-open")) return;
+    if (event.key === "Escape") {
+      event.preventDefault();
+      closeModal();
+      return;
+    }
+    trapModalFocus(modal, event);
+  });
+
   document.addEventListener("click", function (event) {
     var imageTrigger = event.target.closest("[data-image-trigger]");
     if (imageTrigger) {
@@ -2166,7 +2248,7 @@
       var previousImageUrl = ifield.querySelector("[data-image-value]").value;
       startUpload(ifile, ifield.querySelector("[data-image-status]"), function (url) {
         ifield.querySelector("[data-image-value]").value = url;
-        ifield.querySelector("[data-image-preview]").outerHTML = '<img class="image-field__preview" src="' + esc(url) + '" data-image-preview>';
+        ifield.querySelector("[data-image-preview]").outerHTML = '<img class="image-field__preview" src="' + esc(url) + '" alt="Uploaded image preview" loading="lazy" decoding="async" data-image-preview>';
         var trig = ifield.querySelector("[data-image-trigger]");
         if (trig) trig.textContent = "Replace Image";
         deleteFromMediaIfOwned(previousImageUrl);
@@ -2231,7 +2313,7 @@
     var previousDropUrl = field.querySelector("[data-image-value]").value;
     startUpload(file, field.querySelector("[data-image-status]"), function (url) {
       field.querySelector("[data-image-value]").value = url;
-      field.querySelector("[data-image-preview]").outerHTML = '<img class="image-field__preview" src="' + esc(url) + '" data-image-preview>';
+      field.querySelector("[data-image-preview]").outerHTML = '<img class="image-field__preview" src="' + esc(url) + '" alt="Uploaded image preview" loading="lazy" decoding="async" data-image-preview>';
       var trig = field.querySelector("[data-image-trigger]");
       if (trig) trig.textContent = "Replace Image";
       deleteFromMediaIfOwned(previousDropUrl);

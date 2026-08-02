@@ -54,7 +54,16 @@
     }
     updateCount();
   }
-  function updateCount() { document.querySelectorAll("[data-commerce-cart-count]").forEach(function (el) { el.textContent = count() || "0"; }); }
+  function updateCount() {
+    var amount = count();
+    document.querySelectorAll("[data-commerce-cart-count]").forEach(function (el) {
+      el.textContent = String(amount);
+      el.hidden = amount === 0;
+    });
+    document.querySelectorAll("[data-commerce-cart-link]").forEach(function (link) {
+      link.setAttribute("aria-label", amount ? "View shopping cart, " + amount + (amount === 1 ? " item" : " items") : "View shopping cart, empty");
+    });
+  }
   window.addEventListener("lgndry-cart-change", updateCount);
   window.LgndryCommerce = { getCart: read, add: add, update: update, remove: remove, clear: clear, subtotal: subtotal, count: count, deliveryFee: deliveryFee, money: money, itemFromProduct: itemFromProduct, createCartLink: createCartLink };
   if (document.readyState === "loading") document.addEventListener("DOMContentLoaded", createCartLink); else createCartLink();
