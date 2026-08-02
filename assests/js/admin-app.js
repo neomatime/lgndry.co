@@ -7,6 +7,7 @@
   var SUPABASE_ANON_KEY = "sb_publishable_UAS3aUpb9Aj7lbVBPkWncA_l4ghKr4w";
   var supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
   var VAPID_PUBLIC_KEY = "BM_IQFlZnwcu7g4r34KumlYmAJWP0sH4O2_3SNhvqT2gF4hP3enZGP9vgnxZN-FTIpRrXyKByvyb0gMhEA7h4es";
+  var DOCUMENT_SIGNATURE_URL = "assests/images/signature.png";
   var chromeInitialized = false;
   var modalReturnFocus = null;
   var TABLES = ["clients", "practice", "bookings", "projects", "partnerships", "collection", "orders", "galleries", "content", "journal", "cms", "budgets", "invoices", "documents"];
@@ -216,6 +217,8 @@
         f("title", "Document title", "text", true), f("type", "Document type", "select", true, ["Contract", "NDA", "Proposal", "Creative Brief", "Call Sheet", "Model Release", "Location Release"]), rel("client", "Client", "clients"), rel("project", "Project / booking / partnership", "projects"), f("status", "Status", "select", true, ["Draft", "Sent", "Signed", "Expired", "Archived"]),
         h("Content"),
         f("body", "Document text", "textarea", true),
+        h("LGNDRY.Co Signatory"),
+        f("signature", "Dan Mokgwadi signature", "signature"),
         h("Files"),
         f("template", "Template file", "file"), f("signed", "Signed copy", "file")
       ],
@@ -858,7 +861,7 @@
     var next = Object.assign({}, record);
     var valid = true;
     schema.fields.forEach(function (field) {
-      if (field.type === "heading") return;
+      if (field.type === "heading" || field.type === "signature") return;
       var input = form.elements[field.name];
       var value = input ? input.value.trim() : "";
       var error = form.querySelector('[data-error="' + field.name + '"]');
@@ -1229,6 +1232,62 @@
     doc.save((record.number || "invoice") + ".pdf");
   }
 
+  function loadDocumentSignature(url) {
+    return new Promise(function (resolve, reject) {
+      var image = new Image();
+      image.onload = function () {
+        var canvas = document.createElement("canvas");
+        canvas.width = image.naturalWidth;
+        canvas.height = image.naturalHeight;
+        var context = canvas.getContext("2d");
+        context.drawImage(image, 0, 0);
+        resolve(canvas.toDataURL("image/png"));
+      };
+      image.onerror = function () { reject(new Error("Could not load Dan Mokgwadi's signature.")); };
+      image.src = new URL(url, document.baseURI).href;
+    });
+  }
+
+  function writeDocumentPdfBody(doc, text, startY) {
+    var y = startY;
+    var lines = doc.splitTextToSize(text || "", 170);
+    lines.forEach(function (line) {
+      if (y > 270) {
+        doc.addPage();
+        y = 24;
+      }
+      doc.text(line || " ", 20, y);
+      y += 5.3;
+    });
+    return y;
+  }
+
+  function addDocumentPdfSignature(doc, signatureData, startY) {
+    var y = startY + 10;
+    if (y > 232) {
+      doc.addPage();
+      y = 24;
+    }
+    doc.setDrawColor(220, 220, 220);
+    doc.line(20, y, 190, y);
+    y += 10;
+    doc.setFont("helvetica", "bold");
+    doc.setFontSize(8);
+    doc.setTextColor(100, 100, 100);
+    doc.text("LGNDRY.CO AUTHORISATION", 20, y);
+    y += 4;
+    doc.addImage(signatureData, "PNG", 20, y, 50, 32.9);
+    y += 36;
+    doc.setTextColor(29, 29, 29);
+    doc.setFont("helvetica", "bold");
+    doc.setFontSize(10);
+    doc.text("Dan Mokgwadi", 20, y);
+    y += 5;
+    doc.setFont("helvetica", "normal");
+    doc.setFontSize(9);
+    doc.text("Founder & Creative Director", 20, y);
+  }
+
   function buildDocumentPdf(record) {
     var doc = new window.jspdf.jsPDF();
     pdfLetterhead(doc, record.title || "Document");
@@ -1240,13 +1299,16 @@
     if (record.project) { doc.text("Project: " + label("projects", record.project), 20, y); y += 6; }
     doc.text("Status: " + (record.status || "-"), 20, y);
     y += 14;
+    y = writeDocumentPdfBody(doc, record.body, y);
 
-    if (record.body) {
-      var wrapped = doc.splitTextToSize(record.body, 170);
-      doc.text(wrapped, 20, y);
-    }
-
-    doc.save((record.title || "document") + ".pdf");
+    return loadDocumentSignature(DOCUMENT_SIGNATURE_URL).then(function (signatureData) {
+      addDocumentPdfSignature(doc, signatureData, y);
+      doc.save((record.title || "document") + ".pdf");
+    }).catch(function (error) {
+      console.error(error);
+      toast("The signature could not be added. Please try again.");
+      return false;
+    });
   }
 
   function downloadRecordPdf(schema, recordId) {
@@ -1405,7 +1467,7 @@
     if (field.type === "heading") {
       return '<div class="form-section-heading form-field--wide"><span>' + esc(field.label) + "</span></div>";
     }
-    var wide = ["textarea", "image", "imagelist", "file"].indexOf(field.type) > -1 || ["notes", "brief", "copy", "body", "deliverables", "tasks", "files", "comments"].indexOf(field.name) > -1;
+    var wide = ["textarea", "image", "imagelist", "file", "signature"].indexOf(field.type) > -1 || ["notes", "brief", "copy", "body", "deliverables", "tasks", "files", "comments"].indexOf(field.name) > -1;
     var safeValue = (value === undefined || value === null) ? "" : value;
     if (field.type === "datetime-local" && safeValue) safeValue = String(safeValue).slice(0, 16);
     var control = "";
@@ -1415,6 +1477,8 @@
       control = '<select name="' + field.name + '" ' + (field.required ? "required" : "") + '><option value="">Unlinked</option>' + active(field.collection).map(function (record) { return '<option ' + (String(safeValue) === record.id ? "selected" : "") + ' value="' + record.id + '">' + esc(label(field.collection, record.id)) + "</option>"; }).join("") + "</select>";
     } else if (field.type === "textarea") {
       control = '<textarea name="' + field.name + '" ' + (field.required ? "required" : "") + ' placeholder="' + esc(field.placeholder) + '">' + esc(safeValue) + "</textarea>";
+    } else if (field.type === "signature") {
+      control = '<figure class="document-signature-field"><div class="document-signature-field__mark"><img src="' + esc(DOCUMENT_SIGNATURE_URL) + '" alt="Dan Mokgwadi signature" width="310" height="204" decoding="async"></div><figcaption><strong>Dan Mokgwadi</strong><span>Founder &amp; Creative Director</span><small>Pre-populated automatically and included in every generated document.</small></figcaption></figure>';
     } else if (field.type === "image") {
       control = '<div class="image-field" data-image-field data-image-folder="' + esc(field.name) + '">' +
         '<div class="image-field__drop" data-image-dropzone>' +
@@ -1468,7 +1532,7 @@
     var next = state.editing.record ? Object.assign({}, state.editing.record) : { id: newUuid() };
     var ok = true;
     schema.fields.forEach(function (field) {
-      if (field.type === "heading") return;
+      if (field.type === "heading" || field.type === "signature") return;
       var input = form.elements[field.name];
       var value = input ? input.value.trim() : "";
       var error = document.querySelector('[data-error="' + field.name + '"]');

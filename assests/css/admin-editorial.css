@@ -1678,3 +1678,60 @@ body.ops-app-shell .loading-gate__spinner {
     transition-duration: 0.01ms !important;
   }
 }
+
+/* Pre-authorised studio signature shown consistently in every document. */
+body.ops-app-shell .document-signature-field {
+  display: grid;
+  grid-template-columns: minmax(190px, 250px) minmax(0, 1fr);
+  align-items: center;
+  gap: 28px;
+  margin: 0;
+  padding: 22px;
+  border: 1px solid var(--admin-rule);
+  background: var(--admin-panel);
+}
+
+body.ops-app-shell .document-signature-field__mark {
+  display: grid;
+  min-height: 132px;
+  place-items: center;
+  padding: 14px;
+  background: #fff;
+}
+
+body.ops-app-shell .document-signature-field img {
+  display: block;
+  width: min(100%, 220px);
+  height: auto;
+}
+
+body.ops-app-shell .document-signature-field figcaption {
+  display: grid;
+  gap: 5px;
+}
+
+body.ops-app-shell .document-signature-field strong {
+  color: var(--admin-ink);
+  font-family: "Cormorant Garamond", Georgia, serif;
+  font-size: 1.45rem;
+  font-weight: 500;
+}
+
+body.ops-app-shell .document-signature-field span,
+body.ops-app-shell .document-signature-field small {
+  color: var(--admin-muted);
+}
+
+body.ops-app-shell .document-signature-field small {
+  max-width: 36ch;
+  margin-top: 9px;
+  font-size: 0.7rem;
+  line-height: 1.6;
+}
+
+@media (max-width: 520px) {
+  body.ops-app-shell .document-signature-field {
+    grid-template-columns: 1fr;
+    gap: 18px;
+  }
+}
