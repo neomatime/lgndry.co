@@ -74,6 +74,8 @@
     trigger.setAttribute('aria-expanded', 'true');
     trigger.style.opacity = '0';
     trigger.style.pointerEvents = 'none';
+    document.documentElement.classList.add('nav-is-open');
+    document.body.classList.add('nav-is-open');
     closeBtn.focus();
 
     var staggerDelay = prefersReducedMotion ? 0 : 500;
@@ -103,6 +105,8 @@
       trigger.setAttribute('aria-expanded', 'false');
       trigger.style.opacity = '';
       trigger.style.pointerEvents = '';
+      document.documentElement.classList.remove('nav-is-open');
+      document.body.classList.remove('nav-is-open');
       isOpen = false;
       trigger.focus();
     }, closeDelay);

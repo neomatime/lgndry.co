@@ -452,3 +452,52 @@ body:not(.ops-app-shell) textarea {
     flex-basis: 34px;
   }
 }
+/* Full-viewport navigation overlay */
+html.nav-is-open,
+body.nav-is-open {
+  overflow: hidden !important;
+}
+
+.nav-panel {
+  inset: 0 !important;
+  width: 100vw !important;
+  height: 100vh !important;
+  height: 100dvh !important;
+  min-height: 100vh;
+  z-index: 2000 !important;
+  overflow: hidden;
+  isolation: isolate;
+}
+
+.nav-panel__links,
+.nav-panel__preview {
+  height: 100%;
+  min-height: 0;
+}
+
+.nav-panel__close {
+  position: fixed !important;
+  top: clamp(20px, 3.5vh, 34px) !important;
+  left: clamp(24px, 4.4vw, 68px) !important;
+  z-index: 20 !important;
+  display: inline-flex !important;
+  min-width: 44px;
+  min-height: 44px;
+  align-items: center;
+  justify-content: flex-start;
+  visibility: visible !important;
+  opacity: 1 !important;
+}
+
+@media (max-width: 767px) {
+  .nav-panel__links {
+    min-height: 100vh;
+    min-height: 100dvh;
+    overflow-y: auto;
+  }
+
+  .nav-panel__close {
+    top: 12px !important;
+    left: 18px !important;
+  }
+}
