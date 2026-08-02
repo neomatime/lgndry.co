@@ -1,0 +1,388 @@
+/*
+ * LGNDRY.Co Command Center — sharp editorial refinement
+ * A monochrome, fashion-led admin layer with square geometry and fine rules.
+ */
+
+:root {
+  --radius: 0;
+  --accent: #f3f0ea;
+  --accent-soft: rgba(255, 255, 255, 0.055);
+  --accent-border: rgba(255, 255, 255, 0.2);
+  --surface-glass: rgba(12, 12, 11, 0.97);
+  --shadow-soft: none;
+  --shadow-card: none;
+}
+
+:root[data-theme="light"] {
+  --accent: #171614;
+  --accent-soft: rgba(23, 22, 20, 0.055);
+  --accent-border: rgba(23, 22, 20, 0.2);
+  --surface-glass: rgba(249, 248, 245, 0.98);
+  --shadow-soft: none;
+  --shadow-card: none;
+}
+
+body.ops-app-shell {
+  background: var(--bg);
+}
+
+body.ops-app-shell .ops-shell {
+  grid-template-columns: 252px minmax(0, 1fr);
+}
+
+body.ops-app-shell .ops-sidebar {
+  padding: 28px 20px 22px;
+  border-right: 1px solid var(--line);
+  background: #0b0b0a;
+  box-shadow: none;
+  backdrop-filter: none;
+}
+
+:root[data-theme="light"] body.ops-app-shell .ops-sidebar {
+  background: #f3f1ec;
+}
+
+body.ops-app-shell .brand {
+  padding: 0 8px 25px;
+}
+
+body.ops-app-shell .brand__name {
+  font-weight: 400;
+  letter-spacing: 0.12em;
+}
+
+body.ops-app-shell .side-nav {
+  gap: 0;
+  padding: 14px 0 0;
+}
+
+body.ops-app-shell .nav-item {
+  min-height: 48px;
+  padding: 0 8px;
+  border: 0;
+  border-bottom: 1px solid transparent;
+  border-radius: 0;
+  transition: color 160ms ease, border-color 160ms ease, background 160ms ease;
+}
+
+body.ops-app-shell .nav-item:hover {
+  border-bottom-color: var(--line);
+  background: transparent;
+  transform: none;
+}
+
+body.ops-app-shell .nav-item.active,
+body.ops-app-shell .nav-item--active {
+  border-color: var(--line-strong);
+  background: transparent;
+  box-shadow: none;
+  text-decoration: none;
+}
+
+body.ops-app-shell .nav-item__icon,
+body.ops-app-shell .nav-item.active .nav-item__icon {
+  border-radius: 0;
+  background: transparent;
+}
+
+body.ops-app-shell .nav-item__count,
+body.ops-app-shell .status-pill,
+body.ops-app-shell .stock-pill,
+body.ops-app-shell .pill {
+  border-radius: 0;
+  background: transparent;
+}
+
+body.ops-app-shell .sidebar-card {
+  border: 1px solid var(--line);
+  border-radius: 0;
+  background: var(--panel);
+  box-shadow: none;
+}
+
+body.ops-app-shell .ops-main {
+  max-width: none;
+  padding: 0 clamp(24px, 3.2vw, 52px) 56px;
+}
+
+body.ops-app-shell .topbar {
+  top: 0;
+  min-height: 82px;
+  margin: 0 0 34px;
+  padding: 15px 0;
+  border: 0;
+  border-bottom: 1px solid var(--line);
+  border-radius: 0;
+  background: var(--bg);
+  box-shadow: none;
+  backdrop-filter: none;
+}
+
+body.ops-app-shell .welcome h1,
+body.ops-app-shell .module-head h2,
+body.ops-app-shell .panel__title,
+body.ops-app-shell .metric__value,
+body.ops-app-shell .graph-panel__value,
+body.ops-app-shell .auth-card__brand,
+body.ops-app-shell .auth-card h1 {
+  font-weight: 400;
+}
+
+body.ops-app-shell .module-head {
+  padding: 8px 0 24px;
+}
+
+body.ops-app-shell .module-head__eyebrow,
+body.ops-app-shell .auth-card__label {
+  color: var(--muted);
+}
+
+body.ops-app-shell .search input,
+body.ops-app-shell input,
+body.ops-app-shell select,
+body.ops-app-shell textarea {
+  border-radius: 0;
+  background: transparent;
+}
+
+body.ops-app-shell .search input:focus,
+body.ops-app-shell input:focus,
+body.ops-app-shell select:focus,
+body.ops-app-shell textarea:focus {
+  border-color: var(--text);
+  box-shadow: 0 1px 0 var(--text);
+}
+
+body.ops-app-shell :where(
+  .sidebar-toggle,
+  .mobile-nav-toggle,
+  .icon-btn,
+  .icon-button,
+  .theme-toggle,
+  .btn,
+  .primary-btn,
+  .ghost-btn,
+  .danger-btn,
+  .primary-action,
+  .secondary-action,
+  .empty-state-card__action
+) {
+  border-radius: 0;
+  box-shadow: none;
+}
+
+body.ops-app-shell :where(.btn--primary, .primary-btn, .primary-action) {
+  border-color: var(--text);
+  background: var(--text);
+  color: var(--inverse);
+}
+
+:root[data-theme="light"] body.ops-app-shell :where(.btn--primary, .primary-btn, .primary-action) {
+  color: #fff;
+}
+
+body.ops-app-shell :where(.btn, .primary-btn, .ghost-btn, .danger-btn, .primary-action, .secondary-action):hover {
+  box-shadow: none;
+  filter: none;
+  transform: none;
+}
+
+body.ops-app-shell :where(
+  .graph-panel,
+  .metric,
+  .panel,
+  .editor-card,
+  .records-wrap,
+  .focus-strip,
+  .record-card,
+  .detail-hero,
+  .detail-stats,
+  .detail-editor,
+  .detail-panel,
+  .detail-link-card,
+  .detail-document,
+  .empty-state-card,
+  .order-item,
+  .hero-strip
+) {
+  border-radius: 0;
+  background: var(--panel);
+  box-shadow: none;
+}
+
+body.ops-app-shell :where(.graph-panel, .metric, .record-card):hover,
+body.ops-app-shell :where(.detail-link-card, .detail-document, .record-preview--clickable):hover {
+  box-shadow: none;
+  transform: none;
+}
+
+body.ops-app-shell .graph-panel::before,
+body.ops-app-shell .metric::after,
+body.ops-app-shell .detail-hero::after,
+body.ops-app-shell .empty-state-card::before,
+body.ops-app-shell .empty-state-card::after {
+  display: none;
+}
+
+body.ops-app-shell .graph-line span {
+  border-radius: 0 !important;
+  background: var(--text) !important;
+}
+
+body.ops-app-shell .metric__icon,
+body.ops-app-shell .detail-document > span,
+body.ops-app-shell .empty-state-card__icon,
+body.ops-app-shell .order-item img,
+body.ops-app-shell .order-item__placeholder {
+  border-radius: 0;
+  box-shadow: none;
+}
+
+body.ops-app-shell .records-table th {
+  background: transparent;
+  border-bottom: 1px solid var(--line-strong);
+}
+
+body.ops-app-shell .records-table tbody tr:hover,
+body.ops-app-shell .record-row--clickable:hover td,
+body.ops-app-shell .record-row--clickable:focus-visible td {
+  background: var(--accent-soft);
+}
+
+body.ops-app-shell .detail-stat {
+  background: var(--bg);
+}
+
+:root[data-theme="light"] body.ops-app-shell .detail-stat {
+  background: #f4f2ed;
+}
+
+body.ops-app-shell .modal {
+  background: rgba(0, 0, 0, 0.82);
+  backdrop-filter: none;
+}
+
+body.ops-app-shell .modal__panel,
+body.ops-app-shell .toast,
+body.ops-app-shell .popover,
+body.ops-app-shell .global-search__results {
+  border-radius: 0;
+  background: var(--panel-strong);
+  box-shadow: none;
+  backdrop-filter: none;
+}
+
+body.ops-app-shell .auth-gate {
+  background: var(--bg);
+}
+
+body.ops-app-shell .auth-card {
+  width: min(480px, calc(100vw - 36px));
+  padding: clamp(34px, 6vw, 58px);
+  border: 1px solid var(--line-strong);
+  border-radius: 0;
+  background: var(--bg);
+  box-shadow: none;
+  backdrop-filter: none;
+}
+
+body.ops-app-shell .profile__avatar,
+body.ops-app-shell .profile-row img,
+body.ops-app-shell .detail-activity__dot {
+  box-shadow: none;
+}
+
+@media (max-width: 980px) {
+  body.ops-app-shell .ops-sidebar {
+    background: var(--bg);
+  }
+}
+
+@media (max-width: 720px) {
+  body.ops-app-shell .ops-main {
+    padding: 0 16px 38px;
+  }
+
+  body.ops-app-shell .topbar {
+    padding: 14px 0;
+    border-radius: 0;
+  }
+}
+/* Keep the final editorial geometry above legacy component specificity. */
+body.ops-app-shell :is(
+  .topbar,
+  .sidebar-card,
+  .graph-panel,
+  .metric,
+  .panel,
+  .editor-card,
+  .records-wrap,
+  .focus-strip,
+  .record-card,
+  .detail-hero,
+  .detail-stats,
+  .detail-editor,
+  .detail-panel,
+  .detail-link-card,
+  .detail-document,
+  .empty-state-card,
+  .order-item,
+  .hero-strip,
+  .modal__panel,
+  .toast,
+  .popover,
+  .global-search__results,
+  .auth-card
+) {
+  border-radius: 0 !important;
+  background: var(--panel) !important;
+  box-shadow: none !important;
+}
+
+body.ops-app-shell :is(
+  .sidebar-toggle,
+  .mobile-nav-toggle,
+  .icon-btn,
+  .icon-button,
+  .theme-toggle,
+  .btn,
+  .primary-btn,
+  .ghost-btn,
+  .danger-btn,
+  .primary-action,
+  .secondary-action,
+  .empty-state-card__action,
+  input,
+  select,
+  textarea
+) {
+  border-radius: 0 !important;
+  box-shadow: none !important;
+}
+
+body.ops-app-shell :is(.btn--primary, .primary-btn, .primary-action) {
+  border-color: var(--text) !important;
+  background: var(--text) !important;
+  color: var(--inverse) !important;
+}
+
+:root[data-theme="light"] body.ops-app-shell :is(.btn--primary, .primary-btn, .primary-action) {
+  color: #fff !important;
+}
+
+body.ops-app-shell :is(
+  .nav-item,
+  .nav-item__icon,
+  .nav-item__count,
+  .status-pill,
+  .stock-pill,
+  .pill,
+  .metric__icon,
+  .detail-document > span,
+  .empty-state-card__icon,
+  .order-item img,
+  .order-item__placeholder
+) {
+  border-radius: 0 !important;
+  box-shadow: none !important;
+}

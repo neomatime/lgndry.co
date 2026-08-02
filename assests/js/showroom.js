@@ -7,7 +7,7 @@ var spaces=[
 {id:"hallway",name:"Hallway",style:"Scandinavian",image:"assests/images/curated-spaces/hallway.webp",wallWidth:300,y:32,maxHeight:.42},
 {id:"bedroom",name:"Bedroom",style:"Minimal & Warm",image:"assests/images/curated-spaces/bedroom.webp",wallWidth:340,y:27,maxHeight:.34},
 {id:"office",name:"Office",style:"Executive Suite",image:"assests/images/curated-spaces/office.webp",wallWidth:320,y:31,maxHeight:.38},
-{id:"dining",name:"Dining Room",style:"Contemporary",image:"assests/images/curated-spaces/dining-room.webp",wallWidth:360,y:29,maxHeight:.36}];
+{id:"dining",name:"Dining Room",style:"Contemporary",image:"assests/images/curated-spaces/dining-room.webp",wallWidth:360,y:36,maxHeight:.36}];
 function esc(v){return String(v==null?"":v).replace(/[&<>"']/g,function(m){return{"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[m]})}
 function list(v){return String(v||"").split("\n").map(function(x){return x.trim()}).filter(Boolean)}
 function normalize(p){p.artist=p.artist||"Dan Mokgwadi";p.medium=p.medium||p.seriesLabel||"Archival Pigment Print";p.collectionName=p.collectionName||(p.category==="Studio Art"?"Studio Art":"Found Beauty in the Mundane");p.deliveryEstimate=p.deliveryEstimate||"7-14 business days after payment confirmation";return p}
