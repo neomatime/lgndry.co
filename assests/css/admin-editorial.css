@@ -567,7 +567,7 @@ body.ops-app-shell .topbar {
   grid-template-columns: minmax(210px, 1fr) minmax(220px, 330px) auto auto minmax(190px, auto);
   gap: 18px;
   margin-bottom: 34px;
-  padding: 13px 0;
+  padding: 13px clamp(22px, 2vw, 32px);
   border-bottom-color: var(--admin-rule);
   background: var(--admin-canvas);
 }
@@ -1412,6 +1412,7 @@ body.ops-app-shell .loading-gate__spinner {
     position: relative;
     top: auto;
     grid-template-columns: 1fr auto auto auto;
+    padding-inline: 18px;
   }
 
   body.ops-app-shell .search {
@@ -1445,6 +1446,7 @@ body.ops-app-shell .loading-gate__spinner {
   body.ops-app-shell .topbar {
     gap: 10px;
     margin-bottom: 20px;
+    padding-inline: 14px;
   }
 
   body.ops-app-shell .welcome {
