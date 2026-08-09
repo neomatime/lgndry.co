@@ -10,7 +10,7 @@
   var DOCUMENT_SIGNATURE_URL = "assests/images/signature.png";
   var chromeInitialized = false;
   var modalReturnFocus = null;
-  var TABLES = ["clients", "practice", "bookings", "projects", "partnerships", "collection", "orders", "galleries", "content", "journal", "cms", "budgets", "invoices", "documents"];
+  var TABLES = ["clients", "practice", "bookings", "projects", "partnerships", "collection", "orders", "galleries", "content", "journal", "cms", "budgets", "invoices", "documents", "emails"];
   var state = { route: "dashboard", query: "", filter: "all", editing: null, detail: null, columnFilters: {}, selected: {} };
   var data = { activity: [] };
   window.LgndryOpsSnapshot = function () { return data; };
@@ -31,6 +31,7 @@
     invoices: svg('<path d="M7 3h7l4 4v14H7z"/><path d="M14 3v5h5M9 13h6M9 17h6"/>'),
     analytics: svg('<path d="M4 20V9M10 20V4M16 20v-7M22 20H2"/>'),
     documents: svg('<path d="M7 3h7l4 4v14H7z"/><path d="M14 3v5h5"/>'),
+    emails: svg('<path d="M4 6h16v12H4z"/><path d="m4 7 8 6 8-6"/>'),
     settings: svg('<circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.8l.1.1-2 2-.1-.1a1.7 1.7 0 0 0-1.8-.3 1.7 1.7 0 0 0-1 1.5v.2h-3V20a1.7 1.7 0 0 0-1-1.5 1.7 1.7 0 0 0-1.8.3l-.1.1-2-2 .1-.1A1.7 1.7 0 0 0 7.4 15a1.7 1.7 0 0 0-1.5-1H5.7v-3H6a1.7 1.7 0 0 0 1.5-1 1.7 1.7 0 0 0-.3-1.8l-.1-.1 2-2 .1.1a1.7 1.7 0 0 0 1.8.3 1.7 1.7 0 0 0 1-1.5V4.8h3V5a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.8-.3l.1-.1 2 2-.1.1a1.7 1.7 0 0 0-.3 1.8 1.7 1.7 0 0 0 1.5 1h.2v3H21a1.7 1.7 0 0 0-1.6 1z"/>'),
     activity: svg('<circle cx="12" cy="12" r="1.6"/><path d="M12 3v5M12 16v5M3 12h5M16 12h5"/>')
   };
@@ -38,7 +39,7 @@
   var PROJECT_PROGRESS = { Planning: 10, "Shoot Scheduled": 35, Editing: 65, "Client Review": 85, Delivered: 100, Archived: 100 };
 
   var modules = [
-    ["dashboard", "Dashboard"], ["clients", "Clients"], ["bookings", "Bookings"],
+    ["dashboard", "Dashboard"], ["clients", "Clients"], ["emails", "Email"], ["bookings", "Bookings"],
     ["projects", "Projects"], ["partnerships", "Brand Partnerships"],
     ["collection", "Collection"], ["orders", "Orders"],
     ["content", "Content Library"], ["practice", "Practice"], ["journal", "Journal"],
@@ -46,7 +47,7 @@
     ["documents", "Documents"], ["settings", "Settings"]
   ];
 
-  var DETAIL_ROUTES = ["clients", "bookings", "projects", "partnerships", "collection", "orders"];
+  var DETAIL_ROUTES = ["clients", "emails", "bookings", "projects", "partnerships", "collection", "orders"];
 
   var schemas = {
     clients: {
@@ -62,6 +63,23 @@
         h("Status & Notes"),
         f("status", "Status", "select", true, ["Lead", "Active", "Returning", "Archived"]), f("notes", "Notes", "textarea")
       ]
+    },
+    emails: {
+      title: "Email Portal",
+      subtitle: "Manage studio inbox items, client replies, outreach drafts and follow-up emails.",
+      collection: "emails", display: "subject", status: "status",
+      columns: ["subject", "client", "direction", "status", "receivedAt"],
+      fields: [
+        h("Message"),
+        f("subject", "Subject", "text", true), f("direction", "Direction", "select", true, ["Incoming", "Outgoing", "Internal"]), f("status", "Status", "select", true, ["Inbox", "Draft", "Ready To Send", "Sent", "Waiting Reply", "Follow Up", "Archived"]), f("priority", "Priority", "select", true, ["Low", "Normal", "High", "Urgent"]),
+        h("People"),
+        rel("client", "Linked client", "clients"), rel("project", "Linked project", "projects"), f("fromName", "From name", "text"), f("fromEmail", "From email", "email"), f("toName", "To name", "text"), f("toEmail", "To email", "email", true), f("cc", "CC", "text"),
+        h("Workflow"),
+        f("category", "Category", "select", true, ["Lead", "Booking", "Project", "Partnership", "Collection", "Invoice", "General"]), f("receivedAt", "Received / created date", "date"), f("scheduledFor", "Scheduled send / follow-up", "date"), f("owner", "Owner", "text", false, null, "Dan Mokgwadi"),
+        h("Content"),
+        f("body", "Email body", "textarea", true), f("nextStep", "Next step", "textarea")
+      ],
+      actions: ["openEmail"]
     },
     practice: {
       title: "Practice",
@@ -142,7 +160,7 @@
         h("Document"),
         f("number", "Document number", "text", true), f("type", "Document type", "select", true, ["Quote", "Invoice", "Receipt"]), rel("client", "Client", "clients", true), rel("project", "Project / booking / order", "projects"),
         h("Line Items & Amount"),
-        f("items", "Line items (one per line, e.g. 'Brand Shoot — R5,000')", "textarea", true), f("amount", "Amount", "number", true), f("vat", "VAT", "number"), f("due", "Due date", "date"),
+        f("items", "Line items (one per line, e.g. 'Brand Shoot - R5,000')", "textarea", true), f("amount", "Amount", "number", true), f("vat", "VAT", "number"), f("due", "Due date", "date"),
         h("Payment"),
         f("status", "Payment status", "select", true, ["Draft", "Sent", "Paid", "Partially Paid", "Overdue", "Cancelled"]), f("paidAt", "Payment date", "date")
       ],
@@ -253,6 +271,10 @@
         { id: c1, name: "Rituals", type: "Company", contact: "Amina Jacobs", email: "amina@rituals.example", phone: "+27 72 123 4567", status: "Active", guidelines: "Warm minimal product rituals. Neutral palette.", notes: "Returning campaign client." },
         { id: c2, name: "Hennessy SA", type: "Company", contact: "Thabo Mokoena", email: "studio@hennessy.example", phone: "+27 11 555 0920", status: "Returning", guidelines: "Luxury nightlife and editorial portraits.", notes: "Monthly visual communication retainer prospect." },
         { id: c3, name: "LELO Studio", type: "Company", contact: "Kea Matlou", email: "kea@lelo.example", phone: "+27 82 210 0112", status: "Active", guidelines: "High contrast product lighting.", notes: "Product campaign completed." }
+      ],
+      emails: [
+        { id: id(), subject: "Brand campaign follow-up", direction: "Outgoing", status: "Draft", priority: "High", client: c1, project: p1, fromName: "Dan Mokgwadi", fromEmail: "info@lgndry-co.co.za", toName: "Amina Jacobs", toEmail: "amina@rituals.example", cc: "", category: "Project", receivedAt: "2026-07-07", scheduledFor: "2026-07-08", owner: "Dan Mokgwadi", body: "Hi Amina,\n\nThank you for the brief. I have mapped the next steps for the Rituals campaign and can confirm the shoot direction by tomorrow.\n\nWarmly,\nDan", nextStep: "Confirm shoot direction and attach the updated treatment." },
+        { id: id(), subject: "Annual creative partnership", direction: "Incoming", status: "Follow Up", priority: "Normal", client: c2, project: "", fromName: "Thabo Mokoena", fromEmail: "studio@hennessy.example", toName: "LGNDRY.Co", toEmail: "info@lgndry-co.co.za", cc: "", category: "Partnership", receivedAt: "2026-07-06", scheduledFor: "2026-07-09", owner: "Dan Mokgwadi", body: "Hi Dan,\n\nWe would like to review the annual creative partnership proposal and understand the monthly deliverables in more detail.", nextStep: "Reply with proposal summary and discovery call times." }
       ],
       practice: [
         { id: id(), title: "Brand Photography", category: "Photography", description: "Purposeful brand campaigns and founder visuals.", position: 1, visibility: "Visible" },
@@ -400,7 +422,7 @@
       if (failed.length) throw failed[0].error;
     }
     var independentTables = ["collection", "practice", "journal", "cms", "clients"];
-    var laterTables = ["partnerships", "invoices", "orders", "galleries", "content", "documents"];
+    var laterTables = ["partnerships", "invoices", "orders", "galleries", "content", "documents", "emails"];
 
     return Promise.all(independentTables.map(function (table) { return write(table, rowsByTable[table]); })).then(function (results) {
       checkAll(results);
@@ -503,7 +525,7 @@
   function label(collection, recordId) {
     var record = byId(collection, recordId);
     if (!record) return recordId || "Unlinked";
-    return record.name || record.title || record.service || record.orderNumber || record.number || record.company || record.section || "Record";
+    return record.name || record.title || record.subject || record.service || record.orderNumber || record.number || record.company || record.section || "Record";
   }
 
   function render() {
@@ -1031,7 +1053,7 @@
         if (index === 0) return '<td data-label="' + cellLabel + '"><strong>' + esc(value) + '</strong><div class="record-meta">' + esc(record.notes || record.brief || record.description || "") + "</div></td>";
         if (column === schema.status || ["status", "visibility", "availability", "deposit", "paymentStatus"].indexOf(column) > -1) return '<td data-label="' + cellLabel + '"><span class="status-pill ' + statusClass(value) + '">' + esc(value) + "</span></td>";
         return '<td data-label="' + cellLabel + '">' + esc(value || "-") + "</td>";
-      }).join("") + '<td data-label="Actions"><div class="row-actions">' + primaryAction + (schema.actions && schema.actions.indexOf("generateProject") > -1 ? '<button class="table-action" data-generate="' + record.id + '" type="button">Project</button>' : "") + (schema.actions && schema.actions.indexOf("copyLink") > -1 ? '<button class="table-action" data-copy-link="' + record.id + '" type="button">Copy Link</button>' : "") + (schema.actions && schema.actions.indexOf("downloadPdf") > -1 ? '<button class="table-action" data-download-pdf="' + record.id + '" type="button">PDF</button>' : "") + '<button class="table-action" data-archive="' + record.id + '" type="button">Archive</button><button class="table-action table-action--danger" data-delete="' + record.id + '" type="button">Delete</button></div></td></tr>';
+      }).join("") + '<td data-label="Actions"><div class="row-actions">' + primaryAction + (schema.actions && schema.actions.indexOf("generateProject") > -1 ? '<button class="table-action" data-generate="' + record.id + '" type="button">Project</button>' : "") + (schema.actions && schema.actions.indexOf("copyLink") > -1 ? '<button class="table-action" data-copy-link="' + record.id + '" type="button">Copy Link</button>' : "") + (schema.actions && schema.actions.indexOf("downloadPdf") > -1 ? '<button class="table-action" data-download-pdf="' + record.id + '" type="button">PDF</button>' : "") + (schema.actions && schema.actions.indexOf("openEmail") > -1 ? '<button class="table-action" data-open-email="' + record.id + '" type="button">Email</button>' : "") + '<button class="table-action" data-archive="' + record.id + '" type="button">Archive</button><button class="table-action table-action--danger" data-delete="' + record.id + '" type="button">Delete</button></div></td></tr>';
     }).join("") + "</tbody></table>";
   }
   function displayValue(schema, record, column) {
@@ -1141,6 +1163,7 @@
     document.querySelectorAll("[data-generate]").forEach(function (button) { button.addEventListener("click", function () { generateProject(button.dataset.generate); }); });
     document.querySelectorAll("[data-copy-link]").forEach(function (button) { button.addEventListener("click", function () { copyGalleryLink(button.dataset.copyLink); }); });
     document.querySelectorAll("[data-download-pdf]").forEach(function (button) { button.addEventListener("click", function () { downloadRecordPdf(schema, button.dataset.downloadPdf); }); });
+    document.querySelectorAll("[data-open-email]").forEach(function (button) { button.addEventListener("click", function () { openEmailDraft(button.dataset.openEmail); }); });
     document.querySelectorAll("[data-select-row]").forEach(function (checkbox) {
       checkbox.addEventListener("change", function (event) {
         var id = event.target.dataset.selectRow;
@@ -1335,6 +1358,27 @@
     }
   }
 
+
+  function openEmailDraft(recordId) {
+    var record = byId("emails", recordId);
+    if (!record) return;
+    var recipient = record.direction === "Incoming" ? record.fromEmail : record.toEmail;
+    if (!recipient) {
+      toast("Add a recipient email address first.");
+      return;
+    }
+    var params = [];
+    if (record.subject) params.push("subject=" + encodeURIComponent(record.subject));
+    if (record.cc) params.push("cc=" + encodeURIComponent(record.cc));
+    if (record.body) params.push("body=" + encodeURIComponent(record.body));
+    window.location.href = "mailto:" + encodeURIComponent(recipient) + (params.length ? "?" + params.join("&") : "");
+    if (record.status === "Draft" || record.status === "Ready To Send") {
+      record.status = "Sent";
+      persistRecord("emails", record);
+      logActivity('Opened email draft "' + record.subject + '"');
+      refreshTable(schemas.emails);
+    }
+  }
   function uploadToMedia(file, folder) {
     var extMatch = /\.[a-zA-Z0-9]+$/.exec(file.name || "");
     var ext = extMatch ? extMatch[0].toLowerCase() : "";
@@ -2166,7 +2210,7 @@
   });
 
   function recordDisplayName(record) {
-    return record.name || record.title || record.service || record.orderNumber || record.number || record.company || record.section || "Record";
+    return record.name || record.title || record.subject || record.service || record.orderNumber || record.number || record.company || record.section || "Record";
   }
 
   function globalSearchMatches(query) {
