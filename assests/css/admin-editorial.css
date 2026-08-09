@@ -1698,24 +1698,45 @@ body.ops-app-shell .email-sidebar {
 body.ops-app-shell .email-sidebar__top {
   display: grid;
   grid-template-columns: minmax(0, 1fr);
-  gap: 8px;
+  gap: 12px;
   margin-bottom: 20px;
+}
+
+body.ops-app-shell .email-sidebar__header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+}
+
+body.ops-app-shell .email-sidebar__header > span {
+  color: var(--admin-faint);
+  font-size: 0.62rem;
+  font-weight: 700;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
 }
 
 body.ops-app-shell .email-sidebar-toggle {
   display: flex;
-  min-height: 34px;
+  width: 34px;
+  height: 34px;
   align-items: center;
   justify-content: center;
   border: 1px solid var(--admin-rule);
-  color: var(--admin-muted);
-  background: transparent;
+  color: var(--admin-ink);
+  background: var(--admin-panel);
   font: inherit;
-  font-size: 0.6rem;
+  font-size: 1rem;
   font-weight: 700;
-  letter-spacing: 0.14em;
-  text-transform: uppercase;
   cursor: pointer;
+  transition: border-color 140ms ease, background-color 140ms ease, transform 140ms ease;
+}
+
+body.ops-app-shell .email-sidebar-toggle:hover {
+  border-color: var(--admin-ink);
+  background: color-mix(in srgb, var(--admin-ink) 7%, transparent);
+  transform: translateX(-1px);
 }
 
 body.ops-app-shell .email-compose-btn {
@@ -1787,13 +1808,24 @@ body.ops-app-shell .email-portal--folders-collapsed .email-sidebar__top {
   margin-bottom: 14px;
 }
 
-body.ops-app-shell .email-portal--folders-collapsed .email-sidebar-toggle,
+body.ops-app-shell .email-portal--folders-collapsed .email-sidebar__header {
+  justify-content: center;
+}
+
+body.ops-app-shell .email-portal--folders-collapsed .email-sidebar__header > span {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  white-space: nowrap;
+}
+
 body.ops-app-shell .email-portal--folders-collapsed .email-compose-btn {
   min-height: 42px;
   padding: 0;
 }
 
-body.ops-app-shell .email-portal--folders-collapsed .email-sidebar-toggle span,
 body.ops-app-shell .email-portal--folders-collapsed .email-compose-btn span,
 body.ops-app-shell .email-portal--folders-collapsed .email-folder span {
   position: absolute;
@@ -1804,11 +1836,10 @@ body.ops-app-shell .email-portal--folders-collapsed .email-folder span {
   white-space: nowrap;
 }
 
-body.ops-app-shell .email-portal--folders-collapsed .email-sidebar-toggle::after {
-  content: ">";
-  color: var(--admin-ink);
-  font-size: 1rem;
-  letter-spacing: 0;
+body.ops-app-shell .email-portal--folders-collapsed .email-sidebar-toggle {
+  width: 42px;
+  height: 42px;
+  background: color-mix(in srgb, var(--admin-ink) 8%, transparent);
 }
 
 body.ops-app-shell .email-portal--folders-collapsed .email-compose-btn::after {
