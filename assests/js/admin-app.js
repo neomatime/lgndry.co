@@ -728,7 +728,7 @@
     var from = [record.fromName, record.fromEmail].filter(Boolean).join(" <") + (record.fromName && record.fromEmail ? ">" : "");
     var to = [record.toName, record.toEmail].filter(Boolean).join(" <") + (record.toName && record.toEmail ? ">" : "");
     return '<article class="email-message">' +
-      '<header class="email-message__head"><div><span class="eyebrow">' + esc(record.category || "General") + '</span><h2>' + esc(record.subject || "Untitled email") + '</h2></div><div class="email-message__actions"><button class="ghost-btn" type="button" data-email-edit="' + record.id + '">Edit</button><button class="primary-btn" type="button" data-email-open="' + record.id + '">Open Mail App</button></div></header>' +
+      '<header class="email-message__head"><div><span class="eyebrow">' + esc(record.category || "General") + '</span><h2>' + esc(record.subject || "Untitled email") + '</h2></div><div class="email-message__actions"><button class="ghost-btn" type="button" data-email-edit="' + record.id + '">Edit</button><button class="primary-btn" type="button" data-email-open="' + record.id + '">Send Email</button></div></header>' +
       '<dl class="email-message__meta"><div><dt>From</dt><dd>' + esc(from || "LGNDRY.Co") + "</dd></div><div><dt>To</dt><dd>" + esc(to || "Unassigned") + "</dd></div><div><dt>Client</dt><dd>" + esc(label("clients", record.client)) + "</dd></div><div><dt>Status</dt><dd>" + esc(record.status || "Inbox") + "</dd></div></dl>" +
       '<div class="email-message__body">' + emailBody(record.body || record.nextStep || "No message body yet.") + "</div>" +
       '<footer class="email-message__foot"><button class="table-action" type="button" data-email-compose-reply="' + record.id + '">Reply</button><button class="table-action" type="button" data-email-archive="' + record.id + '">Archive</button><button class="table-action table-action--danger" type="button" data-email-delete="' + record.id + '">Delete</button></footer></article>';
@@ -762,7 +762,7 @@
         '<label><span>Follow-up</span><input name="scheduledFor" type="date" value="' + esc(record && record.scheduledFor || "") + '"></label>' +
         '<input name="receivedAt" type="hidden" value="' + esc(record && record.receivedAt || today) + '">' +
         '<label class="email-composer__wide"><span>Message</span><textarea name="body" required placeholder="Write the email...">' + esc(body) + "</textarea></label>" +
-      '</div><div class="email-composer__foot"><button class="ghost-btn" type="submit" data-email-submit="draft">Save Draft</button><button class="primary-btn" type="submit" data-email-submit="send">Open Mail App</button></div></form>';
+      '</div><div class="email-composer__foot"><button class="ghost-btn" type="submit" data-email-submit="draft">Save Draft</button><button class="primary-btn" type="submit" data-email-submit="send">Send Email</button></div></form>';
   }
 
   function emailSelect(name, labelText, collection, value) {
@@ -1191,7 +1191,7 @@
         if (index === 0) return '<td data-label="' + cellLabel + '"><strong>' + esc(value) + '</strong><div class="record-meta">' + esc(record.notes || record.brief || record.description || "") + "</div></td>";
         if (column === schema.status || ["status", "visibility", "availability", "deposit", "paymentStatus"].indexOf(column) > -1) return '<td data-label="' + cellLabel + '"><span class="status-pill ' + statusClass(value) + '">' + esc(value) + "</span></td>";
         return '<td data-label="' + cellLabel + '">' + esc(value || "-") + "</td>";
-      }).join("") + '<td data-label="Actions"><div class="row-actions">' + primaryAction + (schema.actions && schema.actions.indexOf("generateProject") > -1 ? '<button class="table-action" data-generate="' + record.id + '" type="button">Project</button>' : "") + (schema.actions && schema.actions.indexOf("copyLink") > -1 ? '<button class="table-action" data-copy-link="' + record.id + '" type="button">Copy Link</button>' : "") + (schema.actions && schema.actions.indexOf("downloadPdf") > -1 ? '<button class="table-action" data-download-pdf="' + record.id + '" type="button">PDF</button>' : "") + (schema.actions && schema.actions.indexOf("openEmail") > -1 ? '<button class="table-action" data-open-email="' + record.id + '" type="button">Email</button>' : "") + '<button class="table-action" data-archive="' + record.id + '" type="button">Archive</button><button class="table-action table-action--danger" data-delete="' + record.id + '" type="button">Delete</button></div></td></tr>';
+      }).join("") + '<td data-label="Actions"><div class="row-actions">' + primaryAction + (schema.actions && schema.actions.indexOf("generateProject") > -1 ? '<button class="table-action" data-generate="' + record.id + '" type="button">Project</button>' : "") + (schema.actions && schema.actions.indexOf("copyLink") > -1 ? '<button class="table-action" data-copy-link="' + record.id + '" type="button">Copy Link</button>' : "") + (schema.actions && schema.actions.indexOf("downloadPdf") > -1 ? '<button class="table-action" data-download-pdf="' + record.id + '" type="button">PDF</button>' : "") + (schema.actions && schema.actions.indexOf("openEmail") > -1 ? '<button class="table-action" data-open-email="' + record.id + '" type="button">Send</button>' : "") + '<button class="table-action" data-archive="' + record.id + '" type="button">Archive</button><button class="table-action table-action--danger" data-delete="' + record.id + '" type="button">Delete</button></div></td></tr>';
     }).join("") + "</tbody></table>";
   }
   function displayValue(schema, record, column) {
@@ -1301,7 +1301,7 @@
     document.querySelectorAll("[data-generate]").forEach(function (button) { button.addEventListener("click", function () { generateProject(button.dataset.generate); }); });
     document.querySelectorAll("[data-copy-link]").forEach(function (button) { button.addEventListener("click", function () { copyGalleryLink(button.dataset.copyLink); }); });
     document.querySelectorAll("[data-download-pdf]").forEach(function (button) { button.addEventListener("click", function () { downloadRecordPdf(schema, button.dataset.downloadPdf); }); });
-    document.querySelectorAll("[data-open-email]").forEach(function (button) { button.addEventListener("click", function () { openEmailDraft(button.dataset.openEmail); }); });
+    document.querySelectorAll("[data-open-email]").forEach(function (button) { button.addEventListener("click", function () { sendEmailRecord(button.dataset.openEmail); }); });
     document.querySelectorAll("[data-select-row]").forEach(function (checkbox) {
       checkbox.addEventListener("change", function (event) {
         var id = event.target.dataset.selectRow;
@@ -1396,7 +1396,7 @@
       });
     });
     document.querySelectorAll("[data-email-open]").forEach(function (button) {
-      button.addEventListener("click", function () { openEmailDraft(button.dataset.emailOpen); });
+      button.addEventListener("click", function () { sendEmailRecord(button.dataset.emailOpen); });
     });
     document.querySelectorAll("[data-email-archive]").forEach(function (button) {
       button.addEventListener("click", function () { archiveRecord(schemas.emails, button.dataset.emailArchive); });
@@ -1438,7 +1438,7 @@
     next.fromEmail = next.fromEmail || "info@lgndry-co.co.za";
     next.toName = next.toName || "";
     next.owner = next.owner || "Neo Mokgwadi";
-    next.status = action === "send" ? "Sent" : "Draft";
+    next.status = action === "send" ? "Ready To Send" : "Draft";
     if (!next.subject || !next.toEmail || !next.body) {
       toast("Please complete the recipient, subject and message.");
       return;
@@ -1450,13 +1450,17 @@
     persistRecord("emails", next);
     logActivity((existing ? "Updated" : "Created") + ' email "' + next.subject + '"');
     state.emailId = next.id;
-    state.emailFolder = action === "send" ? "Sent" : "Drafts";
+    state.emailFolder = "Drafts";
     state.emailCompose = false;
     state.emailEditingId = null;
     state.emailReplyId = null;
-    render();
-    toast(action === "send" ? "Opening mail app." : "Draft saved.");
-    if (action === "send") openEmailDraft(next.id);
+    if (action === "send") {
+      toast("Sending email via Resend.");
+      sendEmailRecord(next.id);
+    } else {
+      render();
+      toast("Draft saved.");
+    }
   }
 
   function pdfLetterhead(doc, title) {
@@ -1619,7 +1623,13 @@
   }
 
 
-  function openEmailDraft(recordId) {
+  function emailHtml(value) {
+    return String(value || "").split(/\n{2,}/).map(function (paragraph) {
+      return "<p>" + esc(paragraph).replace(/\n/g, "<br>") + "</p>";
+    }).join("");
+  }
+
+  function sendEmailRecord(recordId) {
     var record = byId("emails", recordId);
     if (!record) return;
     var recipient = record.direction === "Incoming" ? record.fromEmail : record.toEmail;
@@ -1627,17 +1637,37 @@
       toast("Add a recipient email address first.");
       return;
     }
-    var params = [];
-    if (record.subject) params.push("subject=" + encodeURIComponent(record.subject));
-    if (record.cc) params.push("cc=" + encodeURIComponent(record.cc));
-    if (record.body) params.push("body=" + encodeURIComponent(record.body));
-    window.location.href = "mailto:" + encodeURIComponent(recipient) + (params.length ? "?" + params.join("&") : "");
-    if (record.status === "Draft" || record.status === "Ready To Send") {
+    if (!record.subject || !record.body) {
+      toast("Add a subject and message before sending.");
+      return;
+    }
+    return supabaseClient.functions.invoke("send-admin-email", {
+      body: {
+        emailId: record.id,
+        to: [recipient],
+        cc: record.cc || "",
+        subject: record.subject,
+        text: record.body,
+        html: emailHtml(record.body)
+      }
+    }).then(function (result) {
+      if (result.error) throw result.error;
+      if (result.data && result.data.error) throw new Error(result.data.error);
       record.status = "Sent";
       persistRecord("emails", record);
-      logActivity('Opened email draft "' + record.subject + '"');
-      refreshTable(schemas.emails);
-    }
+      logActivity('Sent email "' + record.subject + '" via Resend');
+      state.emailId = record.id;
+      state.emailFolder = "Sent";
+      state.emailCompose = false;
+      state.emailEditingId = null;
+      state.emailReplyId = null;
+      render();
+      toast("Email sent via Resend.");
+    }).catch(function (error) {
+      console.error(error);
+      toast("Email send failed: " + (error && error.message ? error.message : "Please check Resend configuration."));
+      render();
+    });
   }
   function uploadToMedia(file, folder) {
     var extMatch = /\.[a-zA-Z0-9]+$/.exec(file.name || "");
