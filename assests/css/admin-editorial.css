@@ -1994,8 +1994,8 @@ body.ops-app-shell .email-reading-pane {
 body.ops-app-shell .email-message,
 body.ops-app-shell .email-composer {
   display: grid;
-  gap: 24px;
-  padding: clamp(22px, 3vw, 38px);
+  gap: 14px;
+  padding: clamp(16px, 2vw, 24px);
 }
 
 body.ops-app-shell .email-message__head,
@@ -2003,16 +2003,16 @@ body.ops-app-shell .email-composer__top {
   display: flex;
   align-items: flex-start;
   justify-content: space-between;
-  gap: 24px;
-  padding-bottom: 22px;
+  gap: 18px;
+  padding-bottom: 12px;
   border-bottom: 1px solid var(--admin-rule);
 }
 
 body.ops-app-shell .email-message__head h2,
 body.ops-app-shell .email-composer__top h2 {
-  margin: 7px 0 0;
+  margin: 4px 0 0;
   font-family: "Cormorant Garamond", Georgia, serif;
-  font-size: clamp(2rem, 3vw, 3.1rem);
+  font-size: clamp(1.75rem, 2.4vw, 2.45rem);
   font-weight: 500;
   line-height: 0.98;
 }
@@ -2080,20 +2080,20 @@ body.ops-app-shell .email-empty {
 
 body.ops-app-shell .email-composer__fields {
   display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 14px;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 8px 10px;
 }
 
 body.ops-app-shell .email-composer label {
   display: grid;
-  gap: 7px;
+  gap: 4px;
 }
 
 body.ops-app-shell .email-composer label span {
   color: var(--admin-faint);
-  font-size: 0.61rem;
+  font-size: 0.54rem;
   font-weight: 700;
-  letter-spacing: 0.14em;
+  letter-spacing: 0.12em;
   text-transform: uppercase;
 }
 
@@ -2110,15 +2110,17 @@ body.ops-app-shell .email-composer textarea {
 
 body.ops-app-shell .email-composer input,
 body.ops-app-shell .email-composer select {
-  height: 44px;
-  padding: 0 12px;
+  height: 34px;
+  padding: 0 10px;
+  font-size: 0.78rem;
 }
 
 body.ops-app-shell .email-composer textarea {
-  min-height: 280px;
+  min-height: clamp(280px, 42vh, 520px);
   resize: vertical;
-  padding: 14px;
-  line-height: 1.65;
+  padding: 12px;
+  font-size: 0.84rem;
+  line-height: 1.58;
 }
 
 body.ops-app-shell .email-composer__wide {
@@ -2127,7 +2129,7 @@ body.ops-app-shell .email-composer__wide {
 
 body.ops-app-shell .email-composer__foot {
   justify-content: flex-end;
-  padding-top: 4px;
+  padding-top: 2px;
 }
 
 @media (max-width: 1240px) {
@@ -2137,6 +2139,10 @@ body.ops-app-shell .email-composer__foot {
 
   body.ops-app-shell .email-portal--folders-collapsed {
     grid-template-columns: 68px minmax(280px, 0.48fr) minmax(340px, 1fr);
+  }
+
+  body.ops-app-shell .email-composer__fields {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 }
 
