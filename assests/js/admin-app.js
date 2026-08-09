@@ -12,7 +12,7 @@
   var modalReturnFocus = null;
   var TABLES = ["clients", "practice", "bookings", "projects", "partnerships", "collection", "orders", "galleries", "content", "journal", "cms", "budgets", "invoices", "documents", "emails"];
   var OPTIONAL_TABLES = ["orders", "emails"];
-  var state = { route: "dashboard", query: "", filter: "all", editing: null, detail: null, columnFilters: {}, selected: {}, emailFolder: "Inbox", emailId: null, emailCompose: false, emailEditingId: null, emailReplyId: null };
+  var state = { route: "dashboard", query: "", filter: "all", editing: null, detail: null, columnFilters: {}, selected: {}, emailFolder: "Inbox", emailId: null, emailCompose: false, emailEditingId: null, emailReplyId: null, emailSidebarCollapsed: false };
   var data = { activity: [] };
   window.LgndryOpsSnapshot = function () { return data; };
 
@@ -696,11 +696,11 @@
     if (selected && rows.every(function (record) { return record.id !== selected.id; })) selected = rows[0];
     var folders = emailFolders().map(function (folder) {
       var current = (state.emailFolder || "Inbox") === folder.id;
-      return '<button class="email-folder' + (current ? " email-folder--active" : "") + '" type="button" data-email-folder="' + esc(folder.id) + '"' + (current ? ' aria-current="page"' : "") + '><span>' + esc(folder.label) + '</span><strong>' + emailFolderCount(folder.id) + "</strong></button>";
+      return '<button class="email-folder' + (current ? " email-folder--active" : "") + '" type="button" data-email-folder="' + esc(folder.id) + '" title="' + esc(folder.label) + '"' + (current ? ' aria-current="page"' : "") + '><small aria-hidden="true">' + esc(folder.label.charAt(0)) + '</small><span>' + esc(folder.label) + '</span><strong>' + emailFolderCount(folder.id) + "</strong></button>";
     }).join("");
     var list = rows.map(function (record) { return emailListItem(record, selected && selected.id === record.id); }).join("");
-    return '<section class="email-portal" aria-label="Email portal">' +
-      '<aside class="email-sidebar"><button class="email-compose-btn" type="button" data-email-compose>New Mail</button><nav aria-label="Mail folders">' + folders + "</nav></aside>" +
+    return '<section class="email-portal' + (state.emailSidebarCollapsed ? " email-portal--folders-collapsed" : "") + '" aria-label="Email portal">' +
+      '<aside class="email-sidebar"><div class="email-sidebar__top"><button class="email-sidebar-toggle" type="button" data-email-sidebar-toggle aria-expanded="' + (!state.emailSidebarCollapsed) + '" title="' + (state.emailSidebarCollapsed ? "Expand folders" : "Collapse folders") + '"><span>' + (state.emailSidebarCollapsed ? "Open" : "Close") + '</span></button><button class="email-compose-btn" type="button" data-email-compose title="New Mail"><span>New Mail</span></button></div><nav aria-label="Mail folders">' + folders + "</nav></aside>" +
       '<section class="email-list-pane"><div class="email-toolbar"><label><span class="sr-only">Search mail</span><input type="search" value="' + esc(state.query) + '" placeholder="Search mail" data-email-search></label><span>' + rows.length + " messages</span></div>" +
       '<div class="email-list" role="list">' + (list || '<div class="email-empty">' + emptyState("No mail here", "Messages matching this folder and search will appear here.", icons.emails, "Compose Email", "data-email-compose", true) + "</div>") + "</div></section>" +
       '<section class="email-reading-pane">' + emailReadingPane(selected) + "</section></section>";
@@ -1338,6 +1338,13 @@
   }
 
   function bindEmailPortal() {
+    var sidebarToggle = document.querySelector("[data-email-sidebar-toggle]");
+    if (sidebarToggle) {
+      sidebarToggle.addEventListener("click", function () {
+        state.emailSidebarCollapsed = !state.emailSidebarCollapsed;
+        render();
+      });
+    }
     document.querySelectorAll("[data-email-folder]").forEach(function (button) {
       button.addEventListener("click", function () {
         state.emailFolder = button.dataset.emailFolder;

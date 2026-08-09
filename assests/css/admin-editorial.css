@@ -1675,6 +1675,10 @@ body.ops-app-shell .email-portal {
   background: var(--admin-panel);
 }
 
+body.ops-app-shell .email-portal--folders-collapsed {
+  grid-template-columns: 72px minmax(320px, 0.42fr) minmax(420px, 1fr);
+}
+
 body.ops-app-shell .email-sidebar,
 body.ops-app-shell .email-list-pane {
   min-width: 0;
@@ -1691,10 +1695,32 @@ body.ops-app-shell .email-sidebar {
   padding: 18px;
 }
 
+body.ops-app-shell .email-sidebar__top {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 8px;
+  margin-bottom: 20px;
+}
+
+body.ops-app-shell .email-sidebar-toggle {
+  display: flex;
+  min-height: 34px;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid var(--admin-rule);
+  color: var(--admin-muted);
+  background: transparent;
+  font: inherit;
+  font-size: 0.6rem;
+  font-weight: 700;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  cursor: pointer;
+}
+
 body.ops-app-shell .email-compose-btn {
   width: 100%;
   min-height: 44px;
-  margin-bottom: 20px;
   border: 1px solid var(--admin-ink);
   color: var(--admin-panel);
   background: var(--admin-ink);
@@ -1728,6 +1754,18 @@ body.ops-app-shell .email-folder {
   cursor: pointer;
 }
 
+body.ops-app-shell .email-folder small {
+  display: none;
+  width: 22px;
+  height: 22px;
+  place-items: center;
+  border: 1px solid var(--admin-rule);
+  color: var(--admin-ink);
+  font-size: 0.62rem;
+  font-weight: 700;
+  line-height: 1;
+}
+
 body.ops-app-shell .email-folder strong {
   color: var(--admin-faint);
   font-size: 0.66rem;
@@ -1738,6 +1776,68 @@ body.ops-app-shell .email-folder--active {
   border-left-color: var(--admin-ink);
   color: var(--admin-ink);
   background: color-mix(in srgb, var(--admin-ink) 8%, transparent);
+}
+
+body.ops-app-shell .email-portal--folders-collapsed .email-sidebar {
+  padding: 14px 10px;
+}
+
+body.ops-app-shell .email-portal--folders-collapsed .email-sidebar__top {
+  gap: 7px;
+  margin-bottom: 14px;
+}
+
+body.ops-app-shell .email-portal--folders-collapsed .email-sidebar-toggle,
+body.ops-app-shell .email-portal--folders-collapsed .email-compose-btn {
+  min-height: 42px;
+  padding: 0;
+}
+
+body.ops-app-shell .email-portal--folders-collapsed .email-sidebar-toggle span,
+body.ops-app-shell .email-portal--folders-collapsed .email-compose-btn span,
+body.ops-app-shell .email-portal--folders-collapsed .email-folder span {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  white-space: nowrap;
+}
+
+body.ops-app-shell .email-portal--folders-collapsed .email-sidebar-toggle::after {
+  content: ">";
+  color: var(--admin-ink);
+  font-size: 1rem;
+  letter-spacing: 0;
+}
+
+body.ops-app-shell .email-portal--folders-collapsed .email-compose-btn::after {
+  content: "+";
+  color: var(--admin-panel);
+  font-size: 1.15rem;
+  line-height: 1;
+}
+
+body.ops-app-shell .email-portal--folders-collapsed .email-folder {
+  display: grid;
+  min-height: 48px;
+  justify-items: center;
+  gap: 4px;
+  padding: 6px 0;
+  border-left-width: 0;
+  border-bottom: 2px solid transparent;
+}
+
+body.ops-app-shell .email-portal--folders-collapsed .email-folder--active {
+  border-bottom-color: var(--admin-ink);
+}
+
+body.ops-app-shell .email-portal--folders-collapsed .email-folder small {
+  display: grid;
+}
+
+body.ops-app-shell .email-portal--folders-collapsed .email-folder strong {
+  font-size: 0.56rem;
 }
 
 body.ops-app-shell .email-list-pane {
@@ -2003,10 +2103,18 @@ body.ops-app-shell .email-composer__foot {
   body.ops-app-shell .email-portal {
     grid-template-columns: 160px minmax(280px, 0.45fr) minmax(360px, 1fr);
   }
+
+  body.ops-app-shell .email-portal--folders-collapsed {
+    grid-template-columns: 68px minmax(280px, 0.48fr) minmax(340px, 1fr);
+  }
 }
 
 @media (max-width: 980px) {
   body.ops-app-shell .email-portal {
+    grid-template-columns: 1fr;
+  }
+
+  body.ops-app-shell .email-portal--folders-collapsed {
     grid-template-columns: 1fr;
   }
 
@@ -2018,6 +2126,14 @@ body.ops-app-shell .email-composer__foot {
 
   body.ops-app-shell .email-sidebar nav {
     grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+
+  body.ops-app-shell .email-portal--folders-collapsed .email-sidebar {
+    padding: 12px;
+  }
+
+  body.ops-app-shell .email-portal--folders-collapsed .email-sidebar nav {
+    grid-template-columns: repeat(6, minmax(44px, 1fr));
   }
 
   body.ops-app-shell .email-list {
