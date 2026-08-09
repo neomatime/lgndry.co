@@ -1666,6 +1666,376 @@ body.ops-app-shell .loading-gate__spinner {
   }
 }
 
+body.ops-app-shell .email-portal {
+  display: grid;
+  grid-template-columns: minmax(170px, 0.22fr) minmax(310px, 0.38fr) minmax(420px, 1fr);
+  min-height: min(760px, calc(100vh - 220px));
+  overflow: hidden;
+  border: 1px solid var(--admin-rule);
+  background: var(--admin-panel);
+}
+
+body.ops-app-shell .email-sidebar,
+body.ops-app-shell .email-list-pane {
+  min-width: 0;
+  border-right: 1px solid var(--admin-rule);
+  background: color-mix(in srgb, var(--admin-panel) 92%, var(--admin-ink) 8%);
+}
+
+:root[data-theme="light"] body.ops-app-shell .email-sidebar,
+:root[data-theme="light"] body.ops-app-shell .email-list-pane {
+  background: color-mix(in srgb, var(--admin-panel) 94%, var(--admin-ink) 6%);
+}
+
+body.ops-app-shell .email-sidebar {
+  padding: 18px;
+}
+
+body.ops-app-shell .email-compose-btn {
+  width: 100%;
+  min-height: 44px;
+  margin-bottom: 20px;
+  border: 1px solid var(--admin-ink);
+  color: var(--admin-panel);
+  background: var(--admin-ink);
+  font: inherit;
+  font-size: 0.68rem;
+  font-weight: 700;
+  letter-spacing: 0.15em;
+  text-transform: uppercase;
+  cursor: pointer;
+}
+
+body.ops-app-shell .email-sidebar nav {
+  display: grid;
+  gap: 4px;
+}
+
+body.ops-app-shell .email-folder {
+  display: flex;
+  min-height: 38px;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 0 8px;
+  border: 0;
+  border-left: 2px solid transparent;
+  color: var(--admin-muted);
+  background: transparent;
+  font: inherit;
+  font-size: 0.74rem;
+  text-align: left;
+  cursor: pointer;
+}
+
+body.ops-app-shell .email-folder strong {
+  color: var(--admin-faint);
+  font-size: 0.66rem;
+  font-weight: 600;
+}
+
+body.ops-app-shell .email-folder--active {
+  border-left-color: var(--admin-ink);
+  color: var(--admin-ink);
+  background: color-mix(in srgb, var(--admin-ink) 8%, transparent);
+}
+
+body.ops-app-shell .email-list-pane {
+  display: grid;
+  grid-template-rows: auto minmax(0, 1fr);
+}
+
+body.ops-app-shell .email-toolbar {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 12px;
+  padding: 14px;
+  border-bottom: 1px solid var(--admin-rule);
+}
+
+body.ops-app-shell .email-toolbar input {
+  width: 100%;
+  height: 40px;
+  padding: 0 12px;
+  border: 1px solid var(--admin-rule);
+  color: var(--admin-ink);
+  background: var(--admin-panel);
+  font: inherit;
+}
+
+body.ops-app-shell .email-toolbar span {
+  color: var(--admin-faint);
+  font-size: 0.62rem;
+  font-weight: 700;
+  letter-spacing: 0.13em;
+  text-transform: uppercase;
+}
+
+body.ops-app-shell .email-list {
+  min-height: 0;
+  overflow-y: auto;
+}
+
+body.ops-app-shell .email-list-item {
+  display: grid;
+  width: 100%;
+  gap: 7px;
+  padding: 15px 16px;
+  border: 0;
+  border-bottom: 1px solid var(--admin-rule);
+  border-left: 3px solid transparent;
+  color: var(--admin-ink);
+  background: transparent;
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+
+body.ops-app-shell .email-list-item:hover,
+body.ops-app-shell .email-list-item--active {
+  border-left-color: var(--admin-ink);
+  background: color-mix(in srgb, var(--admin-ink) 7%, transparent);
+}
+
+body.ops-app-shell .email-list-item__meta,
+body.ops-app-shell .email-list-item__chips {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+body.ops-app-shell .email-list-item__meta strong {
+  overflow: hidden;
+  color: var(--admin-ink);
+  font-size: 0.8rem;
+  font-weight: 600;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+body.ops-app-shell .email-list-item__meta small,
+body.ops-app-shell .email-list-item__preview,
+body.ops-app-shell .email-list-item__chips em {
+  color: var(--admin-muted);
+  font-size: 0.68rem;
+  font-style: normal;
+}
+
+body.ops-app-shell .email-list-item__subject {
+  overflow: hidden;
+  font-size: 0.86rem;
+  font-weight: 600;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+body.ops-app-shell .email-list-item__preview {
+  display: -webkit-box;
+  min-height: 2.7em;
+  overflow: hidden;
+  line-height: 1.45;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+}
+
+body.ops-app-shell .email-list-item__chips {
+  justify-content: flex-start;
+}
+
+body.ops-app-shell .email-list-item__chips em {
+  padding: 3px 7px;
+  border: 1px solid var(--admin-rule);
+  background: var(--admin-panel);
+  font-size: 0.58rem;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+}
+
+body.ops-app-shell .email-reading-pane {
+  min-width: 0;
+  overflow-y: auto;
+  background: var(--admin-panel);
+}
+
+body.ops-app-shell .email-message,
+body.ops-app-shell .email-composer {
+  display: grid;
+  gap: 24px;
+  padding: clamp(22px, 3vw, 38px);
+}
+
+body.ops-app-shell .email-message__head,
+body.ops-app-shell .email-composer__top {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 24px;
+  padding-bottom: 22px;
+  border-bottom: 1px solid var(--admin-rule);
+}
+
+body.ops-app-shell .email-message__head h2,
+body.ops-app-shell .email-composer__top h2 {
+  margin: 7px 0 0;
+  font-family: "Cormorant Garamond", Georgia, serif;
+  font-size: clamp(2rem, 3vw, 3.1rem);
+  font-weight: 500;
+  line-height: 0.98;
+}
+
+body.ops-app-shell .email-message__actions,
+body.ops-app-shell .email-message__foot,
+body.ops-app-shell .email-composer__foot {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+body.ops-app-shell .email-message__meta {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 1px;
+  margin: 0;
+  overflow: hidden;
+  border: 1px solid var(--admin-rule);
+  background: var(--admin-rule);
+}
+
+body.ops-app-shell .email-message__meta div {
+  min-width: 0;
+  padding: 13px 15px;
+  background: var(--admin-panel);
+}
+
+body.ops-app-shell .email-message__meta dt {
+  margin-bottom: 5px;
+  color: var(--admin-faint);
+  font-size: 0.58rem;
+  font-weight: 700;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+}
+
+body.ops-app-shell .email-message__meta dd {
+  margin: 0;
+  overflow: hidden;
+  color: var(--admin-ink);
+  font-size: 0.76rem;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+body.ops-app-shell .email-message__body {
+  max-width: 78ch;
+  color: var(--admin-ink);
+  font-size: 0.9rem;
+  line-height: 1.75;
+}
+
+body.ops-app-shell .email-message__body p {
+  margin: 0 0 1.1em;
+}
+
+body.ops-app-shell .email-message-empty,
+body.ops-app-shell .email-empty {
+  display: grid;
+  min-height: 100%;
+  place-items: center;
+  padding: 24px;
+}
+
+body.ops-app-shell .email-composer__fields {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 14px;
+}
+
+body.ops-app-shell .email-composer label {
+  display: grid;
+  gap: 7px;
+}
+
+body.ops-app-shell .email-composer label span {
+  color: var(--admin-faint);
+  font-size: 0.61rem;
+  font-weight: 700;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+}
+
+body.ops-app-shell .email-composer input,
+body.ops-app-shell .email-composer select,
+body.ops-app-shell .email-composer textarea {
+  width: 100%;
+  min-width: 0;
+  border: 1px solid var(--admin-rule);
+  color: var(--admin-ink);
+  background: color-mix(in srgb, var(--admin-panel) 96%, var(--admin-ink) 4%);
+  font: inherit;
+}
+
+body.ops-app-shell .email-composer input,
+body.ops-app-shell .email-composer select {
+  height: 44px;
+  padding: 0 12px;
+}
+
+body.ops-app-shell .email-composer textarea {
+  min-height: 280px;
+  resize: vertical;
+  padding: 14px;
+  line-height: 1.65;
+}
+
+body.ops-app-shell .email-composer__wide {
+  grid-column: 1 / -1;
+}
+
+body.ops-app-shell .email-composer__foot {
+  justify-content: flex-end;
+  padding-top: 4px;
+}
+
+@media (max-width: 1240px) {
+  body.ops-app-shell .email-portal {
+    grid-template-columns: 160px minmax(280px, 0.45fr) minmax(360px, 1fr);
+  }
+}
+
+@media (max-width: 980px) {
+  body.ops-app-shell .email-portal {
+    grid-template-columns: 1fr;
+  }
+
+  body.ops-app-shell .email-sidebar,
+  body.ops-app-shell .email-list-pane {
+    border-right: 0;
+    border-bottom: 1px solid var(--admin-rule);
+  }
+
+  body.ops-app-shell .email-sidebar nav {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+
+  body.ops-app-shell .email-list {
+    max-height: 360px;
+  }
+
+  body.ops-app-shell .email-message__meta,
+  body.ops-app-shell .email-composer__fields {
+    grid-template-columns: 1fr;
+  }
+
+  body.ops-app-shell .email-message__head,
+  body.ops-app-shell .email-composer__top {
+    align-items: stretch;
+    flex-direction: column;
+  }
+}
+
 @media (prefers-reduced-motion: reduce) {
   html { scroll-behavior: auto; }
   body.ops-app-shell *,

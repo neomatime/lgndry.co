@@ -12,7 +12,7 @@
   var modalReturnFocus = null;
   var TABLES = ["clients", "practice", "bookings", "projects", "partnerships", "collection", "orders", "galleries", "content", "journal", "cms", "budgets", "invoices", "documents", "emails"];
   var OPTIONAL_TABLES = ["orders", "emails"];
-  var state = { route: "dashboard", query: "", filter: "all", editing: null, detail: null, columnFilters: {}, selected: {} };
+  var state = { route: "dashboard", query: "", filter: "all", editing: null, detail: null, columnFilters: {}, selected: {}, emailFolder: "Inbox", emailId: null, emailCompose: false, emailEditingId: null, emailReplyId: null };
   var data = { activity: [] };
   window.LgndryOpsSnapshot = function () { return data; };
 
@@ -563,6 +563,12 @@
       bindSettings();
       return;
     }
+    if (state.route === "emails") {
+      setTitle("Email Portal", "Review client emails, draft replies and keep follow-ups close to the work.");
+      view().innerHTML = emailPortal();
+      bindEmailPortal();
+      return;
+    }
     var schema = schemas[state.route];
     setTitle(schema.title, schema.subtitle);
     view().innerHTML = moduleView(schema);
@@ -636,6 +642,133 @@
       '<span class="empty-state-card__icon">' + (icon || icons.dashboard) + '</span>' +
       '<div class="empty-state-card__copy"><h3>' + esc(title) + '</h3><p>' + esc(message) + "</p></div>" +
       action + "</section>";
+  }
+
+  function emailFolders() {
+    return [
+      { id: "Inbox", label: "Inbox" },
+      { id: "Drafts", label: "Drafts" },
+      { id: "Sent", label: "Sent" },
+      { id: "Follow Up", label: "Follow Up" },
+      { id: "All Mail", label: "All Mail" },
+      { id: "Archived", label: "Archived" }
+    ];
+  }
+
+  function emailRecords() {
+    return (data.emails || []).slice().sort(function (a, b) {
+      var left = b.receivedAt || b.scheduledFor || b.created_at || "";
+      var right = a.receivedAt || a.scheduledFor || a.created_at || "";
+      return String(left).localeCompare(String(right));
+    });
+  }
+
+  function emailInFolder(record, folder) {
+    var status = record.status || "";
+    var archived = record.archived || status === "Archived";
+    if (folder === "Archived") return archived;
+    if (archived) return false;
+    if (folder === "All Mail") return true;
+    if (folder === "Inbox") return record.direction === "Incoming" || ["Inbox", "Waiting Reply", "Follow Up"].indexOf(status) > -1;
+    if (folder === "Drafts") return ["Draft", "Ready To Send"].indexOf(status) > -1;
+    if (folder === "Sent") return status === "Sent" || record.direction === "Outgoing" && status !== "Draft" && status !== "Ready To Send";
+    if (folder === "Follow Up") return ["Follow Up", "Waiting Reply"].indexOf(status) > -1;
+    return true;
+  }
+
+  function emailFilteredRecords() {
+    var folder = state.emailFolder || "Inbox";
+    var query = String(state.query || "").toLowerCase();
+    return emailRecords().filter(function (record) {
+      if (!emailInFolder(record, folder)) return false;
+      if (!query) return true;
+      return [record.subject, record.body, record.fromName, record.fromEmail, record.toName, record.toEmail, record.category, label("clients", record.client), label("projects", record.project)].join(" ").toLowerCase().indexOf(query) > -1;
+    });
+  }
+
+  function emailFolderCount(folder) {
+    return emailRecords().filter(function (record) { return emailInFolder(record, folder); }).length;
+  }
+
+  function emailPortal() {
+    var rows = emailFilteredRecords();
+    var selected = state.emailId ? byId("emails", state.emailId) : rows[0];
+    if (selected && rows.every(function (record) { return record.id !== selected.id; })) selected = rows[0];
+    var folders = emailFolders().map(function (folder) {
+      var current = (state.emailFolder || "Inbox") === folder.id;
+      return '<button class="email-folder' + (current ? " email-folder--active" : "") + '" type="button" data-email-folder="' + esc(folder.id) + '"' + (current ? ' aria-current="page"' : "") + '><span>' + esc(folder.label) + '</span><strong>' + emailFolderCount(folder.id) + "</strong></button>";
+    }).join("");
+    var list = rows.map(function (record) { return emailListItem(record, selected && selected.id === record.id); }).join("");
+    return '<section class="email-portal" aria-label="Email portal">' +
+      '<aside class="email-sidebar"><button class="email-compose-btn" type="button" data-email-compose>New Mail</button><nav aria-label="Mail folders">' + folders + "</nav></aside>" +
+      '<section class="email-list-pane"><div class="email-toolbar"><label><span class="sr-only">Search mail</span><input type="search" value="' + esc(state.query) + '" placeholder="Search mail" data-email-search></label><span>' + rows.length + " messages</span></div>" +
+      '<div class="email-list" role="list">' + (list || '<div class="email-empty">' + emptyState("No mail here", "Messages matching this folder and search will appear here.", icons.emails, "Compose Email", "data-email-compose", true) + "</div>") + "</div></section>" +
+      '<section class="email-reading-pane">' + emailReadingPane(selected) + "</section></section>";
+  }
+
+  function emailListItem(record, selected) {
+    var person = record.direction === "Incoming" ? (record.fromName || record.fromEmail || "Unknown sender") : (record.toName || record.toEmail || "No recipient");
+    var date = record.receivedAt || record.scheduledFor || "";
+    return '<button class="email-list-item' + (selected ? " email-list-item--active" : "") + '" type="button" data-email-select="' + record.id + '" role="listitem">' +
+      '<span class="email-list-item__meta"><strong>' + esc(person) + '</strong><small>' + esc(date) + "</small></span>" +
+      '<span class="email-list-item__subject">' + esc(record.subject || "Untitled email") + "</span>" +
+      '<span class="email-list-item__preview">' + esc(emailPreview(record.body || record.nextStep || "")) + "</span>" +
+      '<span class="email-list-item__chips"><em>' + esc(record.status || "Inbox") + "</em><em>" + esc(record.priority || "Normal") + "</em></span></button>";
+  }
+
+  function emailPreview(value) {
+    var text = String(value || "").replace(/\s+/g, " ").trim();
+    return text.length > 120 ? text.slice(0, 117) + "..." : text;
+  }
+
+  function emailReadingPane(record) {
+    var editing = state.emailEditingId ? byId("emails", state.emailEditingId) : null;
+    if (state.emailCompose) return emailComposePane(editing);
+    if (!record) return '<div class="email-message-empty">' + emptyState("Select a message", "Choose an email from the list or start a new draft.", icons.emails, "New Mail", "data-email-compose", true) + "</div>";
+    var from = [record.fromName, record.fromEmail].filter(Boolean).join(" <") + (record.fromName && record.fromEmail ? ">" : "");
+    var to = [record.toName, record.toEmail].filter(Boolean).join(" <") + (record.toName && record.toEmail ? ">" : "");
+    return '<article class="email-message">' +
+      '<header class="email-message__head"><div><span class="eyebrow">' + esc(record.category || "General") + '</span><h2>' + esc(record.subject || "Untitled email") + '</h2></div><div class="email-message__actions"><button class="ghost-btn" type="button" data-email-edit="' + record.id + '">Edit</button><button class="primary-btn" type="button" data-email-open="' + record.id + '">Open Mail App</button></div></header>' +
+      '<dl class="email-message__meta"><div><dt>From</dt><dd>' + esc(from || "LGNDRY.Co") + "</dd></div><div><dt>To</dt><dd>" + esc(to || "Unassigned") + "</dd></div><div><dt>Client</dt><dd>" + esc(label("clients", record.client)) + "</dd></div><div><dt>Status</dt><dd>" + esc(record.status || "Inbox") + "</dd></div></dl>" +
+      '<div class="email-message__body">' + emailBody(record.body || record.nextStep || "No message body yet.") + "</div>" +
+      '<footer class="email-message__foot"><button class="table-action" type="button" data-email-compose-reply="' + record.id + '">Reply</button><button class="table-action" type="button" data-email-archive="' + record.id + '">Archive</button><button class="table-action table-action--danger" type="button" data-email-delete="' + record.id + '">Delete</button></footer></article>';
+  }
+
+  function emailBody(value) {
+    return String(value || "").split(/\n{2,}/).map(function (paragraph) {
+      return "<p>" + esc(paragraph).replace(/\n/g, "<br>") + "</p>";
+    }).join("");
+  }
+
+  function emailComposePane(record) {
+    var today = new Date().toISOString().slice(0, 10);
+    var reply = !record && state.emailReplyId ? byId("emails", state.emailReplyId) : null;
+    var subject = record ? record.subject : reply ? (/^re:/i.test(reply.subject || "") ? reply.subject : "Re: " + (reply.subject || "")) : "";
+    var toEmail = record ? record.toEmail : reply ? (reply.direction === "Incoming" ? reply.fromEmail : reply.toEmail) : "";
+    var cc = record ? record.cc : "";
+    var body = record ? record.body : reply ? "\n\nOn " + (reply.receivedAt || "recently") + ", " + (reply.fromName || reply.fromEmail || "they") + " wrote:\n" + String(reply.body || "").split("\n").map(function (line) { return "> " + line; }).join("\n") : "";
+    var priority = record ? record.priority : "Normal";
+    var category = record ? record.category : reply ? reply.category : "General";
+    return '<form class="email-composer" data-email-compose-form>' +
+      '<div class="email-composer__top"><div><span class="eyebrow">' + (record ? "Edit Draft" : "Compose") + '</span><h2>' + (record ? "Continue email" : "New mail") + '</h2></div><button class="table-action" type="button" data-email-compose-cancel>Close</button></div>' +
+      '<div class="email-composer__fields">' +
+        '<label><span>To</span><input name="toEmail" type="email" required value="' + esc(toEmail) + '" placeholder="client@example.com"></label>' +
+        '<label><span>Cc</span><input name="cc" type="text" value="' + esc(cc) + '" placeholder="Optional"></label>' +
+        '<label class="email-composer__wide"><span>Subject</span><input name="subject" type="text" required value="' + esc(subject) + '" placeholder="Subject"></label>' +
+        emailSelect("client", "Client", "clients", record && record.client || reply && reply.client) +
+        emailSelect("project", "Project", "projects", record && record.project || reply && reply.project) +
+        '<label><span>Priority</span><select name="priority">' + ["Low", "Normal", "High", "Urgent"].map(function (option) { return '<option' + (priority === option ? " selected" : "") + ">" + option + "</option>"; }).join("") + "</select></label>" +
+        '<label><span>Category</span><select name="category">' + ["Lead", "Booking", "Project", "Partnership", "Collection", "Invoice", "General"].map(function (option) { return '<option' + (category === option ? " selected" : "") + ">" + option + "</option>"; }).join("") + "</select></label>" +
+        '<label><span>Follow-up</span><input name="scheduledFor" type="date" value="' + esc(record && record.scheduledFor || "") + '"></label>' +
+        '<input name="receivedAt" type="hidden" value="' + esc(record && record.receivedAt || today) + '">' +
+        '<label class="email-composer__wide"><span>Message</span><textarea name="body" required placeholder="Write the email...">' + esc(body) + "</textarea></label>" +
+      '</div><div class="email-composer__foot"><button class="ghost-btn" type="submit" data-email-submit="draft">Save Draft</button><button class="primary-btn" type="submit" data-email-submit="send">Open Mail App</button></div></form>';
+  }
+
+  function emailSelect(name, labelText, collection, value) {
+    return '<label><span>' + esc(labelText) + '</span><select name="' + esc(name) + '"><option value="">Unlinked</option>' + active(collection).map(function (record) {
+      return '<option value="' + record.id + '"' + (String(value || "") === record.id ? " selected" : "") + ">" + esc(label(collection, record.id)) + "</option>";
+    }).join("") + "</select></label>";
   }
 
   function recentProjects(projects) {
@@ -1202,6 +1335,121 @@
     if (bulkDeleteBtn) bulkDeleteBtn.addEventListener("click", function () { bulkDelete(schema); });
     var bulkClearBtn = document.querySelector("[data-bulk-clear]");
     if (bulkClearBtn) bulkClearBtn.addEventListener("click", function () { state.selected[schema.collection] = []; refreshTable(schema); });
+  }
+
+  function bindEmailPortal() {
+    document.querySelectorAll("[data-email-folder]").forEach(function (button) {
+      button.addEventListener("click", function () {
+        state.emailFolder = button.dataset.emailFolder;
+        state.emailId = null;
+        state.emailCompose = false;
+        state.emailEditingId = null;
+        state.emailReplyId = null;
+        render();
+      });
+    });
+    document.querySelectorAll("[data-email-compose]").forEach(function (button) {
+      button.addEventListener("click", function () {
+        state.emailCompose = true;
+        state.emailEditingId = null;
+        state.emailReplyId = null;
+        render();
+      });
+    });
+    var search = document.querySelector("[data-email-search]");
+    if (search) {
+      search.addEventListener("input", function (event) {
+        state.query = event.target.value;
+        render();
+      });
+    }
+    document.querySelectorAll("[data-email-select]").forEach(function (button) {
+      button.addEventListener("click", function () {
+        state.emailId = button.dataset.emailSelect;
+        state.emailCompose = false;
+        state.emailEditingId = null;
+        state.emailReplyId = null;
+        render();
+      });
+    });
+    document.querySelectorAll("[data-email-edit]").forEach(function (button) {
+      button.addEventListener("click", function () {
+        state.emailEditingId = button.dataset.emailEdit;
+        state.emailCompose = true;
+        state.emailReplyId = null;
+        render();
+      });
+    });
+    document.querySelectorAll("[data-email-compose-reply]").forEach(function (button) {
+      button.addEventListener("click", function () {
+        state.emailReplyId = button.dataset.emailComposeReply;
+        state.emailEditingId = null;
+        state.emailCompose = true;
+        render();
+      });
+    });
+    document.querySelectorAll("[data-email-open]").forEach(function (button) {
+      button.addEventListener("click", function () { openEmailDraft(button.dataset.emailOpen); });
+    });
+    document.querySelectorAll("[data-email-archive]").forEach(function (button) {
+      button.addEventListener("click", function () { archiveRecord(schemas.emails, button.dataset.emailArchive); });
+    });
+    document.querySelectorAll("[data-email-delete]").forEach(function (button) {
+      button.addEventListener("click", function () { deleteRecord(schemas.emails, button.dataset.emailDelete); });
+    });
+    var cancel = document.querySelector("[data-email-compose-cancel]");
+    if (cancel) {
+      cancel.addEventListener("click", function () {
+        state.emailCompose = false;
+        state.emailEditingId = null;
+        state.emailReplyId = null;
+        render();
+      });
+    }
+    var form = document.querySelector("[data-email-compose-form]");
+    if (form) form.addEventListener("submit", submitEmailCompose);
+  }
+
+  function submitEmailCompose(event) {
+    event.preventDefault();
+    var form = event.currentTarget;
+    var action = event.submitter && event.submitter.dataset.emailSubmit === "send" ? "send" : "draft";
+    var existing = state.emailEditingId ? byId("emails", state.emailEditingId) : null;
+    var next = existing ? Object.assign({}, existing) : { id: newUuid(), archived: false };
+    next.direction = "Outgoing";
+    next.subject = form.elements.subject.value.trim();
+    next.toEmail = form.elements.toEmail.value.trim();
+    next.cc = form.elements.cc.value.trim();
+    next.client = form.elements.client.value;
+    next.project = form.elements.project.value;
+    next.priority = form.elements.priority.value;
+    next.category = form.elements.category.value;
+    next.scheduledFor = form.elements.scheduledFor.value;
+    next.receivedAt = form.elements.receivedAt.value;
+    next.body = form.elements.body.value.trim();
+    next.fromName = next.fromName || "Neo Mokgwadi";
+    next.fromEmail = next.fromEmail || "info@lgndry-co.co.za";
+    next.toName = next.toName || "";
+    next.owner = next.owner || "Neo Mokgwadi";
+    next.status = action === "send" ? "Sent" : "Draft";
+    if (!next.subject || !next.toEmail || !next.body) {
+      toast("Please complete the recipient, subject and message.");
+      return;
+    }
+    data.emails = data.emails || [];
+    var index = data.emails.findIndex(function (record) { return record.id === next.id; });
+    if (index > -1) data.emails[index] = next;
+    else data.emails.unshift(next);
+    persistRecord("emails", next);
+    logActivity((existing ? "Updated" : "Created") + ' email "' + next.subject + '"');
+    state.emailId = next.id;
+    state.emailFolder = action === "send" ? "Sent" : "Drafts";
+    state.emailCompose = false;
+    state.emailEditingId = null;
+    state.emailReplyId = null;
+    render();
+    toast(action === "send" ? "Opening mail app." : "Draft saved.");
+    if (action === "send") openEmailDraft(next.id);
   }
 
   function pdfLetterhead(doc, title) {
