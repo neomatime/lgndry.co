@@ -11,6 +11,7 @@
   var chromeInitialized = false;
   var modalReturnFocus = null;
   var TABLES = ["clients", "practice", "bookings", "projects", "partnerships", "collection", "orders", "galleries", "content", "journal", "cms", "budgets", "invoices", "documents", "emails"];
+  var OPTIONAL_TABLES = ["orders", "emails"];
   var state = { route: "dashboard", query: "", filter: "all", editing: null, detail: null, columnFilters: {}, selected: {} };
   var data = { activity: [] };
   window.LgndryOpsSnapshot = function () { return data; };
@@ -335,12 +336,16 @@
     return Math.round(hours / 24) + "d ago";
   }
 
+  function isUnavailableOptionalTable(table, error) {
+    return OPTIONAL_TABLES.indexOf(table) > -1 && error && (error.code === "42P01" || error.code === "PGRST205");
+  }
+
   function loadRemoteData() {
     var queries = TABLES.map(function (table) {
       return supabaseClient.from(table).select("*").then(function (result) {
         if (result.error) {
-          if (table === "orders" && (result.error.code === "42P01" || result.error.code === "PGRST205")) {
-            console.warn("Orders table is not available yet. Apply the bundled Supabase migration.");
+          if (isUnavailableOptionalTable(table, result.error)) {
+            console.warn(table + " table is not available yet. Apply the bundled Supabase migration.");
             return { table: table, rows: [] };
           }
           throw result.error;
