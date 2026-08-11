@@ -100,6 +100,8 @@ Deno.serve(async (request) => {
       text,
       html,
     };
+    const replyTo = Deno.env.get("ADMIN_EMAIL_REPLY_TO") || Deno.env.get("RESEND_INBOUND_ADDRESS");
+    if (replyTo) resendPayload.reply_to = replyTo;
     if (cc.length) resendPayload.cc = cc;
 
     const response = await fetch("https://api.resend.com/emails", {
