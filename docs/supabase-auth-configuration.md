@@ -27,7 +27,7 @@ The template sends the verification token to the dedicated LGNDRY.Co callback pa
 The default Supabase mail service may display “Supabase Auth”. To reliably use LGNDRY.Co branding, configure **Authentication → SMTP Settings** with a verified custom SMTP provider and set:
 
 - Sender name: `LGNDRY.Co`
-- Sender email: a verified LGNDRY.Co mailbox, such as `info@lgndry-co.co.za`
+- Sender email: the verified LGNDRY.Co mailbox `neomokgwadi@lgndry-co.co.za`
 
 SPF and DKIM should be configured with the selected mail provider to improve delivery. A publishable or anon key cannot change SMTP or dashboard Auth settings.
 

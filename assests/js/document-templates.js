@@ -200,7 +200,7 @@ General call time: ${c.callTime}
 Estimated wrap: ${c.wrapTime}
 
 KEY CONTACTS
-Producer / photographer: Dan Mokgwadi | info@lgndry-co.co.za
+Producer / photographer: Dan Mokgwadi | neomokgwadi@lgndry-co.co.za
 Client contact: ${c.contact} | ${c.email} | ${c.phone}
 Emergency contact: [NAME AND NUMBER]
 

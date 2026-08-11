@@ -443,7 +443,7 @@
   var drawer;
   var cartButton;
   var lastFocused;
-  var orderEmail = 'info@lgndry-co.co.za';
+  var orderEmail = 'neomokgwadi@lgndry-co.co.za';
 
   function escapeHtml(value) {
     return String(value || '').replace(/[&<>"']/g, function (char) {
@@ -807,7 +807,7 @@
     if (!window.LgndrySiteData || !window.LgndrySiteData.submitOrder) {
       if (feedback) {
         feedback.className = 'collection-cart__feedback collection-cart__feedback--error';
-        feedback.textContent = 'Order requests are temporarily unavailable. Please contact info@lgndry-co.co.za.';
+        feedback.textContent = 'Order requests are temporarily unavailable. Please contact neomokgwadi@lgndry-co.co.za.';
       }
       return;
     }
@@ -834,7 +834,7 @@
       submit.textContent = 'Send order request';
       if (feedback) {
         feedback.className = 'collection-cart__feedback collection-cart__feedback--error';
-        feedback.textContent = 'We could not send your request. Please try again or contact info@lgndry-co.co.za.';
+        feedback.textContent = 'We could not send your request. Please try again or contact neomokgwadi@lgndry-co.co.za.';
       }
     });
   }
@@ -978,7 +978,7 @@ function populateBudgetSelect(select, form) {
     var note = actions.parentNode.querySelector('[data-contact-error]') || document.createElement('p');
     note.setAttribute('data-contact-error', '');
     note.className = 'contact-form__error';
-    note.textContent = 'Something went wrong sending your message. Please try again or email us directly at info@lgndry-co.co.za.';
+    note.textContent = 'Something went wrong sending your message. Please try again or email us directly at neomokgwadi@lgndry-co.co.za.';
     actions.parentNode.insertBefore(note, actions);
   }
 
@@ -1464,7 +1464,7 @@ function populateBudgetSelect(select, form) {
       var note = review.querySelector('[data-booking-submit-error]') || document.createElement('p');
       note.setAttribute('data-booking-submit-error', '');
       note.className = 'booking-modal__error is-visible';
-      note.textContent = 'Something went wrong sending your request. Please try again or email us directly at info@lgndry-co.co.za.';
+      note.textContent = 'Something went wrong sending your request. Please try again or email us directly at neomokgwadi@lgndry-co.co.za.';
       review.appendChild(note);
     }
   }
@@ -1946,7 +1946,7 @@ function populateBudgetSelect(select, form) {
       var note = review.querySelector('[data-booking-submit-error]') || document.createElement('p');
       note.setAttribute('data-booking-submit-error', '');
       note.className = 'booking-modal__error is-visible';
-      note.textContent = 'Something went wrong sending your application. Please try again or email us directly at info@lgndry-co.co.za.';
+      note.textContent = 'Something went wrong sending your application. Please try again or email us directly at neomokgwadi@lgndry-co.co.za.';
       review.appendChild(note);
     }
   }

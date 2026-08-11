@@ -94,7 +94,7 @@ Deno.serve(async (request) => {
     }
 
     const resendPayload: Record<string, unknown> = {
-      from: Deno.env.get("ADMIN_EMAIL_FROM") || Deno.env.get("RESEND_EMAIL_FROM") || "LGNDRY.Co <info@lgndry-co.co.za>",
+      from: Deno.env.get("ADMIN_EMAIL_FROM") || Deno.env.get("RESEND_EMAIL_FROM") || "LGNDRY.Co <neomokgwadi@lgndry-co.co.za>",
       to,
       subject,
       text,

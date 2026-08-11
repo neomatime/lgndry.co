@@ -274,8 +274,8 @@
         { id: c3, name: "LELO Studio", type: "Company", contact: "Kea Matlou", email: "kea@lelo.example", phone: "+27 82 210 0112", status: "Active", guidelines: "High contrast product lighting.", notes: "Product campaign completed." }
       ],
       emails: [
-        { id: id(), subject: "Brand campaign follow-up", direction: "Outgoing", status: "Draft", priority: "High", client: c1, project: p1, fromName: "Dan Mokgwadi", fromEmail: "info@lgndry-co.co.za", toName: "Amina Jacobs", toEmail: "amina@rituals.example", cc: "", category: "Project", receivedAt: "2026-07-07", scheduledFor: "2026-07-08", owner: "Dan Mokgwadi", body: "Hi Amina,\n\nThank you for the brief. I have mapped the next steps for the Rituals campaign and can confirm the shoot direction by tomorrow.\n\nWarmly,\nDan", nextStep: "Confirm shoot direction and attach the updated treatment." },
-        { id: id(), subject: "Annual creative partnership", direction: "Incoming", status: "Follow Up", priority: "Normal", client: c2, project: "", fromName: "Thabo Mokoena", fromEmail: "studio@hennessy.example", toName: "LGNDRY.Co", toEmail: "info@lgndry-co.co.za", cc: "", category: "Partnership", receivedAt: "2026-07-06", scheduledFor: "2026-07-09", owner: "Dan Mokgwadi", body: "Hi Dan,\n\nWe would like to review the annual creative partnership proposal and understand the monthly deliverables in more detail.", nextStep: "Reply with proposal summary and discovery call times." }
+        { id: id(), subject: "Brand campaign follow-up", direction: "Outgoing", status: "Draft", priority: "High", client: c1, project: p1, fromName: "Dan Mokgwadi", fromEmail: "neomokgwadi@lgndry-co.co.za", toName: "Amina Jacobs", toEmail: "amina@rituals.example", cc: "", category: "Project", receivedAt: "2026-07-07", scheduledFor: "2026-07-08", owner: "Dan Mokgwadi", body: "Hi Amina,\n\nThank you for the brief. I have mapped the next steps for the Rituals campaign and can confirm the shoot direction by tomorrow.\n\nWarmly,\nDan", nextStep: "Confirm shoot direction and attach the updated treatment." },
+        { id: id(), subject: "Annual creative partnership", direction: "Incoming", status: "Follow Up", priority: "Normal", client: c2, project: "", fromName: "Thabo Mokoena", fromEmail: "studio@hennessy.example", toName: "LGNDRY.Co", toEmail: "neomokgwadi@lgndry-co.co.za", cc: "", category: "Partnership", receivedAt: "2026-07-06", scheduledFor: "2026-07-09", owner: "Dan Mokgwadi", body: "Hi Dan,\n\nWe would like to review the annual creative partnership proposal and understand the monthly deliverables in more detail.", nextStep: "Reply with proposal summary and discovery call times." }
       ],
       practice: [
         { id: id(), title: "Brand Photography", category: "Photography", description: "Purposeful brand campaigns and founder visuals.", position: 1, visibility: "Visible" },
@@ -1435,7 +1435,7 @@
     next.receivedAt = form.elements.receivedAt.value;
     next.body = form.elements.body.value.trim();
     next.fromName = next.fromName || "Neo Mokgwadi";
-    next.fromEmail = next.fromEmail || "info@lgndry-co.co.za";
+    next.fromEmail = next.fromEmail || "neomokgwadi@lgndry-co.co.za";
     next.toName = next.toName || "";
     next.owner = next.owner || "Neo Mokgwadi";
     next.status = action === "send" ? "Ready To Send" : "Draft";
@@ -1470,7 +1470,7 @@
     doc.setFont("helvetica", "normal");
     doc.setFontSize(9);
     doc.setTextColor(120, 120, 120);
-    doc.text("Visual Storytelling Studio  |  Limpopo, South Africa  |  info@lgndry-co.co.za", 20, 30);
+    doc.text("Visual Storytelling Studio  |  Limpopo, South Africa  |  neomokgwadi@lgndry-co.co.za", 20, 30);
     doc.setDrawColor(220, 220, 220);
     doc.line(20, 36, 190, 36);
     doc.setTextColor(29, 29, 29);
