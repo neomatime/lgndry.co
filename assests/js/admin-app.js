@@ -1434,8 +1434,8 @@
     next.scheduledFor = form.elements.scheduledFor.value;
     next.receivedAt = form.elements.receivedAt.value;
     next.body = form.elements.body.value.trim();
-    next.fromName = next.fromName || "Neo Mokgwadi";
-    next.fromEmail = next.fromEmail || "neomokgwadi@lgndry-co.co.za";
+    next.fromName = "LGNDRY.Co";
+    next.fromEmail = "neomokgwadi@lgndry-co.co.za";
     next.toName = next.toName || "";
     next.owner = next.owner || "Neo Mokgwadi";
     next.status = action === "send" ? "Ready To Send" : "Draft";
