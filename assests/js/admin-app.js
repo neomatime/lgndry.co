@@ -701,7 +701,7 @@
     var list = rows.map(function (record) { return emailListItem(record, selected && selected.id === record.id); }).join("");
     return '<section class="email-portal' + (state.emailSidebarCollapsed ? " email-portal--folders-collapsed" : "") + '" aria-label="Email portal">' +
       '<aside class="email-sidebar"><div class="email-sidebar__top"><div class="email-sidebar__header"><span>Folders</span><button class="email-sidebar-toggle" type="button" data-email-sidebar-toggle aria-label="' + (state.emailSidebarCollapsed ? "Expand email folders" : "Collapse email folders") + '" aria-expanded="' + (!state.emailSidebarCollapsed) + '" title="' + (state.emailSidebarCollapsed ? "Expand email folders" : "Collapse email folders") + '"><span>' + (state.emailSidebarCollapsed ? ">" : "<") + '</span></button></div><button class="email-compose-btn" type="button" data-email-compose title="New Mail"><span>New Mail</span></button></div><nav aria-label="Mail folders">' + folders + "</nav></aside>" +
-      '<section class="email-list-pane"><div class="email-toolbar"><label><span class="sr-only">Search mail</span><input type="search" value="' + esc(state.query) + '" placeholder="Search mail" data-email-search></label><span>' + rows.length + " messages</span></div>" +
+      '<section class="email-list-pane"><div class="email-toolbar"><label><span class="sr-only">Search mail</span><input type="search" value="' + esc(state.query) + '" placeholder="Search mail" data-email-search></label><span>' + rows.length + ' messages</span><button class="ghost-btn" type="button" data-sync-inbox>Sync Inbox</button></div>' +
       '<div class="email-list" role="list">' + (list || '<div class="email-empty">' + emptyState("No mail here", "Messages matching this folder and search will appear here.", icons.emails, "Compose Email", "data-email-compose", true) + "</div>") + "</div></section>" +
       '<section class="email-reading-pane">' + emailReadingPane(selected) + "</section></section>";
   }
@@ -1258,6 +1258,37 @@
     bindTableRows(schema);
   }
 
+  function syncTitanInbox(button) {
+    var originalLabel = button.textContent;
+    button.disabled = true;
+    button.textContent = "Syncing...";
+    supabaseClient.functions.invoke("sync-titan-inbox", { body: {} }).then(function (result) {
+      if (result.error) {
+        var context = result.error.context;
+        if (context && typeof context.json === "function") {
+          return context.json().then(function (body) {
+            throw new Error((body && body.error) || result.error.message);
+          }, function () {
+            throw result.error;
+          });
+        }
+        throw result.error;
+      }
+      if (result.data && result.data.error) throw new Error(result.data.error);
+      var synced = (result.data && result.data.synced) || 0;
+      toast(synced > 0 ? "Synced " + synced + " new " + (synced === 1 ? "email" : "emails") + " from the inbox." : "No new emails.");
+      return loadRemoteData();
+    }).then(function (remoteData) {
+      if (remoteData) { data = remoteData; render(); }
+    }).catch(function (error) {
+      console.error("Inbox sync failed:", error);
+      toast("Couldn't sync the inbox: " + (error.message || "unknown error"));
+    }).finally(function () {
+      button.disabled = false;
+      button.textContent = originalLabel;
+    });
+  }
+
   // Re-renders only the results table (not the search input / filter select /
   // New button), so typing in the module search box never loses focus.
   function refreshTable(schema) {
@@ -1338,6 +1369,8 @@
   }
 
   function bindEmailPortal() {
+    var syncInboxBtn = document.querySelector("[data-sync-inbox]");
+    if (syncInboxBtn) syncInboxBtn.addEventListener("click", function () { syncTitanInbox(syncInboxBtn); });
     var sidebarToggle = document.querySelector("[data-email-sidebar-toggle]");
     if (sidebarToggle) {
       sidebarToggle.addEventListener("click", function () {
