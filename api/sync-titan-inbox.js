@@ -24,7 +24,7 @@
 const { ImapFlow } = require('imapflow');
 const { simpleParser } = require('mailparser');
 
-const FETCH_RECENT = 3; // how many of the newest INBOX messages to scan per run (temporarily low for diagnosis)
+const FETCH_RECENT = 15; // how many of the newest INBOX messages to scan per run — kept modest since fetching full raw sources is slow enough that 40 timed out even at 60s
 
 module.exports = async (req, res) => {
   res.setHeader('Access-Control-Allow-Origin', '*');
@@ -54,25 +54,18 @@ module.exports = async (req, res) => {
   const sbHeaders = { Authorization: `Bearer ${SERVICE_KEY}`, apikey: SERVICE_KEY };
 
   let parsed = [];
-  console.log('sync-titan-inbox: connecting to', IMAP_HOST, IMAP_PORT);
   const client = new ImapFlow({
     host: IMAP_HOST, port: IMAP_PORT, secure: true,
     auth: { user: IMAP_USER, pass: IMAP_PASS }, logger: false,
   });
   try {
     await client.connect();
-    console.log('sync-titan-inbox: connected + authenticated, opening INBOX');
     const lock = await client.getMailboxLock('INBOX');
-    console.log('sync-titan-inbox: INBOX locked, exists =', client.mailbox && client.mailbox.exists);
     try {
       const total = client.mailbox && client.mailbox.exists ? client.mailbox.exists : 0;
       if (total > 0) {
         const start = Math.max(1, total - (FETCH_RECENT - 1));
-        console.log('sync-titan-inbox: fetching range', start + ':*', 'of', total);
-        let fetchCount = 0;
         for await (const msg of client.fetch(`${start}:*`, { source: true })) {
-          fetchCount++;
-          console.log('sync-titan-inbox: got message', fetchCount, 'uid', msg.uid, 'bytes', msg.source ? msg.source.length : 0);
           try {
             const mail = await simpleParser(msg.source);
             const fromAddr = mail.from && mail.from.value && mail.from.value[0];
