@@ -807,26 +807,38 @@
   function emailComposePane(record) {
     var today = new Date().toISOString().slice(0, 10);
     var reply = !record && state.emailReplyId ? byId("emails", state.emailReplyId) : null;
-    var subject = record ? record.subject : reply ? (/^re:/i.test(reply.subject || "") ? reply.subject : "Re: " + (reply.subject || "")) : "";
-    var toEmail = record ? record.toEmail : reply ? (reply.direction === "Incoming" ? reply.fromEmail : reply.toEmail) : "";
-    var cc = record ? record.cc : "";
+    // If the user has already started typing in this compose session,
+    // state.emailComposeDraft holds the latest values — used to rebuild
+    // the pane after any re-render (switching to another section and
+    // back, a background data refresh, etc.) without losing what they
+    // wrote. Only the very first render of a fresh session falls back
+    // to record/reply-derived defaults.
+    var draft = state.emailComposeDraft;
+    var subject = draft ? draft.subject : record ? record.subject : reply ? (/^re:/i.test(reply.subject || "") ? reply.subject : "Re: " + (reply.subject || "")) : "";
+    var toEmail = draft ? draft.toEmail : record ? record.toEmail : reply ? (reply.direction === "Incoming" ? reply.fromEmail : reply.toEmail) : "";
+    var cc = draft ? draft.cc : record ? record.cc : "";
+    var client = draft ? draft.client : (record && record.client || reply && reply.client || "");
+    var project = draft ? draft.project : (record && record.project || reply && reply.project || "");
+    var priority = draft ? draft.priority : record ? record.priority : "Normal";
+    var category = draft ? draft.category : record ? record.category : reply ? reply.category : "General";
+    var scheduledFor = draft ? draft.scheduledFor : (record && record.scheduledFor || "");
+    var receivedAt = draft ? draft.receivedAt : (record && record.receivedAt || today);
     var body = record ? record.body : reply ? "\n\nOn " + (reply.receivedAt || "recently") + ", " + (reply.fromName || reply.fromEmail || "they") + " wrote:\n" + String(reply.body || "").split("\n").map(function (line) { return "> " + line; }).join("\n") : "";
-    var bodyHtml = record && record.body_html ? record.body_html
+    var bodyHtml = draft && draft.bodyHtml != null ? draft.bodyHtml
+      : record && record.body_html ? record.body_html
       : "<p><br></p>" + emailSignatureHtml() + (reply ? nl2br(body) : "");
-    var priority = record ? record.priority : "Normal";
-    var category = record ? record.category : reply ? reply.category : "General";
     return '<form class="email-composer" data-email-compose-form>' +
       '<div class="email-composer__top"><div><span class="eyebrow">' + (record ? "Edit Draft" : "Compose") + '</span><h2>' + (record ? "Continue email" : "New mail") + '</h2></div><button class="table-action" type="button" data-email-compose-cancel>Close</button></div>' +
       '<div class="email-composer__fields">' +
         '<label><span>To</span><input name="toEmail" type="email" required value="' + esc(toEmail) + '" placeholder="client@example.com"></label>' +
         '<label><span>Cc</span><input name="cc" type="text" value="' + esc(cc) + '" placeholder="Optional"></label>' +
         '<label class="email-composer__wide"><span>Subject</span><input name="subject" type="text" required value="' + esc(subject) + '" placeholder="Subject"></label>' +
-        emailSelect("client", "Client", "clients", record && record.client || reply && reply.client) +
-        emailSelect("project", "Project", "projects", record && record.project || reply && reply.project) +
+        emailSelect("client", "Client", "clients", client) +
+        emailSelect("project", "Project", "projects", project) +
         '<label><span>Priority</span><select name="priority">' + ["Low", "Normal", "High", "Urgent"].map(function (option) { return '<option' + (priority === option ? " selected" : "") + ">" + option + "</option>"; }).join("") + "</select></label>" +
         '<label><span>Category</span><select name="category">' + ["Lead", "Booking", "Project", "Partnership", "Collection", "Invoice", "General"].map(function (option) { return '<option' + (category === option ? " selected" : "") + ">" + option + "</option>"; }).join("") + "</select></label>" +
-        '<label><span>Follow-up</span><input name="scheduledFor" type="date" value="' + esc(record && record.scheduledFor || "") + '"></label>' +
-        '<input name="receivedAt" type="hidden" value="' + esc(record && record.receivedAt || today) + '">' +
+        '<label><span>Follow-up</span><input name="scheduledFor" type="date" value="' + esc(scheduledFor) + '"></label>' +
+        '<input name="receivedAt" type="hidden" value="' + esc(receivedAt) + '">' +
         '<label class="email-composer__wide email-composer__message"><span>Message</span>' + richToolbarHtml() +
           '<div class="rich-editor" data-email-body contenteditable="true" role="textbox" aria-multiline="true" aria-label="Email message">' + (bodyHtml || "") + "</div>" +
         "</label>" +
@@ -1476,6 +1488,7 @@
         state.emailEditingId = null;
         state.emailReplyId = null;
         state.emailComposeAttachments = [];
+        state.emailComposeDraft = null;
         render();
       });
     });
@@ -1502,6 +1515,7 @@
         state.emailCompose = true;
         state.emailReplyId = null;
         state.emailComposeAttachments = (editingRecord && editingRecord.attachments || []).slice();
+        state.emailComposeDraft = null;
         render();
       });
     });
@@ -1511,6 +1525,7 @@
         state.emailEditingId = null;
         state.emailCompose = true;
         state.emailComposeAttachments = [];
+        state.emailComposeDraft = null;
         render();
       });
     });
@@ -1529,6 +1544,7 @@
         state.emailCompose = false;
         state.emailEditingId = null;
         state.emailReplyId = null;
+        state.emailComposeDraft = null;
         render();
       });
     }
@@ -1536,6 +1552,49 @@
     if (form) form.addEventListener("submit", submitEmailCompose);
     bindRichToolbar();
     bindAttachmentField();
+    bindComposeDraftSync();
+  }
+
+  // Keeps state.emailComposeDraft in sync with the live compose form so
+  // emailComposePane() can rebuild identical content after any re-render
+  // (switching admin sections and back, a background refresh, etc.)
+  // instead of resetting to the session's original pre-fill.
+  function bindComposeDraftSync() {
+    var form = document.querySelector("[data-email-compose-form]");
+    if (!form) return;
+    function ensureDraft() {
+      if (!state.emailComposeDraft) {
+        state.emailComposeDraft = {
+          toEmail: form.elements.toEmail.value,
+          cc: form.elements.cc.value,
+          subject: form.elements.subject.value,
+          client: form.elements.client.value,
+          project: form.elements.project.value,
+          priority: form.elements.priority.value,
+          category: form.elements.category.value,
+          scheduledFor: form.elements.scheduledFor.value,
+          receivedAt: form.elements.receivedAt.value,
+          bodyHtml: null
+        };
+      }
+      return state.emailComposeDraft;
+    }
+    ["toEmail", "cc", "subject", "scheduledFor"].forEach(function (name) {
+      form.elements[name].addEventListener("input", function () {
+        ensureDraft()[name] = form.elements[name].value;
+      });
+    });
+    ["client", "project", "priority", "category"].forEach(function (name) {
+      form.elements[name].addEventListener("change", function () {
+        ensureDraft()[name] = form.elements[name].value;
+      });
+    });
+    var editor = form.querySelector("[data-email-body]");
+    if (editor) {
+      editor.addEventListener("input", function () {
+        ensureDraft().bodyHtml = editor.innerHTML;
+      });
+    }
   }
 
   var RICH_INLINE_TAGS = { bold: "strong", italic: "em", underline: "u" };
@@ -1707,6 +1766,7 @@
     state.emailCompose = false;
     state.emailEditingId = null;
     state.emailReplyId = null;
+    state.emailComposeDraft = null;
     if (action === "send") {
       toast("Sending email via Resend.");
       sendEmailRecord(next.id);
