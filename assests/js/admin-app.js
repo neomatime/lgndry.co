@@ -1680,9 +1680,16 @@
 
 
   function emailHtml(value) {
-    return String(value || "").split(/\n{2,}/).map(function (paragraph) {
+    var body = String(value || "").split(/\n{2,}/).map(function (paragraph) {
       return "<p>" + esc(paragraph).replace(/\n/g, "<br>") + "</p>";
     }).join("");
+    return body + emailSignatureHtml();
+  }
+
+  function emailSignatureHtml() {
+    return '<p style="margin:28px 0 2px;font-family:Arial,Helvetica,sans-serif;font-size:14px;font-weight:700;color:#1a1a18;">Dan Mokgwadi</p>' +
+      '<p style="margin:0 0 18px;font-family:Arial,Helvetica,sans-serif;font-size:13px;color:#655f58;">Founder &amp; Creative Director</p>' +
+      '<img src="https://www.lgndry-co.co.za/assests/images/email-banner.png" alt="LGNDRY.Co" width="600" style="max-width:100%;height:auto;display:block;border:0;">';
   }
 
   function sendEmailRecord(recordId) {
