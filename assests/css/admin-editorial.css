@@ -2141,9 +2141,9 @@ body.ops-app-shell .rich-toolbar {
   align-items: center;
   gap: 2px;
   padding: 6px;
-  border: 1px solid var(--admin-rule);
+  border: 1px solid rgba(17, 17, 15, 0.13);
   border-bottom: 0;
-  background: color-mix(in srgb, var(--admin-panel) 96%, var(--admin-ink) 4%);
+  background: #f3f1ec;
 }
 
 body.ops-app-shell .rich-toolbar__btn {
@@ -2154,7 +2154,7 @@ body.ops-app-shell .rich-toolbar__btn {
   height: 28px;
   border: 1px solid transparent;
   background: transparent;
-  color: var(--admin-ink);
+  color: #11110f;
   cursor: pointer;
 }
 
@@ -2164,33 +2164,37 @@ body.ops-app-shell .rich-toolbar__btn svg {
 }
 
 body.ops-app-shell .rich-toolbar__btn:hover {
-  border-color: var(--admin-rule);
-  background: var(--admin-panel-raised);
+  border-color: rgba(17, 17, 15, 0.13);
+  background: #e9e6de;
 }
 
 body.ops-app-shell .rich-toolbar__sep {
   width: 1px;
   height: 18px;
   margin: 0 4px;
-  background: var(--admin-rule);
+  background: rgba(17, 17, 15, 0.13);
 }
 
+/* Fixed light surface regardless of admin theme: this editor previews
+   actual outgoing/incoming email content, which always renders on a white
+   background in real inboxes — a dark-mode composer would otherwise clash
+   with hardcoded-dark signature/quote text and make it unreadable. */
 body.ops-app-shell .rich-editor {
   min-height: clamp(280px, 42vh, 520px);
   max-height: 60vh;
   overflow-y: auto;
   padding: 12px;
-  border: 1px solid var(--admin-rule);
-  color: var(--admin-ink);
-  background: color-mix(in srgb, var(--admin-panel) 96%, var(--admin-ink) 4%);
+  border: 1px solid rgba(17, 17, 15, 0.13);
+  color: #1a1a18;
+  background: #fff;
   font-size: 0.84rem;
   line-height: 1.58;
 }
 
 body.ops-app-shell .rich-editor:focus {
   outline: none;
-  border-color: var(--text);
-  box-shadow: 0 1px 0 var(--text);
+  border-color: #1a1a18;
+  box-shadow: 0 1px 0 #1a1a18;
 }
 
 body.ops-app-shell .rich-editor ul,

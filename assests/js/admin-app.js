@@ -776,7 +776,12 @@
     var html = record.body_html && String(record.body_html).trim();
     if (html) {
       var doc = "<!DOCTYPE html><html><head><base target=\"_blank\"><meta charset=\"utf-8\">" +
-        "<style>html,body{margin:0;padding:14px;font-family:-apple-system,Segoe UI,Roboto,Helvetica,Arial,sans-serif;color:#1a1a18;background:#fff;font-size:14px;line-height:1.6;}img{max-width:100%;height:auto;}a{color:#1A5C3A;}table{max-width:100%;}</style>" +
+        // Pasted content (Word, Notes, ChatGPT, etc.) can carry inline
+        // color/caret-color styles meant for a dark source surface — left
+        // as-is those bake in invisible near-white text against this
+        // always-white reading pane, so text color is force-reset on every
+        // element except links, which keep their own explicit color.
+        "<style>html,body{margin:0;padding:14px;font-family:-apple-system,Segoe UI,Roboto,Helvetica,Arial,sans-serif;color:#1a1a18;background:#fff;font-size:14px;line-height:1.6;}body :not(a){color:#1a1a18 !important;}img{max-width:100%;height:auto;}a{color:#1A5C3A;}table{max-width:100%;}</style>" +
         "</head><body>" + html + "</body></html>";
       return '<iframe class="email-message__frame" sandbox="allow-same-origin" referrerpolicy="no-referrer" onload="sizeMailFrame(this)" srcdoc="' + esc(doc) + '"></iframe>';
     }
@@ -1649,6 +1654,25 @@
     }
   }
 
+  // Strips color/background/caret-color inline styles from pasted markup —
+  // content pasted from a dark-mode source (Notes, ChatGPT, Word, etc.)
+  // otherwise carries its own near-white text color, invisible once it
+  // lands on this always-white composer/reading-pane surface.
+  function stripForeignColors(html) {
+    var container = document.createElement("div");
+    container.innerHTML = html;
+    var styled = container.querySelectorAll("[style]");
+    for (var i = 0; i < styled.length; i++) {
+      var el = styled[i];
+      el.style.removeProperty("color");
+      el.style.removeProperty("background");
+      el.style.removeProperty("background-color");
+      el.style.removeProperty("caret-color");
+      if (!el.getAttribute("style")) el.removeAttribute("style");
+    }
+    return container.innerHTML;
+  }
+
   function bindRichToolbar() {
     var toolbar = document.querySelector("[data-rich-toolbar]");
     var editor = document.querySelector("[data-email-body]");
@@ -1662,6 +1686,34 @@
       startSel.removeAllRanges();
       startSel.addRange(startRange);
     }
+    editor.addEventListener("paste", function (event) {
+      event.preventDefault();
+      var clipboard = event.clipboardData;
+      var htmlData = clipboard && clipboard.getData("text/html");
+      var textData = (clipboard && clipboard.getData("text/plain")) || "";
+      var sel = window.getSelection();
+      if (!sel || !sel.rangeCount) return;
+      var range = sel.getRangeAt(0);
+      range.deleteContents();
+      var fragment = document.createDocumentFragment();
+      var lastNode;
+      if (htmlData) {
+        var source = document.createElement("div");
+        source.innerHTML = stripForeignColors(htmlData);
+        while (source.firstChild) lastNode = fragment.appendChild(source.firstChild);
+      } else {
+        lastNode = document.createTextNode(textData);
+        fragment.appendChild(lastNode);
+      }
+      range.insertNode(fragment);
+      if (lastNode) {
+        range.setStartAfter(lastNode);
+        range.collapse(true);
+        sel.removeAllRanges();
+        sel.addRange(range);
+      }
+      editor.dispatchEvent(new Event("input", { bubbles: true }));
+    });
     toolbar.querySelectorAll("[data-rich-cmd]").forEach(function (button) {
       button.addEventListener("mousedown", function (event) {
         event.preventDefault();
