@@ -802,7 +802,8 @@
     var toEmail = record ? record.toEmail : reply ? (reply.direction === "Incoming" ? reply.fromEmail : reply.toEmail) : "";
     var cc = record ? record.cc : "";
     var body = record ? record.body : reply ? "\n\nOn " + (reply.receivedAt || "recently") + ", " + (reply.fromName || reply.fromEmail || "they") + " wrote:\n" + String(reply.body || "").split("\n").map(function (line) { return "> " + line; }).join("\n") : "";
-    var bodyHtml = record && record.body_html ? record.body_html : nl2br(body);
+    var bodyHtml = record && record.body_html ? record.body_html
+      : "<p><br></p>" + emailSignatureHtml() + (reply ? nl2br(body) : "");
     var priority = record ? record.priority : "Normal";
     var category = record ? record.category : reply ? reply.category : "General";
     return '<form class="email-composer" data-email-compose-form>' +
@@ -1565,6 +1566,15 @@
     var toolbar = document.querySelector("[data-rich-toolbar]");
     var editor = document.querySelector("[data-email-body]");
     if (!toolbar || !editor) return;
+    if (!state.emailEditingId && editor.firstChild) {
+      editor.focus();
+      var startRange = document.createRange();
+      startRange.setStart(editor.firstChild, 0);
+      startRange.collapse(true);
+      var startSel = window.getSelection();
+      startSel.removeAllRanges();
+      startSel.addRange(startRange);
+    }
     toolbar.querySelectorAll("[data-rich-cmd]").forEach(function (button) {
       button.addEventListener("mousedown", function (event) {
         event.preventDefault();
@@ -1809,8 +1819,11 @@
 
   function outgoingEmailHtml(record) {
     var richHtml = record.body_html && String(record.body_html).trim();
-    var body = richHtml ? richHtml : emailHtml(record.body);
-    return body + emailSignatureHtml();
+    // Rich drafts already carry the signature/banner baked in from the
+    // composer (see emailComposePane). Only the legacy plain-text path
+    // needs it appended here.
+    if (richHtml) return richHtml;
+    return emailHtml(record.body) + emailSignatureHtml();
   }
 
   function sendEmailRecord(recordId) {
