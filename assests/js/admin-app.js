@@ -1262,20 +1262,20 @@
     var originalLabel = button.textContent;
     button.disabled = true;
     button.textContent = "Syncing...";
-    supabaseClient.functions.invoke("sync-titan-inbox", { body: {} }).then(function (result) {
-      if (result.error) {
-        var context = result.error.context;
-        if (context && typeof context.json === "function") {
-          return context.json().then(function (body) {
-            throw new Error((body && body.error) || result.error.message);
-          }, function () {
-            throw result.error;
-          });
-        }
-        throw result.error;
-      }
-      if (result.data && result.data.error) throw new Error(result.data.error);
-      var synced = (result.data && result.data.synced) || 0;
+    supabaseClient.auth.getSession().then(function (sessionResult) {
+      var token = sessionResult.data && sessionResult.data.session && sessionResult.data.session.access_token;
+      if (!token) throw new Error("Not signed in.");
+      return fetch("/api/sync-titan-inbox", {
+        method: "POST",
+        headers: { "Authorization": "Bearer " + token, "Content-Type": "application/json" }
+      });
+    }).then(function (response) {
+      return response.json().then(function (body) {
+        if (!response.ok || body.error) throw new Error(body.error || "Sync failed.");
+        return body;
+      });
+    }).then(function (body) {
+      var synced = body.synced || 0;
       toast(synced > 0 ? "Synced " + synced + " new " + (synced === 1 ? "email" : "emails") + " from the inbox." : "No new emails.");
       return loadRemoteData();
     }).then(function (remoteData) {

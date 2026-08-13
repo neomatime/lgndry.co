@@ -1,0 +1,7 @@
+{
+  "type": "commonjs",
+  "dependencies": {
+    "imapflow": "^1.0.0",
+    "mailparser": "^3.6.0"
+  }
+}
