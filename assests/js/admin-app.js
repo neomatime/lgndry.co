@@ -2699,8 +2699,14 @@
     setInterval(function () {
       var modal = document.querySelector("[data-modal]");
       if (modal && modal.classList.contains("is-open")) return;
+      // Composing/editing/replying to an email holds unsaved work in a
+      // contenteditable region, which document.activeElement stops
+      // reflecting the moment the tab loses focus (e.g. the admin
+      // switches away) — so this has to be checked independently of
+      // "what's focused right now", not just alongside it.
+      if (state.emailCompose) return;
       var active = document.activeElement;
-      if (active && ["INPUT", "TEXTAREA", "SELECT"].indexOf(active.tagName) > -1) return;
+      if (active && (["INPUT", "TEXTAREA", "SELECT"].indexOf(active.tagName) > -1 || active.isContentEditable)) return;
       loadRemoteData().then(function (remoteData) {
         data = remoteData;
         render();
