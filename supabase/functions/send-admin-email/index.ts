@@ -48,6 +48,19 @@ function recipients(value: unknown) {
   return String(value || "").split(",").map((item) => item.trim()).filter(Boolean);
 }
 
+async function fetchAsBase64(url: string): Promise<string> {
+  const response = await fetch(url);
+  if (!response.ok) throw new Error(`Could not fetch attachment (${response.status})`);
+  const buffer = await response.arrayBuffer();
+  const bytes = new Uint8Array(buffer);
+  let binary = "";
+  const chunkSize = 0x8000;
+  for (let i = 0; i < bytes.length; i += chunkSize) {
+    binary += String.fromCharCode(...bytes.subarray(i, i + chunkSize));
+  }
+  return btoa(binary);
+}
+
 Deno.serve(async (request) => {
   if (request.method === "OPTIONS") return new Response("ok", { headers: corsHeaders(request) });
   if (request.method !== "POST") return json(request, { error: "Method not allowed" }, 405);
@@ -103,6 +116,21 @@ Deno.serve(async (request) => {
     const replyTo = Deno.env.get("ADMIN_EMAIL_REPLY_TO") || Deno.env.get("RESEND_INBOUND_ADDRESS");
     if (replyTo) resendPayload.reply_to = replyTo;
     if (cc.length) resendPayload.cc = cc;
+
+    const attachmentInputs = Array.isArray(body.attachments) ? body.attachments : [];
+    if (attachmentInputs.length) {
+      try {
+        const attachments = await Promise.all(
+          attachmentInputs.map(async (item: { name?: string; url?: string }) => ({
+            filename: String(item.name || "attachment"),
+            content: await fetchAsBase64(String(item.url || "")),
+          })),
+        );
+        resendPayload.attachments = attachments;
+      } catch (error) {
+        return json(request, { error: error instanceof Error ? error.message : "Unable to attach files" }, 400);
+      }
+    }
 
     const response = await fetch("https://api.resend.com/emails", {
       method: "POST",

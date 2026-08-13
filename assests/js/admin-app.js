@@ -754,7 +754,16 @@
       '<header class="email-message__head"><div><span class="eyebrow">' + esc(record.category || "General") + '</span><h2>' + esc(record.subject || "Untitled email") + '</h2></div><div class="email-message__actions"><button class="ghost-btn" type="button" data-email-edit="' + record.id + '">Edit</button><button class="primary-btn" type="button" data-email-open="' + record.id + '">Send Email</button></div></header>' +
       '<dl class="email-message__meta"><div><dt>From</dt><dd>' + esc(from || "LGNDRY.Co") + "</dd></div><div><dt>To</dt><dd>" + esc(to || "Unassigned") + "</dd></div><div><dt>Client</dt><dd>" + esc(label("clients", record.client)) + "</dd></div><div><dt>Status</dt><dd>" + esc(record.status || "Inbox") + "</dd></div></dl>" +
       '<div class="email-message__body">' + emailBodyMarkup(record) + "</div>" +
+      emailAttachmentsMarkup(record) +
       '<footer class="email-message__foot"><button class="table-action" type="button" data-email-compose-reply="' + record.id + '">Reply</button><button class="table-action" type="button" data-email-archive="' + record.id + '">Archive</button><button class="table-action table-action--danger" type="button" data-email-delete="' + record.id + '">Delete</button></footer></article>';
+  }
+
+  function emailAttachmentsMarkup(record) {
+    var attachments = Array.isArray(record.attachments) ? record.attachments : [];
+    if (!attachments.length) return "";
+    return '<div class="email-message__attachments">' + attachments.map(function (item) {
+      return '<a class="attachment-chip attachment-chip--link" href="' + esc(item.url) + '" target="_blank" rel="noopener"><span class="attachment-chip__name">' + esc(item.name) + "</span></a>";
+    }).join("") + "</div>";
   }
 
   function emailBody(value) {
@@ -821,7 +830,21 @@
         '<label class="email-composer__wide email-composer__message"><span>Message</span>' + richToolbarHtml() +
           '<div class="rich-editor" data-email-body contenteditable="true" role="textbox" aria-multiline="true" aria-label="Email message">' + (bodyHtml || "") + "</div>" +
         "</label>" +
+        '<div class="email-composer__wide">' + attachmentsFieldHtml() + "</div>" +
       '</div><div class="email-composer__foot"><button class="ghost-btn" type="submit" data-email-submit="draft">Save Draft</button><button class="primary-btn" type="submit" data-email-submit="send">Send Email</button></div></form>';
+  }
+
+  function attachmentsFieldHtml() {
+    var attachments = state.emailComposeAttachments || [];
+    var chips = attachments.map(function (item, index) {
+      return '<span class="attachment-chip"><span class="attachment-chip__name">' + esc(item.name) + '</span><button type="button" class="attachment-chip__remove" data-attachment-remove="' + index + '" aria-label="Remove ' + esc(item.name) + '">&times;</button></span>';
+    }).join("");
+    return '<div class="attachment-field">' +
+      '<button type="button" class="ghost-btn attachment-field__trigger" data-attachment-trigger>' + svg('<path d="M21 12.5V7a4 4 0 0 0-8 0v10a3 3 0 0 0 6 0V9"/>') + " Attach files</button>" +
+      '<span class="attachment-field__status" data-attachment-status></span>' +
+      '<input type="file" hidden multiple data-attachment-input>' +
+      (chips ? '<div class="attachment-field__list">' + chips + "</div>" : "") +
+      "</div>";
   }
 
   function emailSelect(name, labelText, collection, value) {
@@ -1452,6 +1475,7 @@
         state.emailCompose = true;
         state.emailEditingId = null;
         state.emailReplyId = null;
+        state.emailComposeAttachments = [];
         render();
       });
     });
@@ -1473,9 +1497,11 @@
     });
     document.querySelectorAll("[data-email-edit]").forEach(function (button) {
       button.addEventListener("click", function () {
+        var editingRecord = byId("emails", button.dataset.emailEdit);
         state.emailEditingId = button.dataset.emailEdit;
         state.emailCompose = true;
         state.emailReplyId = null;
+        state.emailComposeAttachments = (editingRecord && editingRecord.attachments || []).slice();
         render();
       });
     });
@@ -1484,6 +1510,7 @@
         state.emailReplyId = button.dataset.emailComposeReply;
         state.emailEditingId = null;
         state.emailCompose = true;
+        state.emailComposeAttachments = [];
         render();
       });
     });
@@ -1508,6 +1535,7 @@
     var form = document.querySelector("[data-email-compose-form]");
     if (form) form.addEventListener("submit", submitEmailCompose);
     bindRichToolbar();
+    bindAttachmentField();
   }
 
   var RICH_INLINE_TAGS = { bold: "strong", italic: "em", underline: "u" };
@@ -1595,6 +1623,48 @@
     });
   }
 
+  function renderAttachmentsField() {
+    var container = document.querySelector(".attachment-field");
+    if (!container) return;
+    container.outerHTML = attachmentsFieldHtml();
+    bindAttachmentField();
+  }
+
+  function bindAttachmentField() {
+    var trigger = document.querySelector("[data-attachment-trigger]");
+    var input = document.querySelector("[data-attachment-input]");
+    var status = document.querySelector("[data-attachment-status]");
+    if (trigger && input) {
+      trigger.addEventListener("click", function () { input.click(); });
+    }
+    if (input) {
+      input.addEventListener("change", function () {
+        var files = Array.prototype.slice.call(input.files || []);
+        if (!files.length) return;
+        status.textContent = "Uploading...";
+        Promise.all(files.map(function (file) {
+          return uploadToMedia(file, "email-attachments").then(function (url) {
+            state.emailComposeAttachments = state.emailComposeAttachments || [];
+            state.emailComposeAttachments.push({ name: file.name, url: url });
+          });
+        })).then(function () {
+          status.textContent = "";
+          renderAttachmentsField();
+        }).catch(function (error) {
+          console.error(error);
+          status.textContent = "Upload failed: " + (error.message || "please try again.");
+        });
+      });
+    }
+    document.querySelectorAll("[data-attachment-remove]").forEach(function (button) {
+      button.addEventListener("click", function () {
+        var index = Number(button.dataset.attachmentRemove);
+        state.emailComposeAttachments.splice(index, 1);
+        renderAttachmentsField();
+      });
+    });
+  }
+
   function submitEmailCompose(event) {
     event.preventDefault();
     var form = event.currentTarget;
@@ -1616,6 +1686,7 @@
     var isEmpty = !editorHtml || editorHtml === "<br>" || editorHtml === "<div><br></div>";
     next.body_html = isEmpty ? "" : editorHtml;
     next.body = isEmpty ? "" : htmlToPlainText(editorHtml);
+    next.attachments = (state.emailComposeAttachments || []).slice();
     next.fromName = "LGNDRY.Co";
     next.fromEmail = "neomokgwadi@lgndry-co.co.za";
     next.toName = next.toName || "";
@@ -1845,7 +1916,8 @@
         cc: record.cc || "",
         subject: record.subject,
         text: record.body,
-        html: outgoingEmailHtml(record)
+        html: outgoingEmailHtml(record),
+        attachments: record.attachments || []
       }
     }).then(function (result) {
       if (result.error) throw result.error;

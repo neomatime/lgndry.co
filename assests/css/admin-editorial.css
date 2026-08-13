@@ -2213,6 +2213,83 @@ body.ops-app-shell .email-composer__foot {
   padding-top: 2px;
 }
 
+body.ops-app-shell .attachment-field {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 10px;
+  margin-top: 6px;
+}
+
+body.ops-app-shell .attachment-field__trigger {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+body.ops-app-shell .attachment-field__trigger svg {
+  width: 14px;
+  height: 14px;
+}
+
+body.ops-app-shell .attachment-field__status {
+  font-size: 0.72rem;
+  color: var(--admin-muted);
+}
+
+body.ops-app-shell .attachment-field__list,
+body.ops-app-shell .email-message__attachments {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  width: 100%;
+}
+
+body.ops-app-shell .attachment-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 10px;
+  border: 1px solid var(--admin-rule);
+  background: color-mix(in srgb, var(--admin-panel) 96%, var(--admin-ink) 4%);
+  color: var(--admin-ink);
+  font-size: 0.76rem;
+  max-width: 220px;
+}
+
+body.ops-app-shell .attachment-chip--link {
+  text-decoration: none;
+  cursor: pointer;
+}
+
+body.ops-app-shell .attachment-chip--link:hover {
+  border-color: var(--text);
+}
+
+body.ops-app-shell .attachment-chip__name {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+body.ops-app-shell .attachment-chip__remove {
+  border: 0;
+  background: transparent;
+  color: var(--admin-muted);
+  cursor: pointer;
+  font-size: 1rem;
+  line-height: 1;
+  padding: 0;
+}
+
+body.ops-app-shell .attachment-chip__remove:hover {
+  color: var(--admin-ink);
+}
+
+body.ops-app-shell .email-message__attachments {
+  margin-top: 6px;
+}
+
 @media (max-width: 1240px) {
   body.ops-app-shell .email-portal {
     grid-template-columns: 160px minmax(280px, 0.45fr) minmax(360px, 1fr);
