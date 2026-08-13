@@ -3,6 +3,6 @@
     { "path": "/api/sync-titan-inbox", "schedule": "0 6 * * *" }
   ],
   "functions": {
-    "api/sync-titan-inbox.js": { "maxDuration": 30 }
+    "api/sync-titan-inbox.js": { "maxDuration": 60 }
   }
 }
