@@ -88,11 +88,14 @@ module.exports = async (req, res) => {
     await client.logout();
   } catch (err) {
     try { await client.close(); } catch (_) { /* ignore */ }
-    console.error('sync-titan-inbox IMAP error:', err && err.code, err && err.message, err && err.stack);
+    const raw = {};
+    if (err) Object.getOwnPropertyNames(err).forEach((key) => { raw[key] = err[key]; });
+    console.error('sync-titan-inbox IMAP error:', JSON.stringify(raw));
+    const responseText = (err && (err.response || err.responseText || err.reason)) || (err && err.message) || 'unknown';
     const message = /auth/i.test((err && err.message) || '')
       ? 'IMAP login failed — check the mailbox password.'
       : 'Could not reach the mail server.';
-    res.status(502).json({ error: message, detail: (err && err.code) || (err && err.message) || null }); return;
+    res.status(502).json({ error: message, detail: responseText }); return;
   }
 
   if (!parsed.length) { res.status(200).json({ ok: true, synced: 0 }); return; }
