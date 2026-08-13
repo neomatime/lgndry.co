@@ -2070,6 +2070,15 @@ body.ops-app-shell .email-message__body p {
   margin: 0 0 1.1em;
 }
 
+body.ops-app-shell .email-message__frame {
+  display: block;
+  width: 100%;
+  min-height: 120px;
+  border: 0;
+  border-radius: 6px;
+  background: #fff;
+}
+
 body.ops-app-shell .email-message-empty,
 body.ops-app-shell .email-empty {
   display: grid;

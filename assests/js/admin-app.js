@@ -513,6 +513,18 @@
     });
   }
 
+  window.sizeMailFrame = function (frame) {
+    try {
+      var apply = function () {
+        var body = frame.contentDocument && frame.contentDocument.body;
+        if (body && body.scrollHeight) frame.style.height = Math.min(body.scrollHeight + 24, 6000) + "px";
+      };
+      apply();
+      setTimeout(apply, 400);
+      setTimeout(apply, 1200);
+    } catch (e) { /* cross-origin or not yet loaded — ignore */ }
+  };
+
   function money(value) {
     return "R" + Number(value || 0).toLocaleString("en-ZA");
   }
@@ -730,7 +742,7 @@
     return '<article class="email-message">' +
       '<header class="email-message__head"><div><span class="eyebrow">' + esc(record.category || "General") + '</span><h2>' + esc(record.subject || "Untitled email") + '</h2></div><div class="email-message__actions"><button class="ghost-btn" type="button" data-email-edit="' + record.id + '">Edit</button><button class="primary-btn" type="button" data-email-open="' + record.id + '">Send Email</button></div></header>' +
       '<dl class="email-message__meta"><div><dt>From</dt><dd>' + esc(from || "LGNDRY.Co") + "</dd></div><div><dt>To</dt><dd>" + esc(to || "Unassigned") + "</dd></div><div><dt>Client</dt><dd>" + esc(label("clients", record.client)) + "</dd></div><div><dt>Status</dt><dd>" + esc(record.status || "Inbox") + "</dd></div></dl>" +
-      '<div class="email-message__body">' + emailBody(record.body || record.nextStep || "No message body yet.") + "</div>" +
+      '<div class="email-message__body">' + emailBodyMarkup(record) + "</div>" +
       '<footer class="email-message__foot"><button class="table-action" type="button" data-email-compose-reply="' + record.id + '">Reply</button><button class="table-action" type="button" data-email-archive="' + record.id + '">Archive</button><button class="table-action table-action--danger" type="button" data-email-delete="' + record.id + '">Delete</button></footer></article>';
   }
 
@@ -738,6 +750,17 @@
     return String(value || "").split(/\n{2,}/).map(function (paragraph) {
       return "<p>" + esc(paragraph).replace(/\n/g, "<br>") + "</p>";
     }).join("");
+  }
+
+  function emailBodyMarkup(record) {
+    var html = record.body_html && String(record.body_html).trim();
+    if (html) {
+      var doc = "<!DOCTYPE html><html><head><base target=\"_blank\"><meta charset=\"utf-8\">" +
+        "<style>html,body{margin:0;padding:14px;font-family:-apple-system,Segoe UI,Roboto,Helvetica,Arial,sans-serif;color:#1a1a18;background:#fff;font-size:14px;line-height:1.6;}img{max-width:100%;height:auto;}a{color:#1A5C3A;}table{max-width:100%;}</style>" +
+        "</head><body>" + html + "</body></html>";
+      return '<iframe class="email-message__frame" sandbox="allow-same-origin" referrerpolicy="no-referrer" onload="sizeMailFrame(this)" srcdoc="' + esc(doc) + '"></iframe>';
+    }
+    return emailBody(record.body || record.nextStep || "No message body yet.");
   }
 
   function emailComposePane(record) {

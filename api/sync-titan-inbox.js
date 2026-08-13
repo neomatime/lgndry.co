@@ -77,6 +77,7 @@ module.exports = async (req, res) => {
               to: toAddr ? toAddr.address : IMAP_USER,
               subject: mail.subject || '(No subject)',
               body: (mail.text || '').trim() || stripHtml(mail.html) || '',
+              html: mail.html || '',
               date: mail.date ? mail.date.toISOString() : new Date().toISOString(),
             });
           } catch (e) { /* skip unparseable message */ }
@@ -100,18 +101,35 @@ module.exports = async (req, res) => {
 
   if (!parsed.length) { res.status(200).json({ ok: true, synced: 0 }); return; }
 
-  const existingIds = new Set();
+  const existingById = {}; // messageId -> { id, hasHtml }
   try {
     const ids = parsed.map((p) => `"${p.messageId.replace(/"/g, '\\"')}"`).join(',');
     const r = await fetch(
-      `${SUPABASE_URL}/rest/v1/emails?provider_email_id=in.(${ids})&select=provider_email_id`,
+      `${SUPABASE_URL}/rest/v1/emails?provider_email_id=in.(${ids})&select=id,provider_email_id,body_html`,
       { headers: sbHeaders }
     );
-    if (r.ok) (await r.json()).forEach((row) => existingIds.add(row.provider_email_id));
+    if (r.ok) (await r.json()).forEach((row) => {
+      existingById[row.provider_email_id] = { id: row.id, hasHtml: Boolean(row.body_html && String(row.body_html).length) };
+    });
   } catch (_) { /* dedup read failed — proceed, accepting some dup risk */ }
 
-  const fresh = parsed.filter((p) => !existingIds.has(p.messageId));
-  if (!fresh.length) { res.status(200).json({ ok: true, synced: 0 }); return; }
+  // Backfill HTML onto already-imported emails that don't have it yet (e.g.
+  // synced before body_html existed, or fetched with an earlier batch size).
+  let backfilled = 0;
+  const toBackfill = parsed.filter((p) => existingById[p.messageId] && !existingById[p.messageId].hasHtml && p.html);
+  await Promise.all(toBackfill.map(async (p) => {
+    try {
+      const r = await fetch(`${SUPABASE_URL}/rest/v1/emails?id=eq.${existingById[p.messageId].id}`, {
+        method: 'PATCH',
+        headers: { ...sbHeaders, 'Content-Type': 'application/json', Prefer: 'return=minimal' },
+        body: JSON.stringify({ body_html: p.html }),
+      });
+      if (r.ok) backfilled++;
+    } catch (_) { /* best-effort */ }
+  }));
+
+  const fresh = parsed.filter((p) => !existingById[p.messageId]);
+  if (!fresh.length) { res.status(200).json({ ok: true, synced: 0, backfilled }); return; }
 
   const emailToClient = await mapClients(fresh.map((p) => p.from), SUPABASE_URL, sbHeaders);
   const rows = fresh.map((p) => ({
@@ -129,6 +147,7 @@ module.exports = async (req, res) => {
     received_at: p.date,
     owner: 'Dan Mokgwadi',
     body: p.body,
+    body_html: p.html || null,
     archived: false,
     provider: 'Titan IMAP',
     provider_email_id: p.messageId,
@@ -149,7 +168,7 @@ module.exports = async (req, res) => {
     res.status(502).json({ error: 'Could not save inbound mail' }); return;
   }
 
-  res.status(200).json({ ok: true, synced: rows.length });
+  res.status(200).json({ ok: true, synced: rows.length, backfilled });
 };
 
 async function verifyCaller(req, supabaseUrl, serviceKey) {
