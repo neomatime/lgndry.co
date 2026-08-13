@@ -513,6 +513,17 @@
     });
   }
 
+  function nl2br(value) {
+    return esc(String(value || "")).replace(/\n/g, "<br>");
+  }
+
+  function htmlToPlainText(html) {
+    var withBreaks = String(html || "").replace(/<\/(p|div|li)>/gi, "\n").replace(/<br\s*\/?>/gi, "\n");
+    var holder = document.createElement("div");
+    holder.innerHTML = withBreaks;
+    return (holder.textContent || "").replace(/\n{3,}/g, "\n\n").trim();
+  }
+
   window.sizeMailFrame = function (frame) {
     try {
       var apply = function () {
@@ -763,6 +774,27 @@
     return emailBody(record.body || record.nextStep || "No message body yet.");
   }
 
+  var RICH_TOOLBAR_COMMANDS = [
+    { cmd: "undo", label: "Undo", icon: '<path d="M9 14 4 9l5-5"/><path d="M4 9h10a6 6 0 0 1 0 12h-3"/>' },
+    { cmd: "redo", label: "Redo", icon: '<path d="M15 14l5-5-5-5"/><path d="M20 9H10a6 6 0 0 0 0 12h3"/>' },
+    { cmd: "separator" },
+    { cmd: "bold", label: "Bold", icon: '<path d="M6 4h7a4 4 0 0 1 0 8H6z"/><path d="M6 12h8a4 4 0 0 1 0 8H6z"/>' },
+    { cmd: "italic", label: "Italic", icon: '<path d="M11 4h6M5 20h6M14 4 9 20"/>' },
+    { cmd: "underline", label: "Underline", icon: '<path d="M6 4v6a6 6 0 0 0 12 0V4"/><path d="M4 20h16"/>' },
+    { cmd: "separator" },
+    { cmd: "insertUnorderedList", label: "Bulleted list", icon: '<circle cx="4.5" cy="6" r="1"/><circle cx="4.5" cy="12" r="1"/><circle cx="4.5" cy="18" r="1"/><path d="M9 6h11M9 12h11M9 18h11"/>' },
+    { cmd: "insertOrderedList", label: "Numbered list", icon: '<path d="M9 6h11M9 12h11M9 18h11"/><path d="M4 4.5h1v3M4 7.5h1.5M4.2 11.5h1.3a.7.7 0 0 1 0 1.4h-.5a.7.7 0 0 0 0 1.4h1.3M4 17.2h1.6L4 19.5h1.6"/>' },
+    { cmd: "separator" },
+    { cmd: "createLink", label: "Insert link", icon: '<path d="M9 15 15 9"/><path d="M13 5l1.5-1.5a3.5 3.5 0 1 1 5 5L18 10"/><path d="M11 19l-1.5 1.5a3.5 3.5 0 1 1-5-5L6 14"/>' }
+  ];
+
+  function richToolbarHtml() {
+    return '<div class="rich-toolbar" data-rich-toolbar>' + RICH_TOOLBAR_COMMANDS.map(function (item) {
+      if (item.cmd === "separator") return '<span class="rich-toolbar__sep" aria-hidden="true"></span>';
+      return '<button type="button" class="rich-toolbar__btn" data-rich-cmd="' + item.cmd + '" title="' + esc(item.label) + '" aria-label="' + esc(item.label) + '">' + svg(item.icon) + "</button>";
+    }).join("") + "</div>";
+  }
+
   function emailComposePane(record) {
     var today = new Date().toISOString().slice(0, 10);
     var reply = !record && state.emailReplyId ? byId("emails", state.emailReplyId) : null;
@@ -770,6 +802,7 @@
     var toEmail = record ? record.toEmail : reply ? (reply.direction === "Incoming" ? reply.fromEmail : reply.toEmail) : "";
     var cc = record ? record.cc : "";
     var body = record ? record.body : reply ? "\n\nOn " + (reply.receivedAt || "recently") + ", " + (reply.fromName || reply.fromEmail || "they") + " wrote:\n" + String(reply.body || "").split("\n").map(function (line) { return "> " + line; }).join("\n") : "";
+    var bodyHtml = record && record.body_html ? record.body_html : nl2br(body);
     var priority = record ? record.priority : "Normal";
     var category = record ? record.category : reply ? reply.category : "General";
     return '<form class="email-composer" data-email-compose-form>' +
@@ -784,7 +817,9 @@
         '<label><span>Category</span><select name="category">' + ["Lead", "Booking", "Project", "Partnership", "Collection", "Invoice", "General"].map(function (option) { return '<option' + (category === option ? " selected" : "") + ">" + option + "</option>"; }).join("") + "</select></label>" +
         '<label><span>Follow-up</span><input name="scheduledFor" type="date" value="' + esc(record && record.scheduledFor || "") + '"></label>' +
         '<input name="receivedAt" type="hidden" value="' + esc(record && record.receivedAt || today) + '">' +
-        '<label class="email-composer__wide"><span>Message</span><textarea name="body" required placeholder="Write the email...">' + esc(body) + "</textarea></label>" +
+        '<label class="email-composer__wide email-composer__message"><span>Message</span>' + richToolbarHtml() +
+          '<div class="rich-editor" data-email-body contenteditable="true" role="textbox" aria-multiline="true" aria-label="Email message">' + (bodyHtml || "") + "</div>" +
+        "</label>" +
       '</div><div class="email-composer__foot"><button class="ghost-btn" type="submit" data-email-submit="draft">Save Draft</button><button class="primary-btn" type="submit" data-email-submit="send">Send Email</button></div></form>';
   }
 
@@ -1471,6 +1506,83 @@
     }
     var form = document.querySelector("[data-email-compose-form]");
     if (form) form.addEventListener("submit", submitEmailCompose);
+    bindRichToolbar();
+  }
+
+  var RICH_INLINE_TAGS = { bold: "strong", italic: "em", underline: "u" };
+
+  function findWrappingTag(range, tagName) {
+    var selectedText = range.toString();
+    if (!selectedText) return null;
+    var node = range.commonAncestorContainer;
+    var el = node.nodeType === 1 ? node : node.parentElement;
+    var inside = el ? el.closest(tagName) : null;
+    if (inside && inside.textContent === selectedText) return inside;
+    var container = node.nodeType === 1 ? node : node.parentElement;
+    if (container) {
+      for (var i = 0; i < container.childNodes.length; i++) {
+        var child = container.childNodes[i];
+        if (child.nodeType === 1 && child.tagName.toLowerCase() === tagName && child.textContent === selectedText) return child;
+      }
+    }
+    return null;
+  }
+
+  // Toggles an inline tag (bold/italic/underline) by direct Range manipulation
+  // rather than document.execCommand — the legacy style-toggle commands proved
+  // unreliable (queryCommandEnabled false, or a no-op mutation) in some
+  // environments even though structural commands (lists, links) worked fine.
+  function toggleInlineTag(tagName) {
+    var sel = window.getSelection();
+    if (!sel || sel.rangeCount === 0 || sel.isCollapsed) return;
+    var range = sel.getRangeAt(0);
+    var existing = findWrappingTag(range, tagName);
+    var firstNode, lastNode, container;
+    if (existing) {
+      container = document.createDocumentFragment();
+      while (existing.firstChild) container.appendChild(existing.firstChild);
+      firstNode = container.firstChild;
+      lastNode = container.lastChild;
+      existing.parentNode.replaceChild(container, existing);
+    } else {
+      var extracted = range.extractContents();
+      container = document.createElement(tagName);
+      container.appendChild(extracted);
+      firstNode = container.firstChild;
+      lastNode = container.lastChild;
+      range.insertNode(container);
+    }
+    if (firstNode && lastNode) {
+      var newRange = document.createRange();
+      newRange.setStartBefore(firstNode);
+      newRange.setEndAfter(lastNode);
+      sel.removeAllRanges();
+      sel.addRange(newRange);
+    }
+  }
+
+  function bindRichToolbar() {
+    var toolbar = document.querySelector("[data-rich-toolbar]");
+    var editor = document.querySelector("[data-email-body]");
+    if (!toolbar || !editor) return;
+    toolbar.querySelectorAll("[data-rich-cmd]").forEach(function (button) {
+      button.addEventListener("mousedown", function (event) {
+        event.preventDefault();
+        var cmd = button.dataset.richCmd;
+        editor.focus();
+        if (RICH_INLINE_TAGS[cmd]) {
+          toggleInlineTag(RICH_INLINE_TAGS[cmd]);
+          return;
+        }
+        if (cmd === "createLink") {
+          var url = window.prompt("Link URL");
+          if (!url) return;
+          document.execCommand("createLink", false, url);
+          return;
+        }
+        document.execCommand(cmd, false, null);
+      });
+    });
   }
 
   function submitEmailCompose(event) {
@@ -1489,7 +1601,11 @@
     next.category = form.elements.category.value;
     next.scheduledFor = form.elements.scheduledFor.value;
     next.receivedAt = form.elements.receivedAt.value;
-    next.body = form.elements.body.value.trim();
+    var editor = form.querySelector("[data-email-body]");
+    var editorHtml = editor ? editor.innerHTML.trim() : "";
+    var isEmpty = !editorHtml || editorHtml === "<br>" || editorHtml === "<div><br></div>";
+    next.body_html = isEmpty ? "" : editorHtml;
+    next.body = isEmpty ? "" : htmlToPlainText(editorHtml);
     next.fromName = "LGNDRY.Co";
     next.fromEmail = "neomokgwadi@lgndry-co.co.za";
     next.toName = next.toName || "";
@@ -1680,16 +1796,21 @@
 
 
   function emailHtml(value) {
-    var body = String(value || "").split(/\n{2,}/).map(function (paragraph) {
+    return String(value || "").split(/\n{2,}/).map(function (paragraph) {
       return "<p>" + esc(paragraph).replace(/\n/g, "<br>") + "</p>";
     }).join("");
-    return body + emailSignatureHtml();
   }
 
   function emailSignatureHtml() {
     return '<p style="margin:28px 0 2px;font-family:Arial,Helvetica,sans-serif;font-size:14px;font-weight:700;color:#1a1a18;">Dan Mokgwadi</p>' +
       '<p style="margin:0 0 18px;font-family:Arial,Helvetica,sans-serif;font-size:13px;color:#655f58;">Founder &amp; Creative Director</p>' +
       '<img src="https://www.lgndry-co.co.za/assests/images/email-banner.png" alt="LGNDRY.Co" width="600" style="max-width:100%;height:auto;display:block;border:0;">';
+  }
+
+  function outgoingEmailHtml(record) {
+    var richHtml = record.body_html && String(record.body_html).trim();
+    var body = richHtml ? richHtml : emailHtml(record.body);
+    return body + emailSignatureHtml();
   }
 
   function sendEmailRecord(recordId) {
@@ -1711,7 +1832,7 @@
         cc: record.cc || "",
         subject: record.subject,
         text: record.body,
-        html: emailHtml(record.body)
+        html: outgoingEmailHtml(record)
       }
     }).then(function (result) {
       if (result.error) throw result.error;
