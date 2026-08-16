@@ -775,13 +775,17 @@
   function emailBodyMarkup(record) {
     var html = record.body_html && String(record.body_html).trim();
     if (html) {
+      // Incoming mail is HTML we don't control the source of — a reply
+      // composed in an external dark-mode mail client (Apple Mail, Titan
+      // webmail, etc.) can carry inline color/caret-color styles that bake
+      // in invisible near-white text once it lands on this always-white
+      // pane, so those are stripped here. Outgoing/drafted mail was
+      // composed in our own editor (colors picked via the toolbar, or
+      // caught by its paste sanitizer) — its colors are trusted as-is so a
+      // deliberately chosen font color survives into the reading pane.
+      if (record.direction === "Incoming") html = stripForeignColors(html);
       var doc = "<!DOCTYPE html><html><head><base target=\"_blank\"><meta charset=\"utf-8\">" +
-        // Pasted content (Word, Notes, ChatGPT, etc.) can carry inline
-        // color/caret-color styles meant for a dark source surface — left
-        // as-is those bake in invisible near-white text against this
-        // always-white reading pane, so text color is force-reset on every
-        // element except links, which keep their own explicit color.
-        "<style>html,body{margin:0;padding:14px;font-family:-apple-system,Segoe UI,Roboto,Helvetica,Arial,sans-serif;color:#1a1a18;background:#fff;font-size:14px;line-height:1.6;}body :not(a){color:#1a1a18 !important;}img{max-width:100%;height:auto;}a{color:#1A5C3A;}table{max-width:100%;}</style>" +
+        "<style>html,body{margin:0;padding:14px;font-family:-apple-system,Segoe UI,Roboto,Helvetica,Arial,sans-serif;color:#1a1a18;background:#fff;font-size:14px;line-height:1.6;}img{max-width:100%;height:auto;}a{color:#1A5C3A;}table{max-width:100%;}</style>" +
         "</head><body>" + html + "</body></html>";
       return '<iframe class="email-message__frame" sandbox="allow-same-origin" referrerpolicy="no-referrer" onload="sizeMailFrame(this)" srcdoc="' + esc(doc) + '"></iframe>';
     }
@@ -796,6 +800,8 @@
     { cmd: "italic", label: "Italic", icon: '<path d="M11 4h6M5 20h6M14 4 9 20"/>' },
     { cmd: "underline", label: "Underline", icon: '<path d="M6 4v6a6 6 0 0 0 12 0V4"/><path d="M4 20h16"/>' },
     { cmd: "separator" },
+    { cmd: "foreColor", label: "Text color" },
+    { cmd: "separator" },
     { cmd: "insertUnorderedList", label: "Bulleted list", icon: '<circle cx="4.5" cy="6" r="1"/><circle cx="4.5" cy="12" r="1"/><circle cx="4.5" cy="18" r="1"/><path d="M9 6h11M9 12h11M9 18h11"/>' },
     { cmd: "insertOrderedList", label: "Numbered list", icon: '<path d="M9 6h11M9 12h11M9 18h11"/><path d="M4 4.5h1v3M4 7.5h1.5M4.2 11.5h1.3a.7.7 0 0 1 0 1.4h-.5a.7.7 0 0 0 0 1.4h1.3M4 17.2h1.6L4 19.5h1.6"/>' },
     { cmd: "separator" },
@@ -805,6 +811,9 @@
   function richToolbarHtml() {
     return '<div class="rich-toolbar" data-rich-toolbar>' + RICH_TOOLBAR_COMMANDS.map(function (item) {
       if (item.cmd === "separator") return '<span class="rich-toolbar__sep" aria-hidden="true"></span>';
+      if (item.cmd === "foreColor") {
+        return '<label class="rich-toolbar__color" title="' + esc(item.label) + '"><input type="color" data-rich-color value="#1a1a18" aria-label="' + esc(item.label) + '"></label>';
+      }
       return '<button type="button" class="rich-toolbar__btn" data-rich-cmd="' + item.cmd + '" title="' + esc(item.label) + '" aria-label="' + esc(item.label) + '">' + svg(item.icon) + "</button>";
     }).join("") + "</div>";
   }
@@ -1654,6 +1663,24 @@
     }
   }
 
+  // Wraps the current selection in a <span style="color:..."> — a set
+  // operation (not a toggle like bold/italic/underline), so it always
+  // wraps fresh rather than checking for an existing wrap to undo.
+  function applyFontColor(range, color) {
+    if (!range || range.collapsed) return null;
+    var extracted = range.extractContents();
+    var span = document.createElement("span");
+    span.style.color = color;
+    span.appendChild(extracted);
+    range.insertNode(span);
+    var sel = window.getSelection();
+    var newRange = document.createRange();
+    newRange.selectNodeContents(span);
+    sel.removeAllRanges();
+    sel.addRange(newRange);
+    return span;
+  }
+
   // Strips color/background/caret-color inline styles from pasted markup —
   // content pasted from a dark-mode source (Notes, ChatGPT, Word, etc.)
   // otherwise carries its own near-white text color, invisible once it
@@ -1732,6 +1759,34 @@
         document.execCommand(cmd, false, null);
       });
     });
+    var colorInput = toolbar.querySelector("[data-rich-color]");
+    if (colorInput) {
+      var colorRange = null;
+      var colorSpan = null;
+      // Opening the native color picker steals focus/selection from the
+      // editor before "input" fires, so the live selection has to be
+      // captured up front (on mousedown, before the picker opens). Native
+      // pickers also fire "input" repeatedly while the user drags/tunes a
+      // color — the first firing wraps the selection in a span, and later
+      // firings for the same interaction just update that span's color
+      // instead of re-wrapping (colorRange's original nodes are gone after
+      // the first wrap).
+      colorInput.addEventListener("mousedown", function () {
+        var sel = window.getSelection();
+        colorRange = sel && sel.rangeCount ? sel.getRangeAt(0).cloneRange() : null;
+        colorSpan = null;
+      });
+      colorInput.addEventListener("input", function () {
+        if (colorSpan) {
+          colorSpan.style.color = colorInput.value;
+        } else if (colorRange && !colorRange.collapsed) {
+          colorSpan = applyFontColor(colorRange, colorInput.value);
+        } else {
+          return;
+        }
+        editor.dispatchEvent(new Event("input", { bubbles: true }));
+      });
+    }
   }
 
   function renderAttachmentsField() {
