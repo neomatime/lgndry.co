@@ -808,11 +808,25 @@
     { cmd: "createLink", label: "Insert link", icon: '<path d="M9 15 15 9"/><path d="M13 5l1.5-1.5a3.5 3.5 0 1 1 5 5L18 10"/><path d="M11 19l-1.5 1.5a3.5 3.5 0 1 1-5-5L6 14"/>' }
   ];
 
+  // Black/gray (matches the email signature), brand gold, the reading
+  // pane's own link green, then a small general-purpose spread.
+  var FONT_COLOR_PRESETS = ["#1a1a18", "#655f58", "#C7A86B", "#1A5C3A", "#2E5EAA", "#6B4FA0", "#C0392B", "#D97706"];
+
   function richToolbarHtml() {
     return '<div class="rich-toolbar" data-rich-toolbar>' + RICH_TOOLBAR_COMMANDS.map(function (item) {
       if (item.cmd === "separator") return '<span class="rich-toolbar__sep" aria-hidden="true"></span>';
       if (item.cmd === "foreColor") {
-        return '<label class="rich-toolbar__color" title="' + esc(item.label) + '"><input type="color" data-rich-color value="#1a1a18" aria-label="' + esc(item.label) + '"></label>';
+        return '<div class="rich-toolbar__color-anchor" data-color-anchor>' +
+          '<button type="button" class="rich-toolbar__btn" data-color-trigger title="' + esc(item.label) + '" aria-label="' + esc(item.label) + '" aria-expanded="false">' +
+            svg('<path d="M6 4h6l5 16M8 15h8"/>') +
+          "</button>" +
+          '<div class="rich-toolbar__color-popover" data-color-popover hidden>' +
+            '<div class="rich-toolbar__swatches">' + FONT_COLOR_PRESETS.map(function (hex) {
+              return '<button type="button" class="rich-toolbar__swatch" data-color-swatch="' + hex + '" style="background:' + hex + '" title="' + hex + '" aria-label="Color ' + hex + '"></button>';
+            }).join("") + "</div>" +
+            '<label class="rich-toolbar__custom-color"><span>Custom</span><input type="color" data-rich-color value="#1a1a18"></label>' +
+          "</div>" +
+        "</div>";
       }
       return '<button type="button" class="rich-toolbar__btn" data-rich-cmd="' + item.cmd + '" title="' + esc(item.label) + '" aria-label="' + esc(item.label) + '">' + svg(item.icon) + "</button>";
     }).join("") + "</div>";
@@ -1759,32 +1773,67 @@
         document.execCommand(cmd, false, null);
       });
     });
-    var colorInput = toolbar.querySelector("[data-rich-color]");
-    if (colorInput) {
+    var colorAnchor = toolbar.querySelector("[data-color-anchor]");
+    if (colorAnchor) {
+      var trigger = colorAnchor.querySelector("[data-color-trigger]");
+      var popover = colorAnchor.querySelector("[data-color-popover]");
       var colorRange = null;
       var colorSpan = null;
-      // Opening the native color picker steals focus/selection from the
-      // editor before "input" fires, so the live selection has to be
-      // captured up front (on mousedown, before the picker opens). Native
-      // pickers also fire "input" repeatedly while the user drags/tunes a
-      // color — the first firing wraps the selection in a span, and later
-      // firings for the same interaction just update that span's color
-      // instead of re-wrapping (colorRange's original nodes are gone after
-      // the first wrap).
-      colorInput.addEventListener("mousedown", function () {
+
+      function closeColorPopover() {
+        popover.hidden = true;
+        trigger.setAttribute("aria-expanded", "false");
+      }
+
+      // preventDefault on every control inside this popover keeps the
+      // editor's selection alive the whole time it's open (same trick as
+      // the other toolbar buttons) — so preset swatches can read the live
+      // selection directly. The native color input is the one exception:
+      // opening its OS-level picker steals focus/selection regardless, so
+      // its range has to be captured up front and restored on use.
+      trigger.addEventListener("mousedown", function (event) {
+        event.preventDefault();
         var sel = window.getSelection();
         colorRange = sel && sel.rangeCount ? sel.getRangeAt(0).cloneRange() : null;
         colorSpan = null;
+        if (!popover.hidden) { closeColorPopover(); return; }
+        popover.hidden = false;
+        trigger.setAttribute("aria-expanded", "true");
       });
-      colorInput.addEventListener("input", function () {
-        if (colorSpan) {
-          colorSpan.style.color = colorInput.value;
-        } else if (colorRange && !colorRange.collapsed) {
-          colorSpan = applyFontColor(colorRange, colorInput.value);
-        } else {
-          return;
-        }
-        editor.dispatchEvent(new Event("input", { bubbles: true }));
+
+      popover.querySelectorAll("[data-color-swatch]").forEach(function (swatch) {
+        swatch.addEventListener("mousedown", function (event) {
+          event.preventDefault();
+          if (colorRange && !colorRange.collapsed) {
+            applyFontColor(colorRange, swatch.dataset.colorSwatch);
+            editor.dispatchEvent(new Event("input", { bubbles: true }));
+          }
+          closeColorPopover();
+        });
+      });
+
+      var customColorInput = popover.querySelector("[data-rich-color]");
+      if (customColorInput) {
+        customColorInput.addEventListener("mousedown", function () {
+          var sel = window.getSelection();
+          colorRange = sel && sel.rangeCount ? sel.getRangeAt(0).cloneRange() : colorRange;
+          colorSpan = null;
+        });
+        customColorInput.addEventListener("input", function () {
+          if (colorSpan) {
+            colorSpan.style.color = customColorInput.value;
+          } else if (colorRange && !colorRange.collapsed) {
+            colorSpan = applyFontColor(colorRange, customColorInput.value);
+          } else {
+            return;
+          }
+          editor.dispatchEvent(new Event("input", { bubbles: true }));
+        });
+        customColorInput.addEventListener("change", closeColorPopover);
+      }
+
+      document.addEventListener("mousedown", function (event) {
+        if (!popover.hidden && !colorAnchor.contains(event.target)) closeColorPopover();
       });
     }
   }

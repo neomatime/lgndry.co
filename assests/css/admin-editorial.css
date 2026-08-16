@@ -2175,18 +2175,56 @@ body.ops-app-shell .rich-toolbar__sep {
   background: rgba(17, 17, 15, 0.13);
 }
 
-body.ops-app-shell .rich-toolbar__color {
-  display: flex;
-  align-items: center;
-  justify-content: center;
+body.ops-app-shell .rich-toolbar__color-anchor {
+  position: relative;
+}
+
+body.ops-app-shell .rich-toolbar__color-popover {
+  position: absolute;
+  top: calc(100% + 4px);
+  left: 0;
+  z-index: 20;
+  width: 168px;
+  padding: 10px;
+  border: 1px solid rgba(17, 17, 15, 0.13);
+  border-radius: 4px;
+  background: #fff;
+  box-shadow: 0 8px 24px rgba(17, 17, 15, 0.16);
+}
+
+body.ops-app-shell .rich-toolbar__swatches {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 6px;
+}
+
+body.ops-app-shell .rich-toolbar__swatch {
   width: 28px;
   height: 28px;
+  border: 1px solid rgba(17, 17, 15, 0.15);
+  border-radius: 3px;
   cursor: pointer;
 }
 
-body.ops-app-shell .rich-toolbar__color input[type="color"] {
-  width: 20px;
-  height: 20px;
+body.ops-app-shell .rich-toolbar__swatch:hover {
+  border-color: #1a1a18;
+}
+
+body.ops-app-shell .rich-toolbar__custom-color {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  margin-top: 10px;
+  padding-top: 10px;
+  border-top: 1px solid rgba(17, 17, 15, 0.13);
+  font-size: 0.72rem;
+  color: #655f58;
+}
+
+body.ops-app-shell .rich-toolbar__custom-color input[type="color"] {
+  width: 26px;
+  height: 26px;
   padding: 0;
   border: 1px solid rgba(17, 17, 15, 0.25);
   border-radius: 3px;
@@ -2194,11 +2232,11 @@ body.ops-app-shell .rich-toolbar__color input[type="color"] {
   cursor: pointer;
 }
 
-body.ops-app-shell .rich-toolbar__color input[type="color"]::-webkit-color-swatch-wrapper {
+body.ops-app-shell .rich-toolbar__custom-color input[type="color"]::-webkit-color-swatch-wrapper {
   padding: 0;
 }
 
-body.ops-app-shell .rich-toolbar__color input[type="color"]::-webkit-color-swatch {
+body.ops-app-shell .rich-toolbar__custom-color input[type="color"]::-webkit-color-swatch {
   border: 0;
   border-radius: 2px;
 }
