@@ -1,4 +1,5 @@
 {
+  "framework": "nextjs",
   "crons": [
     { "path": "/api/sync-titan-inbox", "schedule": "0 6 * * *" }
   ],
