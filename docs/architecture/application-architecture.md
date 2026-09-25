@@ -199,3 +199,22 @@ with the existing `is_admin(auth.uid())` on the admin-only tables, keep (or add)
 explicit anon SELECT policies for the tables the public site reads (`cms`,
 `practice`, `budgets`, `collection`), and add tests. Needs the owner's approval
 because the current admin and the public site both depend on these policies.
+
+### Status: fix drafted, NOT yet applied
+
+`supabase/migrations/20260926_restrict_admin_tables_to_admins.sql` (rollback in
+`supabase/rollbacks/`). It replaces `authenticated_full_access` with an
+`is_admin()` policy on the 15 tables, and does the same for write access to the
+`media` storage bucket (which had the identical "any signed-in user" rule).
+It also widens the ten existing `TO anon` public policies to
+`anon, authenticated`, because signed-in customers and staff currently rely on
+the broad policy for catalogue reads and enquiry inserts; without that they
+would lose both.
+
+Tested in a transaction that was rolled back (nothing persisted): as anon, as a
+non-admin signed-in user and as the admin. Customer: sees the same public
+content as anon, sees zero rows in the admin tables, cannot update, delete or
+upload, can still submit leads. Admin: full access. The Titan sync and the
+notification triggers use the service role / SECURITY DEFINER and are
+unaffected. Apply order: apply the migration to the shared database; the legacy
+admin keeps working because only the single `admin_users` member signs into it.
