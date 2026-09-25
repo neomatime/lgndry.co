@@ -1,0 +1,16 @@
+/* Additions the React port needs on top of the ported legacy stylesheets.
+   Kept separate so style.css / premium.css / editorial-sharp.css stay
+   byte-identical to the originals apart from the documented font/url edits. */
+
+/* The loader is server-rendered visible. Hide it before first paint for
+   returning visitors (a head script sets this attribute from sessionStorage)
+   and for anyone who prefers reduced motion, so it never flashes. */
+html[data-skip-loader] .loader {
+  display: none;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .loader {
+    display: none;
+  }
+}

@@ -1,0 +1,754 @@
+/*
+ * LGNDRY.Co sharp editorial refinement
+ * Retains the premium system while replacing soft app-like geometry with
+ * a restrained, fashion-editorial visual language.
+ */
+
+:root {
+  --ui-radius-sm: 0;
+  --ui-radius: 0;
+  --ui-radius-lg: 0;
+  --ui-shadow-sm: 0 1px 0 rgba(24, 20, 16, 0.04);
+  --ui-shadow-md: 0 10px 28px rgba(24, 20, 16, 0.045);
+  --ui-shadow-lg: 0 18px 48px rgba(24, 20, 16, 0.06);
+}
+
+/* Media should read like an editorial spread, not an app tile. */
+:where(
+  .practice-hero__media,
+  .practice-row__media,
+  .about-hero__media,
+  .about-founder__portrait,
+  .contact-hero__media,
+  .collection-hero__media,
+  .booking-cta__media,
+  .showroom-page .showroom-gallery__main
+) {
+  border-radius: 0 !important;
+  box-shadow: var(--ui-shadow-lg) !important;
+}
+
+/* Flat, square content planes. */
+:where(
+  .about-card,
+  .contact-path,
+  .contact-studio,
+  .account-panel,
+  .auth-card,
+  .cart-summary,
+  .checkout-summary,
+  .confirmation-card,
+  .commerce-empty,
+  .commerce-work,
+  .curated-card,
+  .showroom-trust,
+  .showroom-page .showroom-details,
+  .contact-grid > *
+) {
+  border-radius: 0 !important;
+  box-shadow: none !important;
+}
+
+:where(
+  .about-card,
+  .contact-path,
+  .account-panel,
+  .auth-card,
+  .cart-summary,
+  .checkout-summary,
+  .confirmation-card,
+  .commerce-empty,
+  .commerce-work,
+  .curated-card,
+  .showroom-trust,
+  .showroom-page .showroom-details
+) {
+  border-color: var(--ui-line) !important;
+}
+
+/* About principles become one clean editorial row. */
+.about-principles__grid {
+  gap: 0 !important;
+  border-top: 1px solid var(--ui-line);
+  border-bottom: 1px solid var(--ui-line);
+}
+
+.about-principles .about-card {
+  border: 0 !important;
+  border-right: 1px solid var(--ui-line) !important;
+  background: transparent !important;
+  backdrop-filter: none;
+}
+
+.about-principles .about-card:last-child {
+  border-right: 0 !important;
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .about-card:hover,
+  .contact-path:hover,
+  .commerce-work:hover {
+    box-shadow: none !important;
+    transform: none !important;
+  }
+
+  .about-principles .about-card:hover {
+    background: rgba(255, 255, 255, 0.58) !important;
+  }
+
+  .commerce-work:hover {
+    border-color: var(--ui-line-strong) !important;
+  }
+}
+
+/* Collection hero: align copy to the artwork as one deliberate editorial composition. */
+.collection-hero {
+  grid-template-columns: minmax(360px, 0.72fr) minmax(0, 1.28fr);
+  column-gap: clamp(56px, 6.5vw, 104px);
+  align-items: stretch;
+}
+
+.collection-hero__intro {
+  display: grid;
+  grid-template-rows: auto 1fr auto;
+  align-self: stretch;
+  max-width: 430px;
+  padding-block: clamp(10px, 1.2vw, 18px);
+}
+
+.collection-title {
+  max-width: 8ch;
+  margin: 0;
+  font-size: clamp(3.4rem, 4.4vw, 4.35rem);
+  line-height: 0.94;
+  letter-spacing: -0.025em;
+}
+
+.collection-lede {
+  align-self: start;
+  max-width: 33ch;
+  margin-top: clamp(28px, 3vw, 42px);
+  font-size: 0.82rem;
+  line-height: 1.8;
+}
+
+.collection-hero__intro .practice-cta {
+  align-self: end;
+  justify-self: start;
+  margin-top: clamp(34px, 4vw, 58px);
+}
+
+/* Collection controls: a horizontal editorial deck rather than a card. */
+.catalogue-controls {
+  padding: 22px clamp(20px, 2.4vw, 36px) !important;
+  border: 0 !important;
+  border-top: 1px solid var(--ui-line) !important;
+  border-bottom: 1px solid var(--ui-line) !important;
+  border-radius: 0 !important;
+  background: rgba(251, 250, 248, 0.93) !important;
+  box-shadow: none !important;
+}
+
+.catalogue-filter-toggle,
+.catalogue-clear {
+  border-radius: 0 !important;
+  box-shadow: none !important;
+}
+
+/* Inputs, selects and dropdown menus use crisp, architectural edges. */
+body:not(.ops-app-shell) :where(
+  input,
+  select,
+  textarea,
+  .lgndry-select__trigger,
+  .lgndry-select__menu
+) {
+  border-radius: 0 !important;
+}
+
+.lgndry-select__menu {
+  box-shadow: 0 14px 36px rgba(24, 20, 16, 0.09) !important;
+}
+/* Keep copy and controls comfortably inside the sharp editorial geometry. */
+body:not(.ops-app-shell) :where(
+  input:not([type="checkbox"]):not([type="radio"]):not([type="hidden"]):not([type="file"]):not([type="range"]):not([type="color"]),
+  select:not(.lgndry-select__native),
+  textarea,
+  .lgndry-select__trigger
+) {
+  padding-inline: 16px !important;
+}
+
+body:not(.ops-app-shell) select:not(.lgndry-select__native) {
+  padding-right: 46px !important;
+}
+
+body:not(.ops-app-shell) .lgndry-select__trigger {
+  padding-right: 16px !important;
+}
+
+body:not(.ops-app-shell) select:not(.lgndry-select__native) {
+  -webkit-appearance: none;
+  appearance: none;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath d='M1 1.5 6 6.5l5-5' fill='none' stroke='%231d1d1d' stroke-width='1.35'/%3E%3C/svg%3E") !important;
+  background-repeat: no-repeat !important;
+  background-position: right 17px center !important;
+  background-size: 12px 8px !important;
+}
+
+body:not(.ops-app-shell) textarea {
+  padding-block: 14px !important;
+}
+
+.lgndry-select__trigger svg {
+  flex: 0 0 auto;
+  margin-left: auto;
+}
+
+.lgndry-select__menu {
+  padding: 8px !important;
+}
+
+.lgndry-select__option {
+  padding: 12px 14px !important;
+}
+
+.work__size .lgndry-select__trigger {
+  min-height: 28px;
+  padding: 2px 22px 2px 0 !important;
+}
+
+.catalogue-filter-toggle,
+.catalogue-clear {
+  padding-inline: 14px !important;
+}
+
+/* Bordered editorial cards need the same deliberate inset as form fields. */
+.contact-path,
+.about-principles .about-card {
+  min-width: 0;
+  padding: clamp(28px, 3vw, 42px) !important;
+}
+
+.contact-path {
+  display: flex;
+  flex-direction: column;
+}
+
+.contact-path .contact-link {
+  margin-top: auto;
+  padding-top: 34px;
+}
+
+/* Buttons remain premium through proportion and typography, not pills. */
+:where(
+  .commerce-primary,
+  .auth-button,
+  .contact-form button[type='submit'],
+  .collection-cart__footer button,
+  .showroom-primary,
+  .google-auth-button,
+  .showroom-secondary,
+  .auth-button--light
+) {
+  border-radius: 0 !important;
+  box-shadow: none !important;
+}
+
+:where(
+  .commerce-primary,
+  .auth-button,
+  .contact-form button[type='submit'],
+  .collection-cart__footer button,
+  .showroom-primary
+):hover {
+  box-shadow: none !important;
+  filter: none;
+  transform: none;
+  background: #34322f !important;
+}
+
+:where(.google-auth-button, .showroom-secondary, .auth-button--light):hover {
+  transform: none;
+  background: #f5f3f0 !important;
+}
+
+/* Commerce cards remain image-led and quiet. */
+.commerce-work {
+  background: #fff;
+}
+
+.commerce-work .work__media {
+  border-radius: 0 !important;
+}
+
+.commerce-work .work__body {
+  border-top: 1px solid var(--ui-line);
+}
+
+/* Contact surfaces align as a sharp diptych. */
+.contact-grid {
+  gap: 1px !important;
+  background: var(--ui-line);
+}
+
+.contact-grid > * {
+  border: 0 !important;
+}
+
+/* Account and verification screens use framed editorial sheets. */
+.auth-card,
+.confirmation-card {
+  background: rgba(255, 255, 255, 0.9);
+}
+
+/* Curated-space previews and product panels stay visually subordinate. */
+.curated-card,
+.showroom-trust,
+.showroom-page .showroom-details {
+  background: rgba(255, 255, 255, 0.82) !important;
+}
+
+@media (max-width: 720px) {
+  .collection-hero {
+    grid-template-columns: 1fr;
+    row-gap: 30px;
+  }
+
+  .collection-hero__intro {
+    display: block;
+    max-width: none;
+    padding-block: 0;
+  }
+
+  .collection-title {
+    max-width: none;
+    font-size: clamp(3rem, 14vw, 4rem);
+    line-height: 0.98;
+  }
+
+  .collection-lede {
+    margin-top: 22px;
+  }
+
+  .collection-hero__intro .practice-cta {
+    margin-top: 28px;
+  }
+  .about-principles__grid {
+    border-bottom: 0;
+  }
+
+  .about-principles .about-card {
+    border-right: 0 !important;
+    border-bottom: 1px solid var(--ui-line) !important;
+    padding: 28px !important;
+  }
+
+  .catalogue-controls {
+    padding: 20px 16px !important;
+  }
+
+  .contact-grid {
+    gap: 1px !important;
+  }
+
+  .contact-path {
+    padding: 28px !important;
+  }
+}
+
+/* Header cart and visually hidden showroom scrolling */
+.page-header__actions,
+.commerce-header__actions {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: clamp(14px, 1.8vw, 24px);
+  min-width: 0;
+}
+
+.page-header__actions {
+  margin-left: auto;
+}
+
+.page-header__actions .page-header__brand {
+  flex: 0 0 auto;
+}
+
+.page-header .commerce-cart-link--header,
+.commerce-header .commerce-cart-link--header {
+  position: relative !important;
+  inset: auto !important;
+  z-index: auto !important;
+  display: inline-grid !important;
+  width: 38px !important;
+  height: 38px !important;
+  flex: 0 0 38px;
+  place-items: center;
+  border: 0 !important;
+  border-radius: 0 !important;
+  background: transparent !important;
+  color: var(--ui-ink, #1d1c1a) !important;
+  box-shadow: none !important;
+  -webkit-backdrop-filter: none !important;
+  backdrop-filter: none !important;
+  transform: none !important;
+}
+
+.page-header .commerce-cart-link--header:hover,
+.commerce-header .commerce-cart-link--header:hover {
+  background: transparent !important;
+  box-shadow: none !important;
+  opacity: 0.55;
+  transform: none !important;
+}
+
+.page-header .commerce-cart-link--header > svg,
+.commerce-header .commerce-cart-link--header > svg {
+  width: 20px;
+  height: 20px;
+  stroke-width: 1.25;
+}
+
+.page-header .commerce-cart-link--header > span,
+.commerce-header .commerce-cart-link--header > span {
+  position: absolute;
+  top: 1px;
+  right: 0;
+  display: grid;
+  min-width: 15px;
+  height: 15px;
+  padding: 0 4px;
+  place-items: center;
+  border: 0;
+  border-radius: 50%;
+  background: #1d1c1a;
+  color: #fff;
+  font: 500 0.5rem/1 Inter, sans-serif;
+  letter-spacing: 0;
+}
+
+.showroom-page .showroom-details {
+  -ms-overflow-style: none;
+  scrollbar-width: none !important;
+}
+
+.showroom-page .showroom-details::-webkit-scrollbar {
+  display: none;
+  width: 0;
+  height: 0;
+}
+
+@media (max-width: 680px) {
+  .page-header__actions,
+  .commerce-header__actions {
+    gap: 10px;
+  }
+
+  .page-header .commerce-cart-link--header,
+  .commerce-header .commerce-cart-link--header {
+    width: 34px !important;
+    height: 34px !important;
+    flex-basis: 34px;
+  }
+}
+/* Full-viewport navigation overlay */
+html.nav-is-open,
+body.nav-is-open {
+  overflow: hidden !important;
+}
+
+.nav-panel {
+  inset: 0 !important;
+  width: 100vw !important;
+  height: 100vh !important;
+  height: 100dvh !important;
+  min-height: 100vh;
+  z-index: 2000 !important;
+  overflow: hidden;
+  isolation: isolate;
+}
+
+.nav-panel__links,
+.nav-panel__preview {
+  height: 100%;
+  min-height: 0;
+}
+
+.nav-panel__close {
+  position: fixed !important;
+  top: clamp(20px, 3.5vh, 34px) !important;
+  left: clamp(24px, 4.4vw, 68px) !important;
+  z-index: 20 !important;
+  display: inline-flex !important;
+  min-width: 44px;
+  min-height: 44px;
+  align-items: center;
+  justify-content: flex-start;
+  visibility: visible !important;
+  opacity: 1 !important;
+}
+
+@media (max-width: 767px) {
+  .nav-panel__links {
+    min-height: 100vh;
+    min-height: 100dvh;
+    overflow-y: auto;
+  }
+
+  .nav-panel__close {
+    top: 12px !important;
+    left: 18px !important;
+  }
+}
+/* Quality pass: interaction clarity, accessibility and responsive consistency */
+html {
+  scroll-behavior: smooth;
+}
+
+body:not(.ops-app-shell) {
+  overflow-x: clip;
+}
+
+body:not(.ops-app-shell) img {
+  display: block;
+  max-width: 100%;
+}
+
+.skip-link {
+  position: fixed;
+  top: 12px;
+  left: 12px;
+  z-index: 4000;
+  padding: 12px 16px;
+  border: 1px solid #1d1c1a;
+  background: #fff;
+  color: #1d1c1a;
+  font: 600 0.66rem/1 Inter, sans-serif;
+  letter-spacing: 0.13em;
+  text-decoration: none;
+  text-transform: uppercase;
+  transform: translateY(-160%);
+  transition: transform 0.18s ease;
+}
+
+.skip-link:focus {
+  transform: translateY(0);
+}
+
+#main-content:focus {
+  outline: none;
+}
+
+body:not(.ops-app-shell) :where(a, button, input, select, textarea, [tabindex]):focus-visible {
+  outline: 1px solid #1d1c1a !important;
+  outline-offset: 4px;
+}
+
+body:not(.ops-app-shell) :where(button, [role='button'], a) {
+  touch-action: manipulation;
+}
+
+body:not(.ops-app-shell) :where(
+  input:not([type='checkbox']):not([type='radio']):not([type='hidden']):not([type='file']):not([type='range']):not([type='color']),
+  select:not(.lgndry-select__native),
+  .lgndry-select__trigger
+) {
+  min-height: 52px;
+  transition: border-color 0.18s ease, background-color 0.18s ease;
+}
+
+body:not(.ops-app-shell) textarea {
+  min-height: 128px;
+  resize: vertical;
+}
+
+body:not(.ops-app-shell) :where(input, select, textarea):disabled,
+body:not(.ops-app-shell) button:disabled {
+  cursor: not-allowed;
+  opacity: 0.48;
+}
+
+body:not(.ops-app-shell) :where(input, select, textarea):user-invalid {
+  border-color: #9a3d35 !important;
+}
+
+body:not(.ops-app-shell) :where(
+  .auth-feedback,
+  .checkout-feedback,
+  .showroom-feedback,
+  [data-auth-feedback],
+  [data-checkout-feedback],
+  [data-showroom-feedback]
+):empty {
+  display: none;
+}
+
+body:not(.ops-app-shell) :where(
+  .auth-feedback,
+  .checkout-feedback,
+  .showroom-feedback,
+  [data-auth-feedback],
+  [data-checkout-feedback],
+  [data-showroom-feedback]
+):not(:empty) {
+  display: block;
+  min-height: 0;
+  margin-block: 12px;
+  padding: 12px 14px;
+  border-left: 2px solid currentColor;
+  background: #f7f5f1;
+  font-size: 0.76rem;
+  line-height: 1.55;
+}
+
+.nav-panel__item[aria-current='page'] .nav-panel__link,
+.site-footer a[aria-current='page'] {
+  text-decoration: underline;
+  text-decoration-thickness: 1px;
+  text-underline-offset: 6px;
+}
+
+.catalogue-controls__primary,
+.catalogue-controls__refine {
+  min-width: 0;
+}
+
+.catalogue-controls label,
+.catalogue-controls input,
+.catalogue-controls select {
+  min-width: 0;
+}
+
+.catalogue-results {
+  min-height: 1em;
+  padding-inline: 2px;
+}
+
+.catalogue-empty {
+  min-height: 280px;
+  padding: clamp(44px, 7vw, 88px) 24px;
+  color: var(--ui-muted, #746f68);
+  font-size: 0.82rem;
+  line-height: 1.7;
+}
+
+.commerce-empty {
+  display: grid;
+  min-height: 300px;
+  align-content: center;
+  justify-items: start;
+  gap: 16px;
+  padding: clamp(48px, 7vw, 88px) clamp(22px, 5vw, 54px) !important;
+}
+
+.commerce-empty h2,
+.commerce-empty p {
+  margin: 0;
+}
+
+.commerce-empty p {
+  max-width: 42ch;
+  color: var(--ui-muted, #746f68);
+  font-size: 0.84rem;
+  line-height: 1.7;
+}
+
+.commerce-empty__action {
+  display: inline-flex;
+  align-items: center;
+  gap: 28px;
+  margin-top: 10px;
+  padding: 10px 0;
+  border-bottom: 1px solid currentColor;
+  color: inherit;
+  font: 500 0.65rem/1 Inter, sans-serif;
+  letter-spacing: 0.15em;
+  text-decoration: none;
+  text-transform: uppercase;
+}
+
+.commerce-empty__action::after {
+  content: '→';
+  font-size: 1rem;
+  font-weight: 300;
+}
+
+
+[data-commerce-cart-count][hidden] {
+  display: none !important;
+}.showroom-loading {
+  min-height: 58vh;
+  display: grid;
+  place-items: center;
+  color: var(--ui-muted, #746f68);
+  font: 500 0.62rem/1.5 Inter, sans-serif;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+}
+
+.showroom-page .showroom-details h1 {
+  font-size: clamp(2.8rem, 3.6vw, 4.25rem);
+}
+
+.showroom-page .showroom-actions button {
+  min-height: 54px;
+}
+
+@media (max-width: 720px) {
+  .catalogue-controls__primary {
+    grid-template-columns: minmax(0, 1fr) auto !important;
+    column-gap: 14px !important;
+    row-gap: 20px !important;
+  }
+
+  .catalogue-controls__primary .catalogue-search {
+    grid-column: 1 / -1;
+  }
+
+  .catalogue-filter-toggle {
+    min-width: 86px;
+    justify-self: end;
+    padding-inline: 8px !important;
+  }
+
+  .catalogue-results {
+    margin-top: 22px;
+    text-align: right !important;
+  }
+
+  .commerce-page,
+  .checkout-page,
+  .confirmation-page {
+    padding-inline: 20px;
+  }
+
+  .commerce-page__head {
+    margin-bottom: 42px;
+  }
+
+  .commerce-empty {
+    min-height: 260px;
+  }
+
+  .showroom-page .showroom-details h1 {
+    max-width: 11ch;
+    font-size: clamp(2.55rem, 11vw, 3.5rem);
+    line-height: 0.94;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  html {
+    scroll-behavior: auto;
+  }
+
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    scroll-behavior: auto !important;
+    transition-duration: 0.01ms !important;
+  }
+}

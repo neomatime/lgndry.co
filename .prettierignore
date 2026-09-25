@@ -11,3 +11,4 @@ supabase/functions
 *.png
 .claude
 vercel.json
+src/styles/public
