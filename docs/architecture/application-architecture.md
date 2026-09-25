@@ -183,7 +183,7 @@ accepted difference: ~0.3px in form-control intrinsic width between the two
 copies of the Inter font. Nothing was submitted on either side, because forms
 write to the live database.
 
-## OPEN SECURITY ISSUE (existing, not caused by this migration)
+## SECURITY ISSUE (existing, not caused by this migration) — FIXED 2026-09-26
 
 Fourteen tables carry a policy `authenticated_full_access` with
 `USING/WITH CHECK (auth.role() = 'authenticated')` for command ALL:
@@ -200,7 +200,7 @@ explicit anon SELECT policies for the tables the public site reads (`cms`,
 `practice`, `budgets`, `collection`), and add tests. Needs the owner's approval
 because the current admin and the public site both depend on these policies.
 
-### Status: fix drafted, NOT yet applied
+### Status: APPLIED to the live database on 2026-09-26
 
 `supabase/migrations/20260926_restrict_admin_tables_to_admins.sql` (rollback in
 `supabase/rollbacks/`). It replaces `authenticated_full_access` with an
@@ -211,7 +211,7 @@ It also widens the ten existing `TO anon` public policies to
 the broad policy for catalogue reads and enquiry inserts; without that they
 would lose both.
 
-Tested in a transaction that was rolled back (nothing persisted): as anon, as a
+Tested before and after applying, in rolled-back transactions (nothing persisted): as anon, as a
 non-admin signed-in user and as the admin. Customer: sees the same public
 content as anon, sees zero rows in the admin tables, cannot update, delete or
 upload, can still submit leads. Admin: full access. The Titan sync and the
