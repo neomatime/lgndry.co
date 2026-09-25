@@ -23,6 +23,16 @@ const nextConfig: NextConfig = {
       { source: "/about.html", destination: "/about", permanent: true },
       { source: "/services.html", destination: "/services", permanent: true },
       { source: "/contact.html", destination: "/contact", permanent: true },
+      { source: "/collection.html", destination: "/collection", permanent: true },
+      { source: "/cart.html", destination: "/cart", permanent: true },
+      // The old showroom took the artwork as ?id=…; it's now part of the path.
+      {
+        source: "/showroom.html",
+        has: [{ type: "query", key: "id", value: "(?<id>[^/&]+)" }],
+        destination: "/showroom/:id",
+        permanent: true,
+      },
+      { source: "/showroom.html", destination: "/collection", permanent: true },
     ];
   },
 

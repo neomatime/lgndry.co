@@ -4,13 +4,21 @@ import { useEffect, useRef, useState } from "react";
 import { cn } from "@/lib/utils/cn";
 
 type SelectProps = {
-  name: string;
+  /** Form field name; omit for a control that is only read through `onChange`. */
+  name?: string;
   /** The choices, not including the empty "placeholder" entry. */
   options: readonly string[];
-  /** Label of the empty first entry, e.g. "Select one". */
-  placeholder: string;
+  /**
+   * Label of the empty first entry, e.g. "Select one". Leave out for a control
+   * that always has one of `options` chosen (the first, unless told otherwise).
+   */
+  placeholder?: string;
   required?: boolean;
   defaultValue?: string;
+  /** Makes the control controlled; pair with `onChange`. */
+  value?: string;
+  /** Names the control for assistive tech, e.g. "Print size for Gae". */
+  label?: string;
   onChange?: (value: string) => void;
 };
 
@@ -24,17 +32,22 @@ export function Select({
   options,
   placeholder,
   required,
-  defaultValue = "",
+  defaultValue,
+  value: controlledValue,
+  label,
   onChange,
 }: SelectProps) {
-  const [value, setValue] = useState(defaultValue);
+  const [ownValue, setOwnValue] = useState(
+    defaultValue ?? (placeholder === undefined ? (options[0] ?? "") : ""),
+  );
   const [open, setOpen] = useState(false);
   const rootRef = useRef<HTMLDivElement>(null);
   const triggerRef = useRef<HTMLButtonElement>(null);
   const menuRef = useRef<HTMLDivElement>(null);
 
+  const value = controlledValue ?? ownValue;
   const entries = [
-    { value: "", label: placeholder },
+    ...(placeholder === undefined ? [] : [{ value: "", label: placeholder }]),
     ...options.map((o) => ({ value: o, label: o })),
   ];
   const selected = entries.find((entry) => entry.value === value) ?? entries[0];
@@ -55,9 +68,13 @@ export function Select({
     menuRef.current?.querySelector<HTMLElement>('[aria-selected="true"]')?.focus();
   }, [open]);
 
-  const choose = (next: string) => {
-    setValue(next);
+  const change = (next: string) => {
+    setOwnValue(next);
     onChange?.(next);
+  };
+
+  const choose = (next: string) => {
+    change(next);
     setOpen(false);
     triggerRef.current?.focus();
   };
@@ -88,10 +105,7 @@ export function Select({
         name={name}
         required={required}
         value={value}
-        onChange={(event) => {
-          setValue(event.target.value);
-          onChange?.(event.target.value);
-        }}
+        onChange={(event) => change(event.target.value)}
         className="lgndry-select__native"
         // The themed button/list is the accessible control; this native one only
         // carries the value and browser validation, so it's kept out of the
@@ -112,6 +126,7 @@ export function Select({
         className="lgndry-select__trigger"
         aria-haspopup="listbox"
         aria-expanded={open}
+        aria-label={label ? `${label}: ${selected?.label ?? ""}` : undefined}
         onClick={() => setOpen((isOpen) => !isOpen)}
       >
         <span>{selected?.label}</span>

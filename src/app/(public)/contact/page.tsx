@@ -66,7 +66,7 @@ function Method({
 export default function ContactPage() {
   return (
     <>
-      <main className="contact-page">
+      <main className="contact-page" id="main-content">
         <section className="contact-hero" aria-labelledby="contact-title">
           <Reveal className="contact-hero__copy">
             <h1 id="contact-title" className="contact-title">

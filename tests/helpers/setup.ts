@@ -10,3 +10,30 @@ afterEach(() => cleanup());
 if (!Element.prototype.scrollIntoView) {
   Element.prototype.scrollIntoView = () => {};
 }
+
+// Nor does it implement media queries (nobody prefers reduced motion in a
+// test) or IntersectionObserver (nothing ever scrolls into view).
+if (!window.matchMedia) {
+  window.matchMedia = (query: string) =>
+    ({
+      matches: false,
+      media: query,
+      onchange: null,
+      addEventListener: () => {},
+      removeEventListener: () => {},
+      addListener: () => {},
+      removeListener: () => {},
+      dispatchEvent: () => false,
+    }) as MediaQueryList;
+}
+if (!(window as { IntersectionObserver?: unknown }).IntersectionObserver) {
+  class NoopIntersectionObserver {
+    observe() {}
+    unobserve() {}
+    disconnect() {}
+    takeRecords() {
+      return [];
+    }
+  }
+  window.IntersectionObserver = NoopIntersectionObserver as unknown as typeof IntersectionObserver;
+}

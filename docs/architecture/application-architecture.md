@@ -218,3 +218,59 @@ upload, can still submit leads. Admin: full access. The Titan sync and the
 notification triggers use the service role / SECURITY DEFINER and are
 unaffected. Apply order: apply the migration to the shared database; the legacy
 admin keeps working because only the single `admin_users` member signs into it.
+
+## Phase 3, slice 3a — Collection, Showroom, Cart
+
+The catalogue is live data (prices, stock and new works are edited in the old
+admin), so unlike the content pages it is **not** seeded into code.
+
+- `features/shop/catalogue/data.ts` reads the `collection` table as the anon
+  role with no cookies (RLS already hides archived/hidden works). The
+  `/collection` and `/showroom/[id]` pages are statically generated and
+  revalidated every 60 seconds, so a price or stock change appears within a
+  minute. If the database can't be reached the collection page shows the same
+  "temporarily unavailable" message the legacy page did.
+- **Environment:** the build and the running site need `NEXT_PUBLIC_SUPABASE_URL`
+  and `NEXT_PUBLIC_SUPABASE_ANON_KEY` for the *Preview* and *Production*
+  environments in Vercel. Without them these pages render the unavailable state.
+- Image paths in the table are either full storage URLs or site-relative
+  ("assests/images/..."). Relative ones must exist under `public/`; the ones
+  the current rows use were copied there. New works added through the admin use
+  storage URLs and need nothing.
+- `/showroom.html?id=X` redirects to `/showroom/X`; an unknown id is a real 404
+  with the legacy "artwork could not be found" content.
+- The cart is the same localStorage key and line format as the legacy site
+  (`lgndry_collection_cart_v2`), so a cart started before cutover survives it.
+  Pure operations (add/merge/clamp/remove/totals) live in `cart-storage.ts` and
+  are unit tested; `useCart` exposes it to React.
+- Prices render through `formatMoney` (non-breaking-space thousands, as the
+  legacy `en-ZA` output) so the server and browser produce identical text.
+
+### Verification
+
+Element-by-element geometry/typography comparison against the running legacy
+pages, 1440px and 390px, same data and same cart contents on both sides:
+collection 221/222 and 355/357 (the rest is `next/image` transparent-colour
+noise), showroom 205/207 desktop (cart badge, and a hover scale because the
+pointer was over the legacy image) and 207/207 phone, cart 57/57 on both.
+Document heights are identical on every page. Room-preview scale maths were
+checked against the legacy values for the same size and room (0.278 / 0.225).
+Interactions (filter, sort, search, add, gallery, rooms, frame/size/quantity,
+cart edit/remove) were exercised in the browser. Nothing was submitted.
+
+### Deliberate differences
+
+| Change | Why |
+| --- | --- |
+| Showroom content is in the server HTML and appears at once; no "Preparing the showroom" fade. | The legacy page was an empty shell filled by script. |
+| Opening a work from the grid no longer flashes the full-image lightbox for 90 ms. | Legacy quirk: two scripts both reacted to the same click. |
+| Ctrl/Cmd/middle-click on a work opens a new tab as a browser normally would. | Legacy intercepted every click. |
+| Cart quantity commits on Enter/leaving the box/spinner, not per keystroke. | Legacy fired on `change` (same), but a React input would otherwise remove the line while the box is cleared to type a new number. |
+| Every dropdown trigger has an accessible name (e.g. "Print size for Gae: 50 × 70 cm"). | The legacy custom dropdown had none. |
+| Old `/showroom.html?id=X` links carry the id as a harmless extra `?id=` after redirecting. | Next.js copies the source query onto redirects. |
+
+### Still to do in the shop group
+
+Checkout and order confirmation (writes `orders`, and today trusts the prices
+in the visitor's cart: to be recomputed from the database server-side), then
+sign-in/account/auth-callback and the client gallery page.

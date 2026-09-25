@@ -60,7 +60,7 @@ function ServiceContent({ area, cta }: { area: ServiceArea; cta: React.ReactNode
 export default function ServicesPage() {
   return (
     <>
-      <main className="practice-page">
+      <main className="practice-page" id="main-content">
         <section className="practice-hero">
           <Reveal className="practice-hero__intro">
             <p className="practice-eyebrow">Practice</p>

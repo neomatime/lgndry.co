@@ -44,7 +44,7 @@ const LOGOS = [
 export default function AboutPage() {
   return (
     <>
-      <main className="about-page">
+      <main className="about-page" id="main-content">
         <section className="about-hero" aria-labelledby="about-title">
           <Reveal className="about-hero__copy">
             <p className="about-eyebrow">About LGNDRY.Co</p>
