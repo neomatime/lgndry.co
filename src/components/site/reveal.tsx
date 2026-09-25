@@ -5,7 +5,7 @@ import { usePrefersReducedMotion } from "@/hooks/use-media-query";
 import { cn } from "@/lib/utils/cn";
 
 type RevealProps = React.HTMLAttributes<HTMLElement> & {
-  as?: "div" | "figure";
+  as?: "div" | "figure" | "article" | "section" | "aside";
 };
 
 /**

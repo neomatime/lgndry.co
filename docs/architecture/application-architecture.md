@@ -118,3 +118,84 @@ difference: `next/image` adds `color: transparent` to `<img>`.
   legacy site will need to sign in once after cutover (different storage).
 - **Preview deployments** need `NEXT_PUBLIC_SUPABASE_URL` and
   `NEXT_PUBLIC_SUPABASE_ANON_KEY` set for the Preview environment in Vercel.
+
+## Phase 3, slice 2 — About, Services, Contact (showroom deferred)
+
+### Scope decision: showroom moves to the shop slice
+
+`showroom.html` is an empty shell that `showroom.js` fills from the `collection`
+table (artwork detail, size/framing choices, add-to-cart, related works). It
+depends on the catalogue, the cart and checkout, so it migrates with them, not
+with the static pages.
+
+### Runtime behaviour found in the legacy scripts (not visible in the HTML)
+
+- **Database-driven page text.** `site-data.js` overwrote text from the `cms`,
+  `practice` and `budgets` tables on every page. Content is now static in
+  `src/content/`, seeded from the live rows on 2026-09-25 (practice matched the
+  HTML; budgets did not, so the *database* wording is what visitors see today).
+  With the old admin retired, edit these files to change wording.
+- **Booking modal** attached to *any* link or button whose text contained the
+  word "book". **Partnership modal** attached to links mentioning "brand
+  partnership"/"apply to partner". Both are now built once
+  (`features/lead-capture/components/lead-modal.tsx`) and opened only by
+  explicit `BookingTrigger` / `PartnershipTrigger` links, which keep a
+  `mailto:` href as the no-JavaScript fallback.
+- **Custom dropdowns and date picker** were injected onto every `<select>` and
+  date input. Rebuilt as `Select` and `DatePicker` components with the same
+  markup and classes, so the ported CSS applies unchanged.
+
+### Lead capture (writes to the live database)
+
+Server actions (`features/lead-capture/actions.ts`) validate with zod, then
+insert with the visitor's anon-role client, so row-level security still applies.
+Stored formats (`clients` Lead rows, `bookings` Enquiry rows, `partnerships`
+Applied rows, `notes` / `application` strings, `ops_activity_log` messages) are
+identical to the legacy ones, because the current admin reads them; a test pins
+them. Verified against the live schema with an anon-role insert inside a rolled
+back transaction (no rows persisted).
+
+Added protections: server-side validation with length limits, a honeypot field,
+activity messages truncated to the database's 200-character limit.
+
+### Deliberate differences from the legacy site (please review)
+
+| Change | Why |
+| --- | --- |
+| **About → Founder section shows the intended text.** The live legacy page shows the first bio paragraph in place of the "Founder" label, replaces the first paragraph with the second bio, and so shows the second bio twice. | Bug in the legacy CMS script's selector (`p:nth-of-type(1)` also matches the label). Not reproduced. |
+| About headline has no forced line breaks. | The legacy script replaced the HTML's `<br>`s with unbroken CMS text, so that is what visitors see. |
+| Picking "Book a photography session" / "Ready to book now" in the Contact dropdowns no longer also opens the booking modal. | The word-matching rule caught the dropdown's own option buttons. Accident. |
+| Date picker: **Clear** and **Today** now work; keyboard users can open it. | A stray quote in the legacy markup disabled both buttons; the field had no key handler. The date remains optional, as before. |
+| Native `<select>`s are hidden from screen readers and the tab order. | The legacy version announced each dropdown twice. |
+| A partnership applicant's **role** is now saved (appended as "Contact role: …"). | The legacy form collected it but never stored it. |
+| The booking/partnership budget choice can no longer be scrambled by the late database response. | Legacy race: choosing before the list refreshed recorded a different option. |
+| Booking / partnership dialogs are `inert` while closed. | Keyboard focus could wander into the hidden dialog. |
+
+### Verification
+
+Legacy and new pages were compared in a real browser by recording the size,
+position and typography of every classed element, at 1440px and 390px. Services:
+identical. Contact: identical. About: identical except the Founder section above.
+Both modals were driven through all four steps on each side and compared
+(booking: 414 of 457 identical, the rest sub-pixel or the legacy budget race;
+partnership: 360 of 408 identical, 45 sub-pixel, 3 from the same race). Known
+accepted difference: ~0.3px in form-control intrinsic width between the two
+copies of the Inter font. Nothing was submitted on either side, because forms
+write to the live database.
+
+## OPEN SECURITY ISSUE (existing, not caused by this migration)
+
+Fourteen tables carry a policy `authenticated_full_access` with
+`USING/WITH CHECK (auth.role() = 'authenticated')` for command ALL:
+`bookings, budgets, clients, cms, collection, content, documents, galleries,
+invoices, journal, ops_activity_log, partnerships, practice, projects,
+push_subscriptions`. It grants full read/write/delete to **any signed-in user**,
+not only admins. Customers can register on the public site (the project has 5
+auth users, 1 of them an admin), so a customer session could read or change
+client contact details, invoices and collection prices through the API.
+
+Not exploited, not changed. Proposed fix: replace `auth.role() = 'authenticated'`
+with the existing `is_admin(auth.uid())` on the admin-only tables, keep (or add)
+explicit anon SELECT policies for the tables the public site reads (`cms`,
+`practice`, `budgets`, `collection`), and add tests. Needs the owner's approval
+because the current admin and the public site both depend on these policies.

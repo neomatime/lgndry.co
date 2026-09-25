@@ -11,6 +11,8 @@ import {
   type GalleryImage,
 } from "@/components/site/scroll-gallery";
 import { SiteFooter } from "@/components/site/site-footer";
+import { mailto } from "@/content/site";
+import { BookingTrigger } from "@/features/lead-capture/components/lead-modals";
 
 export const metadata: Metadata = {
   title: { absolute: "LGNDRY.Co — Visual Storytelling Studio" },
@@ -116,12 +118,12 @@ export default function HomePage() {
                 </p>
               </div>
               <div className="booking-cta__actions">
-                <a
+                <BookingTrigger
                   className="booking-cta__button"
-                  href="mailto:neomokgwadi@lgndry-co.co.za?subject=Booking%20a%20service%20with%20LGNDRY.Co"
+                  href={mailto("Booking%20a%20service%20with%20LGNDRY.Co")}
                 >
                   Book a service
-                </a>
+                </BookingTrigger>
                 <a className="booking-cta__phone" href="tel:+27764862725">
                   076 486 2725
                 </a>

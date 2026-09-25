@@ -18,7 +18,12 @@ const nextConfig: NextConfig = {
   async redirects() {
     // Legacy .html URLs → clean URLs, permanently, so existing search
     // rankings and inbound links carry over. Add each page here as it migrates.
-    return [{ source: "/index.html", destination: "/", permanent: true }];
+    return [
+      { source: "/index.html", destination: "/", permanent: true },
+      { source: "/about.html", destination: "/about", permanent: true },
+      { source: "/services.html", destination: "/services", permanent: true },
+      { source: "/contact.html", destination: "/contact", permanent: true },
+    ];
   },
 
   async headers() {

@@ -3,11 +3,13 @@ import { Cormorant_Garamond, Inter } from "next/font/google";
 import { NavPanel } from "@/components/site/nav-panel";
 import { NavProvider } from "@/components/site/nav-context";
 import { SiteHeader } from "@/components/site/site-header";
+import { LeadModalsProvider } from "@/features/lead-capture/components/lead-modals";
 
 // Order matters: this is the same cascade order the legacy pages linked them in.
 import "@/styles/public/style.css";
 import "@/styles/public/premium.css";
 import "@/styles/public/editorial-sharp.css";
+import "@/styles/public/date-picker.css";
 import "@/styles/public/overrides.css";
 
 // The ported CSS names these families literally ('Inter', 'Cormorant Garamond');
@@ -17,7 +19,7 @@ import "@/styles/public/overrides.css";
 const inter = Inter({ subsets: ["latin"], variable: "--font-inter", display: "swap" });
 const cormorant = Cormorant_Garamond({
   subsets: ["latin"],
-  weight: ["300", "400"],
+  weight: ["300", "400", "500"],
   variable: "--font-cormorant",
   display: "swap",
 });
@@ -46,9 +48,11 @@ export default function PublicLayout({ children }: { children: React.ReactNode }
           Skip to content
         </a>
         <NavProvider>
-          <SiteHeader />
-          <NavPanel />
-          {children}
+          <LeadModalsProvider>
+            <SiteHeader />
+            <NavPanel />
+            {children}
+          </LeadModalsProvider>
         </NavProvider>
       </body>
     </html>
