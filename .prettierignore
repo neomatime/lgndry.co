@@ -1,0 +1,13 @@
+.next
+node_modules
+coverage
+pnpm-lock.yaml
+docs
+assests
+api
+supabase/functions
+*.html
+*.js
+*.png
+.claude
+vercel.json

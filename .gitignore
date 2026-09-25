@@ -13,3 +13,17 @@ assests/references/
 
 # Brainstorming visual companion (scratch, not for deployment)
 .superpowers/
+
+# Next.js / Node
+node_modules/
+.next/
+out/
+coverage/
+next-env.d.ts
+*.tsbuildinfo
+.vercel
+
+# Local environment files (never commit secrets)
+.env
+.env.local
+.env.*.local
