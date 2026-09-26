@@ -1,8 +1,6 @@
 import type { Metadata } from "next";
 import { Cormorant_Garamond, Inter } from "next/font/google";
-import { NavPanel } from "@/components/site/nav-panel";
 import { NavProvider } from "@/components/site/nav-context";
-import { SiteHeader } from "@/components/site/site-header";
 import { LeadModalsProvider } from "@/features/lead-capture/components/lead-modals";
 
 // Order matters: this is the same cascade order the legacy pages linked them in.
@@ -48,11 +46,7 @@ export default function PublicLayout({ children }: { children: React.ReactNode }
           Skip to content
         </a>
         <NavProvider>
-          <LeadModalsProvider>
-            <SiteHeader />
-            <NavPanel />
-            {children}
-          </LeadModalsProvider>
+          <LeadModalsProvider>{children}</LeadModalsProvider>
         </NavProvider>
       </body>
     </html>

@@ -274,3 +274,63 @@ cart edit/remove) were exercised in the browser. Nothing was submitted.
 Checkout and order confirmation (writes `orders`, and today trusts the prices
 in the visitor's cart: to be recomputed from the database server-side), then
 sign-in/account/auth-callback and the client gallery page.
+
+## Phase 3, slice 3b — Checkout and order confirmation
+
+Route groups under `(public)`: `(storefront)` pages share the full header and
+menu panel; `(checkout)` pages (checkout, order confirmation) get the slim
+`CommerceHeader` (brand, page name, cart, one way back) and no menu, matching
+the legacy `commerce-header`.
+
+### Orders are priced on the server (behaviour change, security)
+
+The legacy checkout sent the whole cart, prices included, straight to the
+database, so a customer could edit a price in their browser and pay it. The
+`placeOrder` server action (`features/shop/checkout/actions.ts`) now takes only
+*which* work and the visitor's choices (size, framing, quantity), then:
+
+- re-reads the collection and prices everything from it (`order.ts`, unit tested);
+- refuses a direct purchase of a work that is no longer available or has fewer
+  units left than requested, and an order for a work that has left the collection;
+  an "Order Request" may include any work (that is how reserved and sold-out
+  pieces are enquired about);
+- recomputes delivery (R250, free for collection) and totals;
+- refuses payment methods other than EFT / payment in person (card is
+  "Coming soon", switched by `content/payment.ts`);
+- has a honeypot, zod validation and length limits, and retries with a new
+  order number on the (rare) unique-number clash.
+
+The stored `orders` row is otherwise identical to the legacy one (same columns,
+`items` JSON with `unitPrice`/`lineTotal`, same placeholder text for collection
+addresses, same activity-log line), so the current admin reads it unchanged.
+
+Ownership: a signed-in customer **with a confirmed email** gets the order linked
+to their account (`customer_id`); everyone else orders as a guest. Legacy tried
+to link an unconfirmed user's order and the database refused it; the new action
+falls back to a guest order instead. Verified against the live policies in
+rolled-back transactions (guest insert, activity log, cannot link an account or
+read orders; customer insert, sees only their own order, cannot insert an
+unlinked one).
+
+### Verification
+
+Element-by-element geometry/typography comparison with the legacy pages, same
+cart, 1440px and 390px: checkout identical apart from the honeypot input shifting
+the classless-input index (document heights identical, 2350 and 3554);
+confirmation identical in all three states (with order 33/33 and 33/33 phone,
+order mismatch 16/16). Form behaviour (Collect in person, billing toggle,
+required fields, validation gate, disabled card) was exercised in the browser.
+No order was placed: that would write to the live database.
+
+### Deliberate differences
+
+| Change | Why |
+| --- | --- |
+| Prices, stock and totals come from the database, not the browser. | Security, above. |
+| Signed-in customer details only fill *empty* fields. | The legacy prefill could overwrite what the customer had already typed. |
+| Order confirmation link "My Account" points to `/account#orders`. | Account pages are the next slice; until they ship that link 404s on the branch. |
+| Old `/checkout.html?type=request` and `/order-confirmation.html?order=…` redirect, query kept. | Bookmarks and emails. |
+
+### Still to do in the shop group
+
+Sign-in / sign-up / auth-callback, My Account, and the client gallery page.
