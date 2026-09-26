@@ -1,12 +1,11 @@
 "use server";
 
-import { createClient } from "@supabase/supabase-js";
 import { fetchCollection } from "@/features/shop/catalogue/data";
 import { priceOrder } from "@/features/shop/checkout/order";
 import { orderActivity, orderRecord, type OrderRecord } from "@/features/shop/checkout/records";
 import { placeOrderSchema } from "@/features/shop/checkout/schema";
+import { createSupabaseAnonClient } from "@/lib/db/anon";
 import { createSupabaseServerClient } from "@/lib/db/server";
-import { getPublicEnv } from "@/lib/env";
 
 export type PlaceOrderResult = { ok: true; order: OrderRecord } | { ok: false; error: string };
 
@@ -61,15 +60,7 @@ export async function placeOrder(payload: unknown): Promise<PlaceOrderResult> {
 
   // A signed-in visitor whose email isn't confirmed is neither a guest nor a
   // customer as far as the database policies go, so they order as a guest.
-  const supabase = customer
-    ? session
-    : createClient(
-        getPublicEnv().NEXT_PUBLIC_SUPABASE_URL,
-        getPublicEnv().NEXT_PUBLIC_SUPABASE_ANON_KEY,
-        {
-          auth: { persistSession: false, autoRefreshToken: false },
-        },
-      );
+  const supabase = customer ? session : createSupabaseAnonClient();
 
   const submittedAt = new Date().toISOString();
   for (let attempt = 0; attempt < ATTEMPTS; attempt++) {

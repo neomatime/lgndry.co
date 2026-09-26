@@ -334,3 +334,80 @@ No order was placed: that would write to the live database.
 ### Still to do in the shop group
 
 Sign-in / sign-up / auth-callback, My Account, and the client gallery page.
+
+## Phase 3, slice 3c — Sign-in, account, verification callback, client gallery
+
+The public site is now fully migrated. Three root layouts exist: `(public)`
+(storefront and checkout, full site CSS), `(account)` (sign-in, callback and My
+Account) and `(gallery)`. The last two are separate documents because the
+legacy pages loaded a different stylesheet set (they never loaded `style.css`);
+each imports one `*-bundle.css` so the cascade order is fixed to the legacy
+order (Turbopack otherwise emitted the chunks in a different order and changed
+input backgrounds).
+
+### URLs and links that must keep working
+
+| Legacy | New | Notes |
+| --- | --- | --- |
+| `/auth.html?mode=…` | `/auth?mode=…` | modes: login, signup, forgot, reset, verify |
+| `/auth-callback.html` | `/auth-callback` | **Supabase's redirect allow-list contains the `.html` address**, so sign-in still asks for `…/auth-callback.html` and the site redirects it, keeping `?code=`/`#access_token=` |
+| `/account.html#orders` | `/account#orders` | section still lives in the fragment (`#profile`, `#tracking`, `#settings`, `#order=<id>`) |
+| `/gallery.html?id=<uuid>` | `/gallery?id=<uuid>` | links already emailed to clients |
+
+Sessions: the browser client now keeps the session in cookies (the legacy
+`supabase-js` used localStorage), so the server can see the customer (checkout
+links the order; `/account` loads their data on the server). Existing customers
+will need to sign in once after cutover. The proxy also refreshes the session
+cookies for `/account` and `/checkout`.
+
+### Security findings and fixes in this slice
+
+1. **Gallery passwords protected nothing (fixed in code, additive DB change applied).**
+   The legacy page downloaded the whole gallery row — files *and* password — as an
+   anonymous visitor and compared the password in the browser. Added
+   `gallery_access()` and `gallery_mark()` (security-definer functions,
+   `supabase/migrations/20260926_gallery_access_functions.sql`, applied and tested
+   in rolled-back transactions): the password is checked inside the database, the
+   gallery only comes back once it is satisfied, the password is never returned,
+   wrong guesses are slowed, status only moves forward. The new page uses them.
+2. **NOT yet fixed — direct table access for anonymous users.** The anonymous role
+   can still read every non-draft gallery (files and password) and update *any
+   column* of a Sent/Viewed gallery through the API, and the legacy `gallery.html`
+   still uses that. `supabase/deferred/20260926_restrict_gallery_public_access.sql`
+   removes it; apply it when the legacy gallery page is retired. There were no
+   galleries in the database when this was written (2026-09-26), so nothing was
+   exposed.
+3. **NOT yet fixed — `orders.internalNotes`.** A customer can read their own
+   orders, and row-level security can't hide a column, so `internalNotes` (the
+   studio's private notes) is readable by the customer through the API. The new
+   account page never requests it (`ACCOUNT_ORDER_COLUMNS`), but the API still
+   allows it. Proper fix: move internal notes to an admin-only table or a view;
+   needs a decision because the current admin edits the column in place.
+4. **Open redirect (fixed).** The legacy sign-in accepted `next=//evil.example`.
+   `safeCustomerNext` only accepts single-slash same-site paths.
+5. A signed-in but unverified user is now signed out again when they try to log
+   in (the legacy left a dangling session).
+
+### Verification
+
+Element-by-element comparison with the legacy pages at 1440px and 390px:
+sign-in (all five views) and the callback page match apart from font metrics
+(below); My Account matches in all eight views (orders, profile, tracking,
+settings, three order details, unknown order) with identical text and document
+heights, using identical fixture data (a stubbed-auth copy of the legacy page vs
+a temporary preview route, both since removed — no account was created on the
+live project); the gallery's "not found" and "unavailable" states match. Not
+verified visually with real data: the gallery with images / password gate (there
+are no galleries to show; both flows are unit tested) and a live sign-in, sign-up,
+Google or email-link round trip (needs the project's redirect list to include the
+preview origin, or a test after cutover).
+
+Known, accepted difference: on these pages the legacy stylesheet loads Inter from
+Google and the site now self-hosts the variable Inter, whose `line-height: normal`
+is about a pixel shorter on ~11px labels. No layout shifts beyond ~2px.
+
+### After cutover
+
+Retire `assests/js` and the legacy HTML, apply the deferred gallery migration,
+decide on `internalNotes`, and check the Supabase Auth redirect URLs (Site URL and
+the `…/auth-callback.html` entry) match the production domain.

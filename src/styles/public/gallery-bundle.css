@@ -1,0 +1,5 @@
+/* One entry point so the cascade order is fixed to the legacy page's: its own
+   inline rules first, then premium and editorial (which win where they overlap). */
+@import "./gallery.css";
+@import "./premium.css";
+@import "./editorial-sharp.css";

@@ -26,6 +26,12 @@ const nextConfig: NextConfig = {
       { source: "/collection.html", destination: "/collection", permanent: true },
       { source: "/cart.html", destination: "/cart", permanent: true },
       { source: "/checkout.html", destination: "/checkout", permanent: true },
+      { source: "/auth.html", destination: "/auth", permanent: true },
+      // Emailed verification and reset links (and Google sign-in) come back here,
+      // with the sign-in code in the query or fragment: both are carried across.
+      { source: "/auth-callback.html", destination: "/auth-callback", permanent: true },
+      { source: "/account.html", destination: "/account", permanent: true },
+      { source: "/gallery.html", destination: "/gallery", permanent: true },
       {
         source: "/order-confirmation.html",
         destination: "/order-confirmation",
@@ -46,7 +52,7 @@ const nextConfig: NextConfig = {
     return [
       {
         // Public pages only: the CSP the legacy pages declared in a <meta> tag.
-        source: "/((?!ops|auth|_next).*)",
+        source: "/((?!ops|auth/|_next).*)",
         headers: [
           {
             key: "Content-Security-Policy",

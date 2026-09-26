@@ -1,8 +1,7 @@
 import "server-only";
-import { createClient } from "@supabase/supabase-js";
 import { cache } from "react";
 import { artworkFromRow, type Artwork } from "@/features/shop/catalogue/artwork";
-import { getPublicEnv } from "@/lib/env";
+import { createSupabaseAnonClient } from "@/lib/db/anon";
 
 /**
  * The published collection, in display order, or `null` when it can't be
@@ -13,10 +12,7 @@ import { getPublicEnv } from "@/lib/env";
  */
 export const fetchCollection = cache(async (): Promise<Artwork[] | null> => {
   try {
-    const env = getPublicEnv();
-    const client = createClient(env.NEXT_PUBLIC_SUPABASE_URL, env.NEXT_PUBLIC_SUPABASE_ANON_KEY, {
-      auth: { persistSession: false, autoRefreshToken: false },
-    });
+    const client = createSupabaseAnonClient();
     const { data, error } = await client.from("collection").select("*").order("position");
     if (error) throw error;
     return data

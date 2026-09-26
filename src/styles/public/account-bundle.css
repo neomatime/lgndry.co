@@ -1,0 +1,6 @@
+/* One entry point so the cascade order is fixed: the build tool may otherwise
+   emit separately imported stylesheets in a different order than the legacy
+   auth and account pages linked them (account.css, then premium, then editorial). */
+@import "./account.css";
+@import "./premium.css";
+@import "./editorial-sharp.css";
