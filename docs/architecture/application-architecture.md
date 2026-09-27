@@ -411,3 +411,64 @@ is about a pixel shorter on ~11px labels. No layout shifts beyond ~2px.
 Retire `assests/js` and the legacy HTML, apply the deferred gallery migration,
 decide on `internalNotes`, and check the Supabase Auth redirect URLs (Site URL and
 the `…/auth-callback.html` entry) match the production domain.
+
+## Phase 5, sub-project 1 — Attachment pipeline and enquiry record
+
+The first piece of the OPS Command Center rebuild (see
+`docs/LGNDRY_Command_Center_Refinement_Scope.md` and
+`docs/superpowers/specs/2026-09-27-attachment-pipeline-and-enquiry-record-design.md`).
+A public "Start a Project" form (`/start-a-project`) now exists, matching the
+website refinement scope's §11 field list, and is the first form on the site
+that accepts file attachments.
+
+### What's new
+
+- `enquiries` and `enquiry_attachments` tables, and a private
+  `enquiry-attachments` Storage bucket (15 MB/file, PDF/JPG/JPEG/PNG/DOC/
+  DOCX/XLS/XLSX only, enforced at the bucket level and again in code).
+- All public writes go through one `SECURITY DEFINER` function,
+  `submit_enquiry()` — there are no direct anon policies on
+  `clients`/`enquiries`/`enquiry_attachments`, because matching an enquiry to
+  an existing client needs to read `clients` by email first, which `anon`
+  must never do directly.
+- Every attachment is validated twice: cheaply in the browser (extension,
+  size), and authoritatively on the server (extension, size, and a
+  magic-byte check that the file's real content matches what its extension
+  claims — catching a mislabelled or disguised file a declared MIME type
+  alone would not).
+- A bare admin page, `/ops/enquiries`, lists every submission and opens each
+  attachment through a short-lived signed URL. Deliberately unstyled — the
+  full Enquiries page (matching `docs/design-references/enquiries.png` /
+  `view-enquiry.png`) is its own later sub-project.
+
+### Deliberately unchanged
+
+The existing Contact page, Booking dialog and Partnership dialog keep
+writing into `clients`/`bookings`/`partnerships` exactly as before — a
+temporary, intentional parallel path. Nothing links to `/start-a-project`
+yet; nav/CTA wiring is the later website-structure sub-project. Existing
+`clients`/`bookings`/`partnerships` rows were not migrated into `enquiries`.
+
+### Verification
+
+Full gate suite green (`format:check`, `typecheck`, `lint`, `test` — 300/300,
+`build`). The Server Action body-size limit was raised to 80 MB
+(`next.config.ts`, `experimental.serverActions.bodySizeLimit`) and proven
+against a real, valid 10.2 MB PDF plus a small JPG submitted through
+`/start-a-project` on the live database: the enquiry, client and both
+attachment rows landed with byte-exact sizes, and both Storage objects were
+confirmed present with matching sizes and MIME types. The test enquiry,
+attachment rows and client row were deleted afterward (the two uploaded
+Storage objects were left behind — a harmless, accepted minor gap, not worth
+building cleanup tooling for in this sub-project).
+
+### Still open
+
+- The styled Enquiries list + detail page (next sub-project). Its admin page
+  currently swallows Supabase/Storage query errors as empty results with
+  nothing logged (an accepted, deferred gap in the bare `/ops/enquiries`
+  verification page) — worth fixing when that page is rebuilt.
+- Quotes, bookings, payments, communication history and follow-ups will
+  reference `enquiries.id` when each is built; none of that exists yet.
+- Retiring the legacy forms, and the website nav/IA change to Work /
+  Practice / Fine Art / About / Start a Project.

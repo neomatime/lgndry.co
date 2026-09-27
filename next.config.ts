@@ -8,6 +8,14 @@ const nextConfig: NextConfig = {
   // (e.g. in the user's home folder) can be mistaken for the project root.
   turbopack: { root: path.resolve(__dirname) },
 
+  // Default Server Action body limit is far below what a 15 MB file (let
+  // alone up to 5 of them) needs — see /start-a-project's attachment upload.
+  experimental: {
+    serverActions: {
+      bodySizeLimit: "80mb",
+    },
+  },
+
   images: {
     // The site's photographs are already resized/optimised WebP, and their
     // /assests/... URLs are referenced from sent emails and external links,
