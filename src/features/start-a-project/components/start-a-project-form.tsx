@@ -4,7 +4,11 @@ import { useRef, useState } from "react";
 import { Select } from "@/components/site/forms/select";
 import { CONTACT_EMAIL } from "@/content/site";
 import { submitProjectEnquiry } from "@/features/start-a-project/actions";
-import { MAX_FILES, checkFileCount, checkFileMeta } from "@/features/start-a-project/file-validation";
+import {
+  MAX_FILES,
+  checkFileCount,
+  checkFileMeta,
+} from "@/features/start-a-project/file-validation";
 import { PROJECT_TYPES } from "@/features/start-a-project/schemas";
 
 type Status = "idle" | "sending" | "sent" | "failed";
@@ -88,7 +92,12 @@ export function StartAProjectForm() {
   }
 
   return (
-    <form ref={formRef} className="contact-form" noValidate onSubmit={(event) => void submit(event)}>
+    <form
+      ref={formRef}
+      className="contact-form"
+      noValidate
+      onSubmit={(event) => void submit(event)}
+    >
       {/* Spam trap: invisible to people, tempting to bots. */}
       <input
         type="text"

@@ -74,7 +74,10 @@ describe("submitProjectEnquiry", () => {
 
     expect(result).toEqual({ ok: true });
     expect(upload).not.toHaveBeenCalled();
-    expect(rpc).toHaveBeenCalledWith("submit_enquiry", expect.objectContaining({ attachments: [] }));
+    expect(rpc).toHaveBeenCalledWith(
+      "submit_enquiry",
+      expect.objectContaining({ attachments: [] }),
+    );
   });
 
   it("rejects invalid form fields without touching the database", async () => {

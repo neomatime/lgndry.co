@@ -30,9 +30,8 @@ beforeEach(() => submitProjectEnquiry.mockReset());
 
 describe("StartAProjectForm", () => {
   it("renders every field from the website scope, including the honeypot", async () => {
-    const { StartAProjectForm } = await import(
-      "@/features/start-a-project/components/start-a-project-form"
-    );
+    const { StartAProjectForm } =
+      await import("@/features/start-a-project/components/start-a-project-form");
     const { container } = render(<StartAProjectForm />);
 
     for (const label of [
@@ -51,9 +50,8 @@ describe("StartAProjectForm", () => {
   });
 
   it("rejects an oversized file at the file picker, before any submit", async () => {
-    const { StartAProjectForm } = await import(
-      "@/features/start-a-project/components/start-a-project-form"
-    );
+    const { StartAProjectForm } =
+      await import("@/features/start-a-project/components/start-a-project-form");
     render(<StartAProjectForm />);
     const input = screen.getByLabelText("Attachments") as HTMLInputElement;
 
@@ -64,9 +62,8 @@ describe("StartAProjectForm", () => {
   });
 
   it("lists a valid attachment and can remove it", async () => {
-    const { StartAProjectForm } = await import(
-      "@/features/start-a-project/components/start-a-project-form"
-    );
+    const { StartAProjectForm } =
+      await import("@/features/start-a-project/components/start-a-project-form");
     render(<StartAProjectForm />);
     const input = screen.getByLabelText("Attachments") as HTMLInputElement;
 
@@ -79,9 +76,8 @@ describe("StartAProjectForm", () => {
 
   it("submits the form (with a chosen file) and shows the success state", async () => {
     submitProjectEnquiry.mockResolvedValue({ ok: true });
-    const { StartAProjectForm } = await import(
-      "@/features/start-a-project/components/start-a-project-form"
-    );
+    const { StartAProjectForm } =
+      await import("@/features/start-a-project/components/start-a-project-form");
     const { container } = render(<StartAProjectForm />);
     fillRequiredFields();
     fireEvent.change(screen.getByLabelText("Attachments"), { target: { files: [pdfFile()] } });
@@ -97,9 +93,8 @@ describe("StartAProjectForm", () => {
 
   it("shows the server's error and lets the visitor try again", async () => {
     submitProjectEnquiry.mockResolvedValue({ ok: false, error: "Please try again in a moment." });
-    const { StartAProjectForm } = await import(
-      "@/features/start-a-project/components/start-a-project-form"
-    );
+    const { StartAProjectForm } =
+      await import("@/features/start-a-project/components/start-a-project-form");
     const { container } = render(<StartAProjectForm />);
     fillRequiredFields();
 
