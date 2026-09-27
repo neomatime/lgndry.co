@@ -106,6 +106,9 @@ begin
   if coalesce(trim(full_name), '') = '' or coalesce(trim(email), '') = '' then
     raise exception 'full_name and email are required';
   end if;
+  if jsonb_array_length(coalesce(attachments, '[]'::jsonb)) > 5 then
+    raise exception 'too many attachments: %', jsonb_array_length(attachments);
+  end if;
 
   select c.id into matched_client_id
   from public.clients c
