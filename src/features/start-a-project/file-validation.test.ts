@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 import {
   MAX_FILES,
+  canonicalMimeType,
   checkFileContent,
   checkFileCount,
   checkFileMeta,
@@ -89,6 +90,35 @@ describe("checkFileCount", () => {
     const result = checkFileCount(MAX_FILES + 1);
     expect(result.ok).toBe(false);
     expect(result).toMatchObject({ error: expect.stringContaining(String(MAX_FILES)) });
+  });
+});
+
+describe("canonicalMimeType", () => {
+  it("maps every allowed extension to its bucket-matching canonical MIME type", () => {
+    expect(canonicalMimeType("brief.pdf")).toBe("application/pdf");
+    expect(canonicalMimeType("photo.jpg")).toBe("image/jpeg");
+    expect(canonicalMimeType("photo.jpeg")).toBe("image/jpeg");
+    expect(canonicalMimeType("photo.png")).toBe("image/png");
+    expect(canonicalMimeType("old.doc")).toBe("application/msword");
+    expect(canonicalMimeType("new.docx")).toBe(
+      "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+    );
+    expect(canonicalMimeType("old.xls")).toBe("application/vnd.ms-excel");
+    expect(canonicalMimeType("new.xlsx")).toBe(
+      "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+    );
+  });
+
+  it("is not fooled by a spoofable, case-varying extension", () => {
+    expect(canonicalMimeType("Brief.PDF")).toBe("application/pdf");
+    expect(canonicalMimeType("Report.DOCX")).toBe(
+      "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+    );
+  });
+
+  it("falls back to application/octet-stream for an unrecognized extension", () => {
+    expect(canonicalMimeType("script.exe")).toBe("application/octet-stream");
+    expect(canonicalMimeType("no-extension")).toBe("application/octet-stream");
   });
 });
 

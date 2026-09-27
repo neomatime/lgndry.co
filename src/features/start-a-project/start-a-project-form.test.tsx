@@ -91,6 +91,18 @@ describe("StartAProjectForm", () => {
     expect(await screen.findByText("Project received")).toBeInTheDocument();
   });
 
+  it("does not call the server action when a required field is left empty", async () => {
+    const { StartAProjectForm } =
+      await import("@/features/start-a-project/components/start-a-project-form");
+    const { container } = render(<StartAProjectForm />);
+    // Leave "Your name" (and the other required fields) blank.
+    fireEvent.change(screen.getByLabelText("Attachments"), { target: { files: [pdfFile()] } });
+
+    fireEvent.submit(container.querySelector("form")!);
+
+    expect(submitProjectEnquiry).not.toHaveBeenCalled();
+  });
+
   it("shows the server's error and lets the visitor try again", async () => {
     submitProjectEnquiry.mockResolvedValue({ ok: false, error: "Please try again in a moment." });
     const { StartAProjectForm } =

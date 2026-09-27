@@ -5,11 +5,16 @@ import { Select } from "@/components/site/forms/select";
 import { CONTACT_EMAIL } from "@/content/site";
 import { submitProjectEnquiry } from "@/features/start-a-project/actions";
 import {
+  ALLOWED_EXTENSIONS,
   MAX_FILES,
+  MAX_FILE_BYTES,
   checkFileCount,
   checkFileMeta,
 } from "@/features/start-a-project/file-validation";
 import { PROJECT_TYPES } from "@/features/start-a-project/schemas";
+
+const ACCEPT_ATTRIBUTE = ALLOWED_EXTENSIONS.map((extension) => `.${extension}`).join(",");
+const MAX_FILE_MB = Math.round(MAX_FILE_BYTES / (1024 * 1024));
 
 type Status = "idle" | "sending" | "sent" | "failed";
 
@@ -63,6 +68,7 @@ export function StartAProjectForm() {
   const submit = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
     if (status === "sending") return;
+    if (formRef.current && !formRef.current.reportValidity()) return;
     setStatus("sending");
     setServerError(null);
     const formData = new FormData(formRef.current ?? undefined);
@@ -155,15 +161,10 @@ export function StartAProjectForm() {
       <div className="project-enquiry-form__files contact-form__wide">
         <label>
           <span>Attachments</span>
-          <input
-            type="file"
-            multiple
-            accept=".pdf,.jpg,.jpeg,.png,.doc,.docx,.xls,.xlsx"
-            onChange={onFilesChosen}
-          />
+          <input type="file" multiple accept={ACCEPT_ATTRIBUTE} onChange={onFilesChosen} />
         </label>
         <p className="project-enquiry-form__file-hint">
-          PDF, JPG, PNG, DOC, DOCX, XLS or XLSX — up to {MAX_FILES} files, 15 MB each.
+          PDF, JPG, PNG, DOC, DOCX, XLS or XLSX — up to {MAX_FILES} files, {MAX_FILE_MB} MB each.
         </p>
         {files.length ? (
           <ul className="project-enquiry-form__file-list">

@@ -49,6 +49,40 @@ export function extensionOf(fileName: string): string {
   return dot === -1 ? "" : fileName.slice(dot + 1).toLowerCase();
 }
 
+/**
+ * The canonical MIME type for an extension, matching the Storage bucket's
+ * `allowed_mime_types` list exactly (see
+ * supabase/migrations/20260927_enquiries_and_attachments.sql). The
+ * browser-declared `file.type` is spoofable and, for `.doc`/`.docx`/`.xls`/
+ * `.xlsx` on many OSes, often just an empty string -- so this is what
+ * should be used for both the Storage upload's `contentType` and the
+ * `mime_type` sent to `submit_enquiry`, never `file.type`. Only call this
+ * after `checkFileContent` has confirmed the file's real byte signature
+ * matches its extension.
+ */
+export function canonicalMimeType(fileName: string): string {
+  const extension = extensionOf(fileName);
+  switch (extension) {
+    case "pdf":
+      return "application/pdf";
+    case "jpg":
+    case "jpeg":
+      return "image/jpeg";
+    case "png":
+      return "image/png";
+    case "doc":
+      return "application/msword";
+    case "docx":
+      return "application/vnd.openxmlformats-officedocument.wordprocessingml.document";
+    case "xls":
+      return "application/vnd.ms-excel";
+    case "xlsx":
+      return "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet";
+    default:
+      return "application/octet-stream";
+  }
+}
+
 export type FileCheck = { ok: true } | { ok: false; error: string };
 
 /** Cheap checks that don't need the file's bytes: extension and size. */

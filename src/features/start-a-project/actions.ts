@@ -2,6 +2,7 @@
 
 import { createSupabaseAnonClient } from "@/lib/db/anon";
 import {
+  canonicalMimeType,
   checkFileContent,
   checkFileCount,
   checkFileMeta,
@@ -39,8 +40,11 @@ function fieldsFromFormData(formData: FormData): Record<string, string> {
  * Validates the form and every attachment, uploads the attachments to
  * private Storage, then writes the client/enquiry/attachment rows through
  * submit_enquiry(). Every file is fully validated (size, extension, then
- * its real content) before any of them are uploaded, so a later rejection
- * never leaves an earlier file stranded in Storage.
+ * its real content) before any of them are uploaded, so a validation
+ * failure never uploads anything. A failure partway through the upload
+ * loop or in the submit_enquiry() call itself, after some files already
+ * succeeded, can still leave those earlier files stranded in Storage --
+ * a known, accepted gap (see the design doc's orphaned-upload note).
  */
 export async function submitProjectEnquiry(formData: FormData): Promise<EnquiryResult> {
   const input = projectEnquirySchema.safeParse(fieldsFromFormData(formData));
@@ -54,24 +58,28 @@ export async function submitProjectEnquiry(formData: FormData): Promise<EnquiryR
   const countCheck = checkFileCount(files.length);
   if (!countCheck.ok) return { ok: false, error: countCheck.error };
 
-  const readFiles: { file: File; bytes: Uint8Array }[] = [];
+  const checkedFiles: File[] = [];
   for (const file of files) {
     const metaCheck = checkFileMeta(file.name, file.size);
     if (!metaCheck.ok) return { ok: false, error: metaCheck.error };
-    const bytes = new Uint8Array(await file.arrayBuffer());
-    const contentCheck = checkFileContent(file.name, bytes);
+    // Only the first few bytes are needed to confirm the file's real
+    // signature -- reading the whole file into memory here would be
+    // wasteful, especially with up to 5 x 15 MB attachments per submission.
+    const head = new Uint8Array(await file.slice(0, 16).arrayBuffer());
+    const contentCheck = checkFileContent(file.name, head);
     if (!contentCheck.ok) return { ok: false, error: contentCheck.error };
-    readFiles.push({ file, bytes });
+    checkedFiles.push(file);
   }
 
   const supabase = createSupabaseAnonClient();
   const submissionId = crypto.randomUUID();
   const uploaded: UploadedFile[] = [];
 
-  for (const [index, { file, bytes }] of readFiles.entries()) {
+  for (const [index, file] of checkedFiles.entries()) {
     const storagePath = `${submissionId}/${index}-${sanitizeFileName(file.name)}`;
-    const { error } = await supabase.storage.from(BUCKET).upload(storagePath, bytes, {
-      contentType: file.type || "application/octet-stream",
+    const mimeType = canonicalMimeType(file.name);
+    const { error } = await supabase.storage.from(BUCKET).upload(storagePath, file, {
+      contentType: mimeType,
       upsert: false,
     });
     if (error) {
@@ -81,7 +89,7 @@ export async function submitProjectEnquiry(formData: FormData): Promise<EnquiryR
     uploaded.push({
       storage_path: storagePath,
       file_name: file.name,
-      mime_type: file.type || "application/octet-stream",
+      mime_type: mimeType,
       size_bytes: file.size,
     });
   }
