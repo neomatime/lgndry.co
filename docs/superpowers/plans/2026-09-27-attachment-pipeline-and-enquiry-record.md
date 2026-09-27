@@ -485,7 +485,7 @@ describe("checkFileCount", () => {
 
 describe("sanitizeFileName", () => {
   it("strips path separators and unsafe characters", () => {
-    expect(sanitizeFileName("../../etc/passwd")).toBe("......etcpasswd");
+    expect(sanitizeFileName("../../etc/passwd")).toBe("....etcpasswd");
     expect(sanitizeFileName("My Brief (final)!!.pdf")).toBe("My Brief (final).pdf");
   });
 
