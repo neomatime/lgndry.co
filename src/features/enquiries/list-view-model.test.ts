@@ -6,9 +6,10 @@ import {
   filterEnquiries,
   sortEnquiries,
   type EnquiryListItem,
+  type EnquiryRecord,
 } from "@/features/enquiries/list-view-model";
 
-const enquiryRecord = (over: Partial<Record<string, unknown>> = {}) => ({
+const enquiryRecord = (over: Partial<EnquiryRecord> = {}): EnquiryRecord => ({
   id: "e1",
   full_name: "Thandi Mokoena",
   company: "Blackridge Hotels",

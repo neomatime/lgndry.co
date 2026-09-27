@@ -16,7 +16,7 @@ export type EnquiryListItem = {
   attachmentCount: number;
 };
 
-type EnquiryRecord = {
+export type EnquiryRecord = {
   id: string;
   full_name: string;
   company: string | null;
