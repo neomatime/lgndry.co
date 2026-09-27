@@ -25,7 +25,13 @@ describe("buildEnquiryDetail", () => {
       enquiry,
       [{ file_name: "brief.pdf", storage_path: "e1/0-brief.pdf", size_bytes: 2_400_000 }],
       new Map([["e1/0-brief.pdf", "https://signed.example/brief.pdf"]]),
-      [{ id: "a1", message: "New project enquiry from Thandi Mokoena", created_at: "2026-09-27T10:00:00Z" }],
+      [
+        {
+          id: "a1",
+          message: "New project enquiry from Thandi Mokoena",
+          created_at: "2026-09-27T10:00:00Z",
+        },
+      ],
       NOW,
     );
 

@@ -6,9 +6,7 @@ const BUCKET = "enquiry-attachments";
 const SIGNED_URL_TTL_SECONDS = 60 * 5;
 
 export type EnquiryDetailResult =
-  | { status: "ok"; enquiry: EnquiryDetail }
-  | { status: "not-found" }
-  | { status: "error" };
+  { status: "ok"; enquiry: EnquiryDetail } | { status: "not-found" } | { status: "error" };
 
 export async function fetchEnquiryDetail(id: string): Promise<EnquiryDetailResult> {
   try {
@@ -23,19 +21,21 @@ export async function fetchEnquiryDetail(id: string): Promise<EnquiryDetailResul
     if (enquiryError) throw enquiryError;
     if (!enquiry) return { status: "not-found" };
 
-    const [{ data: attachmentRows, error: attachmentsError }, { data: activityRows, error: activityError }] =
-      await Promise.all([
-        supabase.from("enquiry_attachments").select("file_name, storage_path, size_bytes").eq(
-          "enquiry_id",
-          id,
-        ),
-        supabase
-          .from("ops_activity_log")
-          .select("id, message, created_at")
-          .eq("collection", "enquiries")
-          .eq("record_id", id)
-          .order("created_at", { ascending: false }),
-      ]);
+    const [
+      { data: attachmentRows, error: attachmentsError },
+      { data: activityRows, error: activityError },
+    ] = await Promise.all([
+      supabase
+        .from("enquiry_attachments")
+        .select("file_name, storage_path, size_bytes")
+        .eq("enquiry_id", id),
+      supabase
+        .from("ops_activity_log")
+        .select("id, message, created_at")
+        .eq("collection", "enquiries")
+        .eq("record_id", id)
+        .order("created_at", { ascending: false }),
+    ]);
     if (attachmentsError) throw attachmentsError;
     if (activityError) throw activityError;
 
@@ -49,7 +49,12 @@ export async function fetchEnquiryDetail(id: string): Promise<EnquiryDetailResul
 
     return {
       status: "ok",
-      enquiry: buildEnquiryDetail(enquiry, attachmentRows ?? [], signedUrlByPath, activityRows ?? []),
+      enquiry: buildEnquiryDetail(
+        enquiry,
+        attachmentRows ?? [],
+        signedUrlByPath,
+        activityRows ?? [],
+      ),
     };
   } catch (error) {
     console.error("Could not load enquiry", id, error);
