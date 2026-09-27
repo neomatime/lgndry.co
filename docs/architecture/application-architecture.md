@@ -497,3 +497,49 @@ the site nav or otherwise directing real traffic at it.
   reference `enquiries.id` when each is built; none of that exists yet.
 - Retiring the legacy forms, and the website nav/IA change to Work /
   Practice / Fine Art / About / Start a Project.
+
+## Phase 5, sub-project 2 — Styled Enquiries page
+
+The second piece of the OPS Command Center rebuild (see
+`docs/superpowers/specs/2026-09-27-styled-enquiries-page-design.md`). Replaces
+the bare `/ops/enquiries` verification page from sub-project 1 with a real
+list page and a new `/ops/enquiries/[id]` detail page.
+
+### What's new
+
+- `/ops/enquiries`: stat cards (New/Reviewing/Quoted/Missing Attachments,
+  plain counts), a filter tab per real status, client-side search and sort,
+  a table with row selection (checking a row shows an inline preview;
+  clicking it navigates to the detail page).
+- `/ops/enquiries/[id]`: Overview/Attachments/Activity tabs, a stat-card row,
+  and Enquiry Details / Contact Details right-rail panels.
+- Three small, reusable primitives for future OPS modules: `StatusBadge`,
+  `StatCard` (`src/components/ops/`), and a generic `Tabs`
+  (`src/components/ui/`).
+- Fixed a real gap: `submitProjectEnquiry`'s `ops_activity_log` insert now
+  carries `collection`/`record_id`, so the Activity tab can filter to just
+  its own enquiry (previously the insert had no way to be attributed to one).
+
+### Deliberately different from the reference images
+
+Matches `docs/design-references/enquiries.png` / `view-enquiry.png` in
+layout, but not in content: uses the live 8-value `status` enum (not the
+mockup's wording), renders `project_type` as one pill (not invented
+multi-tag "Services"), and omits assignee/owner UI (no multi-staff team
+concept exists yet), the Qualification Checklist, Communication tab, the
+Follow-ups tab, and the Opportunity Snapshot (all depend on systems not yet
+built). No trend deltas on stat cards (no status-history table exists).
+
+### Deliberately unchanged
+
+Write flows (Edit Enquiry, Qualify Enquiry, Export, manually creating an
+enquiry) are not built — this sub-project makes the *read* side real.
+
+### Still open
+
+- Communication tab (needs the Inbox rebuild), Follow-ups tab (needs the
+  Follow-ups module), Qualification Checklist, Routing & Ownership, and
+  Opportunity Snapshot — each deferred to its own later sub-project once its
+  backing system exists.
+- The website nav/IA change and legacy form retirement remain unrelated,
+  unstarted sub-projects.
