@@ -179,11 +179,18 @@ icon), Status (`StatusBadge`). No Assignee column.
 - Clicking the row itself (or the Enquiry ID) navigates to
   `/ops/enquiries/[id]`.
 
-**Error handling:** the fetch destructures `{ data, error }`; on error, log
-via `console.error` and render the existing `ErrorState` component instead of
-an empty table. An empty (but successful) fetch renders `EmptyState`
-("No enquiries yet — submissions from /start-a-project will appear here"),
-matching the bare page's existing copy.
+**Error handling:** matches this codebase's established convention exactly
+(`src/features/shop/catalogue/data.ts`'s `fetchCollection`) rather than the
+`ErrorState` component, which is this segment's *uncaught*-exception boundary
+(`src/app/(app)/ops/error.tsx`, rendered automatically by Next when a Server
+Component throws) — not something a page renders itself. The data-fetching
+function wraps its Supabase calls in `try/catch`, logs via `console.error`,
+and returns `null` on failure; the page renders a distinct "temporarily
+unavailable" message (reusing `EmptyState` with different copy) when the
+fetch returns `null`, versus its normal empty-list copy
+("No enquiries yet — submissions from /start-a-project will appear here")
+when the fetch succeeds with zero rows. A genuinely unexpected exception
+still propagates to the existing `error.tsx` boundary unchanged.
 
 ## `/ops/enquiries/[id]` (detail page)
 
@@ -221,9 +228,10 @@ Attachments (count). No Owner card.
 - **Attachments preview** — first 3 attachments + "View all →" (scrolls/jumps
   to the Attachments tab)
 
-**Error handling:** same destructure-log-render-`ErrorState` pattern as the
-list page. A genuinely missing enquiry (valid uuid shape, no matching row)
-renders Next's `notFound()`, not an error state.
+**Error handling:** same try/catch-log-return-`null` pattern as the list
+page's data function; the page renders the same "temporarily unavailable"
+copy on `null`. A genuinely missing enquiry (valid uuid shape, no matching
+row) renders Next's `notFound()`, not an error state.
 
 ## Testing plan
 
