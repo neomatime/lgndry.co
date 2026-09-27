@@ -455,15 +455,40 @@ Full gate suite green (`format:check`, `typecheck`, `lint`, `test` — 300/300,
 `build`). The Server Action body-size limit was raised to 80 MB
 (`next.config.ts`, `experimental.serverActions.bodySizeLimit`) and proven
 against a real, valid 10.2 MB PDF plus a small JPG submitted through
-`/start-a-project` on the live database: the enquiry, client and both
-attachment rows landed with byte-exact sizes, and both Storage objects were
-confirmed present with matching sizes and MIME types. The test enquiry,
-attachment rows and client row were deleted afterward (the two uploaded
-Storage objects were left behind — a harmless, accepted minor gap, not worth
-building cleanup tooling for in this sub-project).
+`/start-a-project` **on the local dev server** (against the live Supabase
+project): the enquiry, client and both attachment rows landed with byte-exact
+sizes, and both Storage objects were confirmed present with matching sizes
+and MIME types. The test enquiry, attachment rows and client row were deleted
+afterward (the two uploaded Storage objects were left behind — a harmless,
+accepted minor gap, not worth building cleanup tooling for in this
+sub-project).
+
+**Not yet proven against the actual Vercel deployment** — see "Known risk"
+below.
+
+### Known risk — Vercel's platform request-size limit (not yet resolved)
+
+Vercel Functions cap a request body at roughly 4.5 MB regardless of any
+Next.js-level config (`bodySizeLimit` only raises Next's *own* limit; it
+cannot raise the platform's). The one live end-to-end test this sub-project
+ran was against the local dev server, which has no such cap, so it did not
+actually exercise this limit. A live repro against the deployed Vercel
+preview was attempted and not completed (blocked by the deployment's SSO
+protection plus an unrelated tooling denial), so this remains **unverified
+in production**, not resolved.
+
+Given the spec's 15 MB/file, 5-files/submission limits, most real
+submissions will very likely exceed 4.5 MB and fail with a platform-level
+413 once this page is linked from the nav. The fix, if the limit is
+confirmed, is architectural — short-lived signed upload URLs straight from
+the browser to Storage, bypassing the Server Action for the file bytes
+entirely — which changes Task 4 and Task 5's design and needs its own
+brainstorming/plan pass. Do this **before** wiring `/start-a-project` into
+the site nav or otherwise directing real traffic at it.
 
 ### Still open
 
+- **The Vercel request-size risk above — resolve before going live.**
 - The styled Enquiries list + detail page (next sub-project). Its admin page
   currently swallows Supabase/Storage query errors as empty results with
   nothing logged (an accepted, deferred gap in the bare `/ops/enquiries`
