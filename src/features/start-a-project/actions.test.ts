@@ -64,7 +64,11 @@ describe("submitProjectEnquiry", () => {
     );
     expect(insert).toHaveBeenCalledWith(
       "ops_activity_log",
-      expect.objectContaining({ message: expect.stringContaining("Thandi Mokoena") }),
+      expect.objectContaining({
+        message: expect.stringContaining("Thandi Mokoena"),
+        collection: "enquiries",
+        record_id: "new-id",
+      }),
     );
   });
 

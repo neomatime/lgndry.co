@@ -94,7 +94,7 @@ export async function submitProjectEnquiry(formData: FormData): Promise<EnquiryR
     });
   }
 
-  const { error: rpcError } = await supabase.rpc(
+  const { data: newEnquiryId, error: rpcError } = await supabase.rpc(
     "submit_enquiry",
     submitEnquiryArgs(input.data, uploaded),
   );
@@ -104,9 +104,13 @@ export async function submitProjectEnquiry(formData: FormData): Promise<EnquiryR
   }
 
   // Best-effort: the enquiry itself is already saved even if this fails.
-  const { error: activityError } = await supabase
-    .from("ops_activity_log")
-    .insert({ message: enquiryActivityMessage(input.data.full_name) });
+  // collection/record_id link this row to the enquiry so its Activity tab
+  // can filter to just its own entries.
+  const { error: activityError } = await supabase.from("ops_activity_log").insert({
+    message: enquiryActivityMessage(input.data.full_name),
+    collection: "enquiries",
+    record_id: newEnquiryId,
+  });
   if (activityError) {
     console.error("start-a-project: activity log insert failed:", activityError.message);
   }
