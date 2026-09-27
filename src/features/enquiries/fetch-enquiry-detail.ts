@@ -1,14 +1,17 @@
 import "server-only";
+import { cache } from "react";
 import { buildEnquiryDetail, type EnquiryDetail } from "@/features/enquiries/detail-view-model";
 import { createSupabaseServerClient } from "@/lib/db/server";
 
 const BUCKET = "enquiry-attachments";
 const SIGNED_URL_TTL_SECONDS = 60 * 5;
+const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
 export type EnquiryDetailResult =
   { status: "ok"; enquiry: EnquiryDetail } | { status: "not-found" } | { status: "error" };
 
-export async function fetchEnquiryDetail(id: string): Promise<EnquiryDetailResult> {
+export const fetchEnquiryDetail = cache(async (id: string): Promise<EnquiryDetailResult> => {
+  if (!UUID_RE.test(id)) return { status: "not-found" };
   try {
     const supabase = await createSupabaseServerClient();
     const { data: enquiry, error: enquiryError } = await supabase
@@ -41,9 +44,12 @@ export async function fetchEnquiryDetail(id: string): Promise<EnquiryDetailResul
 
     const signedUrlByPath = new Map<string, string | null>();
     for (const row of (attachmentRows ?? []) as { storage_path: string }[]) {
-      const { data: signed } = await supabase.storage
+      const { data: signed, error: signedUrlError } = await supabase.storage
         .from(BUCKET)
         .createSignedUrl(row.storage_path, SIGNED_URL_TTL_SECONDS);
+      if (signedUrlError) {
+        console.error("Could not sign attachment URL", row.storage_path, signedUrlError.message);
+      }
       signedUrlByPath.set(row.storage_path, signed?.signedUrl ?? null);
     }
 
@@ -60,4 +66,4 @@ export async function fetchEnquiryDetail(id: string): Promise<EnquiryDetailResul
     console.error("Could not load enquiry", id, error);
     return { status: "error" };
   }
-}
+});

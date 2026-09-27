@@ -1,7 +1,7 @@
 "use client";
 
 import { Paperclip } from "lucide-react";
-import { useRouter } from "next/navigation";
+import Link from "next/link";
 import { useMemo, useState } from "react";
 import { StatusBadge } from "@/components/ops/status-badge";
 import { ENQUIRY_STATUSES, type EnquiryStatus } from "@/features/enquiries/types";
@@ -12,10 +12,12 @@ import {
   type EnquiryListItem,
 } from "@/features/enquiries/list-view-model";
 
-const dateFormatter = new Intl.DateTimeFormat("en-ZA", { dateStyle: "medium" });
+const dateFormatter = new Intl.DateTimeFormat("en-ZA", {
+  dateStyle: "medium",
+  timeZone: "Africa/Johannesburg",
+});
 
 export function EnquiriesTable({ rows }: { rows: EnquiryListItem[] }) {
-  const router = useRouter();
   const [status, setStatus] = useState<EnquiryStatus | "All">("All");
   const [search, setSearch] = useState("");
   const [sort, setSort] = useState<"newest" | "oldest">("newest");
@@ -89,6 +91,7 @@ export function EnquiriesTable({ rows }: { rows: EnquiryListItem[] }) {
           <thead>
             <tr className="border-line border-b text-left">
               <th className="w-8 py-2" />
+              <th className="py-2 pr-4">Enquiry ID</th>
               <th className="py-2 pr-4">Client / Contact</th>
               <th className="py-2 pr-4">Project Type</th>
               <th className="py-2 pr-4">Submitted</th>
@@ -107,12 +110,19 @@ export function EnquiriesTable({ rows }: { rows: EnquiryListItem[] }) {
                     aria-label={`Preview ${row.fullName}`}
                   />
                 </td>
-                <td
-                  className="cursor-pointer py-2 pr-4"
-                  onClick={() => router.push(`/ops/enquiries/${row.id}`)}
-                >
-                  <p className="font-medium">{row.fullName}</p>
-                  {row.company ? <p className="text-ink-muted">{row.company}</p> : null}
+                <td className="py-2 pr-4">
+                  <Link
+                    href={`/ops/enquiries/${row.id}`}
+                    className="hover:text-ink text-ink-muted underline"
+                  >
+                    {row.id.slice(0, 8).toUpperCase()}
+                  </Link>
+                </td>
+                <td className="py-2 pr-4">
+                  <Link href={`/ops/enquiries/${row.id}`} className="block">
+                    <p className="font-medium hover:underline">{row.fullName}</p>
+                    {row.company ? <p className="text-ink-muted">{row.company}</p> : null}
+                  </Link>
                 </td>
                 <td className="py-2 pr-4">{row.projectType}</td>
                 <td className="py-2 pr-4">{dateFormatter.format(new Date(row.createdAt))}</td>

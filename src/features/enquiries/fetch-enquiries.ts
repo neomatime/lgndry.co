@@ -11,27 +11,20 @@ import { buildEnquiryListItems, type EnquiryListItem } from "@/features/enquirie
 export async function fetchEnquiries(): Promise<EnquiryListItem[] | null> {
   try {
     const supabase = await createSupabaseServerClient();
-    const [
-      { data: enquiries, error: enquiriesError },
-      { data: attachments, error: attachmentsError },
-    ] = await Promise.all([
-      supabase
-        .from("enquiries")
-        .select(
-          "id, full_name, company, email, phone, project_type, location, timeline, description, budget, status, created_at",
-        )
-        .order("created_at", { ascending: false }),
-      supabase.from("enquiry_attachments").select("enquiry_id"),
-    ]);
+    const { data: enquiries, error: enquiriesError } = await supabase
+      .from("enquiries")
+      .select(
+        "id, full_name, company, email, phone, project_type, location, timeline, description, budget, status, created_at, enquiry_attachments(count)",
+      )
+      .order("created_at", { ascending: false });
     if (enquiriesError) throw enquiriesError;
-    if (attachmentsError) throw attachmentsError;
 
     const attachmentCounts = new Map<string, number>();
-    for (const attachment of (attachments ?? []) as { enquiry_id: string }[]) {
-      attachmentCounts.set(
-        attachment.enquiry_id,
-        (attachmentCounts.get(attachment.enquiry_id) ?? 0) + 1,
-      );
+    for (const enquiry of (enquiries ?? []) as {
+      id: string;
+      enquiry_attachments: { count: number }[];
+    }[]) {
+      attachmentCounts.set(enquiry.id, enquiry.enquiry_attachments?.[0]?.count ?? 0);
     }
 
     return buildEnquiryListItems(enquiries ?? [], attachmentCounts);

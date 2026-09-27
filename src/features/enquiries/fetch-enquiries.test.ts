@@ -1,7 +1,6 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
 const enquiriesResult = { data: [] as unknown[], error: null as { message: string } | null };
-const attachmentsResult = { data: [] as unknown[], error: null as { message: string } | null };
 
 const fakeClient = {
   from: (table: string) => {
@@ -12,7 +11,7 @@ const fakeClient = {
         }),
       };
     }
-    return { select: () => Promise.resolve(attachmentsResult) };
+    throw new Error(`unexpected table: ${table}`);
   },
 };
 
@@ -23,12 +22,15 @@ vi.mock("@/lib/db/server", () => ({
 beforeEach(() => {
   enquiriesResult.data = [];
   enquiriesResult.error = null;
-  attachmentsResult.data = [];
-  attachmentsResult.error = null;
 });
 
 describe("fetchEnquiries", () => {
   it("shapes rows with their attachment counts on success", async () => {
+    // Supabase's JS client returns an embedded `table(count)` select as an
+    // array with a single object holding the aggregate, e.g.
+    // `enquiry_attachments: [{ count: 2 }]` -- confirmed against PostgREST's
+    // documented embedded-resource-aggregate response shape (a `count`
+    // embed always resolves to a one-element array, never a bare number).
     enquiriesResult.data = [
       {
         id: "e1",
@@ -43,9 +45,9 @@ describe("fetchEnquiries", () => {
         budget: "R20,000 - R35,000",
         status: "New",
         created_at: "2026-09-27T10:00:00Z",
+        enquiry_attachments: [{ count: 2 }],
       },
     ];
-    attachmentsResult.data = [{ enquiry_id: "e1" }, { enquiry_id: "e1" }];
 
     const { fetchEnquiries } = await import("@/features/enquiries/fetch-enquiries");
     const result = await fetchEnquiries();
@@ -56,13 +58,6 @@ describe("fetchEnquiries", () => {
 
   it("returns null when the enquiries query fails", async () => {
     enquiriesResult.error = { message: "connection refused" };
-
-    const { fetchEnquiries } = await import("@/features/enquiries/fetch-enquiries");
-    expect(await fetchEnquiries()).toBeNull();
-  });
-
-  it("returns null when the attachments query fails", async () => {
-    attachmentsResult.error = { message: "connection refused" };
 
     const { fetchEnquiries } = await import("@/features/enquiries/fetch-enquiries");
     expect(await fetchEnquiries()).toBeNull();

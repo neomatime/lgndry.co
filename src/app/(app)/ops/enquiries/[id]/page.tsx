@@ -2,7 +2,6 @@ import { Calendar, FileText, Paperclip, Tag, Wallet } from "lucide-react";
 import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { Button } from "@/components/ui/button";
 import { EmptyState } from "@/components/feedback/empty-state";
 import { PageHeader } from "@/components/layout/page-header";
 import { StatCard } from "@/components/ops/stat-card";
@@ -54,8 +53,11 @@ export default async function EnquiryDetailPage({ params }: Props) {
         title={`${enquiry.company ?? enquiry.fullName} Enquiry`}
         description={enquiry.fullName}
         actions={
-          <Link href="/ops/enquiries">
-            <Button variant="secondary">Back to Enquiries</Button>
+          <Link
+            href="/ops/enquiries"
+            className="border-line-strong text-ink hover:bg-surface-soft inline-flex h-10 items-center justify-center gap-2 border bg-white px-4 text-sm font-medium transition-colors"
+          >
+            Back to Enquiries
           </Link>
         }
       />
@@ -77,7 +79,7 @@ export default async function EnquiryDetailPage({ params }: Props) {
             <dl className="text-ink-muted mt-3 space-y-2 text-sm">
               <div className="flex justify-between gap-4">
                 <dt>Enquiry ID</dt>
-                <dd className="text-ink">{enquiry.id}</dd>
+                <dd className="text-ink break-all">{enquiry.id}</dd>
               </div>
               <div className="flex justify-between gap-4">
                 <dt>Client</dt>

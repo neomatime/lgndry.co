@@ -1,9 +1,5 @@
 import { fireEvent, render, screen } from "@testing-library/react";
-import { describe, expect, it, vi } from "vitest";
-
-const push = vi.fn();
-vi.mock("next/navigation", () => ({ useRouter: () => ({ push }) }));
-
+import { describe, expect, it } from "vitest";
 import { EnquiriesTable } from "@/features/enquiries/components/enquiries-table";
 import type { EnquiryListItem } from "@/features/enquiries/list-view-model";
 
@@ -76,9 +72,11 @@ describe("EnquiriesTable", () => {
     expect(screen.getByText("A short documentary series.")).toBeInTheDocument();
   });
 
-  it("navigates to the detail page when a row is clicked", () => {
-    render(<EnquiriesTable rows={[row({ id: "e1" })]} />);
-    fireEvent.click(screen.getByText("Thandi Mokoena"));
-    expect(push).toHaveBeenCalledWith("/ops/enquiries/e1");
+  it("links to the detail page for each row", () => {
+    render(
+      <EnquiriesTable rows={[row({ id: "e1", fullName: "Thandi Mokoena", company: null })]} />,
+    );
+    const link = screen.getByRole("link", { name: "Thandi Mokoena" });
+    expect(link).toHaveAttribute("href", "/ops/enquiries/e1");
   });
 });
