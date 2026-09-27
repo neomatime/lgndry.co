@@ -14,6 +14,7 @@ import { requireOpsUser } from "@/lib/auth/guards";
 type Props = { params: Promise<{ id: string }> };
 
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
+  await requireOpsUser();
   const { id } = await params;
   const result = await fetchEnquiryDetail(id);
   if (result.status !== "ok") return { title: "Enquiry" };
