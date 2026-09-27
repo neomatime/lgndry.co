@@ -44,6 +44,7 @@ create trigger set_updated_at
 
 create index enquiries_status_idx on public.enquiries (status);
 create index enquiries_created_at_idx on public.enquiries (created_at desc);
+create index enquiries_client_id_idx on public.enquiries (client_id);
 
 alter table public.enquiries enable row level security;
 
@@ -97,6 +98,8 @@ declare
   matched_client_id uuid;
   new_enquiry_id uuid;
   attachment jsonb;
+  storage_metadata jsonb;
+  already_claimed boolean;
 begin
   if project_type not in (
     'Documentary', 'Event', 'Film', 'Visual Production', 'Other'
@@ -106,6 +109,44 @@ begin
   if coalesce(trim(full_name), '') = '' or coalesce(trim(email), '') = '' then
     raise exception 'full_name and email are required';
   end if;
+
+  -- Anti-abuse length bounds. This function is the sole write gate for
+  -- `anon` (no anon table policies exist on enquiries/enquiry_attachments),
+  -- so a caller hitting the RPC directly -- bypassing the form, zod
+  -- validation and the honeypot entirely -- could otherwise send
+  -- arbitrarily long text into every field. These limits are deliberately
+  -- generous compared to the zod schema in
+  -- src/features/start-a-project/schemas.ts, which already enforces the
+  -- real UX-facing limits client- and server-side; these are anti-abuse
+  -- bounds only.
+  if length(full_name) > 200 then
+    raise exception 'full_name too long (max 200 characters)';
+  end if;
+  if length(coalesce(company, '')) > 200 then
+    raise exception 'company too long (max 200 characters)';
+  end if;
+  if length(email) > 320 then
+    raise exception 'email too long (max 320 characters)';
+  end if;
+  if length(coalesce(phone, '')) > 50 then
+    raise exception 'phone too long (max 50 characters)';
+  end if;
+  if length(coalesce(location, '')) > 200 then
+    raise exception 'location too long (max 200 characters)';
+  end if;
+  if length(coalesce(timeline, '')) > 200 then
+    raise exception 'timeline too long (max 200 characters)';
+  end if;
+  if length(coalesce(description, '')) > 5000 then
+    raise exception 'description too long (max 5000 characters)';
+  end if;
+  if length(coalesce(budget, '')) > 200 then
+    raise exception 'budget too long (max 200 characters)';
+  end if;
+  if length(coalesce(client_notes, '')) > 2000 then
+    raise exception 'client_notes too long (max 2000 characters)';
+  end if;
+
   if jsonb_array_length(coalesce(attachments, '[]'::jsonb)) > 5 then
     raise exception 'too many attachments: %', jsonb_array_length(attachments);
   end if;
@@ -142,8 +183,38 @@ begin
   )
   returning id into new_enquiry_id;
 
+  -- Per-attachment integrity. Never trust the caller-supplied mime_type or
+  -- size_bytes -- an anon RPC caller could lie about both. Look up the real
+  -- Storage object by path instead, and take size/type from its metadata.
+  -- If no matching object exists (upload never completed, or the path was
+  -- made up), or the path is already claimed by another attachment row
+  -- (replaying/stealing someone else's uploaded path), skip that one
+  -- attachment silently rather than failing the whole enquiry -- consistent
+  -- with the orphaned-upload tolerance already accepted elsewhere in this
+  -- project (see the docstring in actions.ts).
   for attachment in select * from jsonb_array_elements(coalesce(attachments, '[]'::jsonb))
   loop
+    storage_metadata := (
+      select o.metadata
+      from storage.objects o
+      where o.bucket_id = 'enquiry-attachments'
+        and o.name = (attachment ->> 'storage_path')
+      limit 1
+    );
+
+    if storage_metadata is null then
+      continue;
+    end if;
+
+    already_claimed := exists (
+      select 1 from public.enquiry_attachments ea
+      where ea.storage_path = (attachment ->> 'storage_path')
+    );
+
+    if already_claimed then
+      continue;
+    end if;
+
     insert into public.enquiry_attachments (
       enquiry_id, storage_path, file_name, mime_type, size_bytes
     )
@@ -151,8 +222,8 @@ begin
       new_enquiry_id,
       attachment ->> 'storage_path',
       attachment ->> 'file_name',
-      attachment ->> 'mime_type',
-      (attachment ->> 'size_bytes')::integer
+      storage_metadata ->> 'mimetype',
+      (storage_metadata ->> 'size')::integer
     );
   end loop;
 
