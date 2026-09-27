@@ -122,12 +122,17 @@ Small, reusable — later OPS modules need the same look, so these are built
 once here rather than copy-pasted per module.
 
 - **`StatusBadge`** (`src/components/ops/status-badge.tsx`) — takes one of
-  the 8 real status strings, renders a pill with a per-status color (e.g.
-  New = neutral, Reviewing/Quoted = amber/blue progress tones, Booked/In
-  Production = green, Completed = green-dark, Closed = muted/grey,
-  Follow-up = amber). Exact colors chosen to fit the existing Tailwind theme
-  tokens already used elsewhere (`text-ink-muted`, `bg-line`, etc.) — no new
-  color tokens invented.
+  the 8 real status strings, renders a pill. The existing design system
+  (`src/styles/globals.css`) is intentionally monochrome — `ink`,
+  `ink-muted`, `surface`, `surface-soft`, `line`, `line-strong` are the only
+  tokens; no colored (green/amber/red) tokens exist anywhere in this
+  codebase. Rather than invent a new color system for one component, this
+  reuses the existing scale: `New` (a fresh, unactioned enquiry) gets the
+  filled `bg-ink text-white` treatment already used for `Button`'s primary
+  variant; every in-progress status (`Reviewing`, `Quoted`, `Follow-up`,
+  `Booked`, `In Production`) gets a neutral `bg-line text-ink` pill; the two
+  terminal statuses (`Completed`, `Closed`) get a quieter
+  `border-line-strong text-ink-muted` outline. No new color tokens.
 - **`StatCard`** (`src/components/ops/stat-card.tsx`) — icon circle
   (`lucide-react` icon), label, big number. No delta/trend slot.
 - **`Tabs`** (`src/components/ui/tabs.tsx`) — a small, generic
