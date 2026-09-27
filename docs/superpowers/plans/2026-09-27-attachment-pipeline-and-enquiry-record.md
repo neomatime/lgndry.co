@@ -285,11 +285,16 @@ begin
 
   set local role anon;
 
-  -- anon cannot read or directly write the new tables
-  begin
-    perform 1 from public.enquiries limit 1;
-    raise exception 'FAIL anon can read enquiries';
-  exception when insufficient_privilege then null; end;
+  -- anon cannot read the new tables. Note: Postgres RLS does not raise
+  -- insufficient_privilege for a SELECT that a policy simply doesn't grant —
+  -- it silently returns zero rows (insufficient_privilege is only raised for
+  -- a write that violates WITH CHECK, or a genuine missing GRANT). Every
+  -- RLS-only table in this project already behaves this way, including the
+  -- pre-existing `clients` table, so the check here is a row count, not a
+  -- caught exception.
+  select count(*) into n from public.enquiries;
+  if n <> 0 then raise exception 'FAIL anon can read enquiries (% rows)', n; end if;
+
   begin
     insert into public.enquiries (full_name, email, phone, project_type, location, timeline, description)
     values ('x', 'x@example.com', 'x', 'Other', 'x', 'x', 'x');
@@ -310,8 +315,6 @@ begin
     'Test Visitor', 'Test Co', 'test-visitor@example.com', '0700000000',
     'Film', 'Cape Town', 'Flexible', 'A second enquiry.', null, 'Company: Test Co'
   );
-  select count(*) into n from public.clients where email = 'test-visitor@example.com';
-  if n <> 1 then raise exception 'FAIL expected exactly 1 client, got %', n; end if;
 
   -- an invalid project_type is rejected
   begin
@@ -321,19 +324,21 @@ begin
     raise exception 'FAIL accepted an invalid project_type';
   exception when others then null; end;
 
-  -- anon can upload into the bucket but cannot read/list it back
+  -- anon can upload into the bucket but cannot read/list it back (same
+  -- silent-zero-rows semantics as above — anon has no bucket SELECT policy)
   insert into storage.objects (bucket_id, name) values ('enquiry-attachments', 'dryrun/anon-check.txt');
-  begin
-    perform 1 from storage.objects where bucket_id = 'enquiry-attachments' and name = 'dryrun/anon-check.txt';
-    raise exception 'FAIL anon can read the attachments bucket';
-  exception when insufficient_privilege then null; end;
+  select count(*) into n from storage.objects where bucket_id = 'enquiry-attachments' and name = 'dryrun/anon-check.txt';
+  if n <> 0 then raise exception 'FAIL anon can read the attachments bucket (% rows)', n; end if;
 
   reset role;
 
-  -- the admin sees everything
+  -- the admin sees everything (checked here, not as anon, since anon cannot
+  -- read `clients` at all — this is also where the dedup check belongs)
   perform set_config('request.jwt.claims', json_build_object('sub', admin_id, 'role', 'authenticated')::text, true);
   perform set_config('request.jwt.claim.sub', admin_id::text, true);
   set local role authenticated;
+  select count(*) into n from public.clients where email = 'test-visitor@example.com';
+  if n <> 1 then raise exception 'FAIL expected exactly 1 client, got %', n; end if;
   select count(*) into n from public.enquiries; if n < 2 then raise exception 'FAIL admin sees % enquiries', n; end if;
   select count(*) into n from public.enquiry_attachments; if n < 1 then raise exception 'FAIL admin sees no attachments'; end if;
   select count(*) into n from storage.objects where bucket_id = 'enquiry-attachments'; if n < 1 then raise exception 'FAIL admin cannot see bucket objects'; end if;
