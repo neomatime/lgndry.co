@@ -327,8 +327,6 @@ Co-Authored-By: Claude Sonnet 5 <noreply@anthropic.com>"
 - Test: `src/features/enquiries/list-view-model.test.ts`
 - Create: `src/features/enquiries/fetch-enquiries.ts`
 - Test: `src/features/enquiries/fetch-enquiries.test.ts`
-- Delete: `src/features/start-a-project/admin/build-enquiry-rows.ts`
-- Delete: `src/features/start-a-project/admin/build-enquiry-rows.test.ts`
 
 **Interfaces:**
 - Consumes: `EnquiryStatus`/`ENQUIRY_STATUSES` from
@@ -342,9 +340,12 @@ Co-Authored-By: Claude Sonnet 5 <noreply@anthropic.com>"
   `fetchEnquiries(): Promise<EnquiryListItem[] | null>`. Task 4 (list page
   UI) imports all of these.
 
-The two deleted files belonged to the bare verification page from the prior
-sub-project, which this task's list page fully replaces (Task 4). Nothing
-else imports them (confirmed: only the old page and its own test did).
+The old bare verification page (`src/app/(app)/ops/enquiries/page.tsx`)
+still imports `src/features/start-a-project/admin/build-enquiry-rows.ts` at
+this point in the plan — do not delete that file or its test in this task.
+Task 4 replaces the page (removing that import) and deletes both retired
+files in the same commit, so the branch is never left with a dangling
+import. This task only adds the two new modules below.
 
 - [ ] **Step 1: Write the failing tests**
 
@@ -358,9 +359,10 @@ import {
   filterEnquiries,
   sortEnquiries,
   type EnquiryListItem,
+  type EnquiryRecord,
 } from "@/features/enquiries/list-view-model";
 
-const enquiryRecord = (over: Partial<Record<string, unknown>> = {}) => ({
+const enquiryRecord = (over: Partial<EnquiryRecord> = {}): EnquiryRecord => ({
   id: "e1",
   full_name: "Thandi Mokoena",
   company: "Blackridge Hotels",
@@ -618,7 +620,7 @@ export type EnquiryListItem = {
   attachmentCount: number;
 };
 
-type EnquiryRecord = {
+export type EnquiryRecord = {
   id: string;
   full_name: string;
   company: string | null;
@@ -747,13 +749,7 @@ export async function fetchEnquiries(): Promise<EnquiryListItem[] | null> {
 Run: `pnpm exec vitest run src/features/enquiries/list-view-model.test.ts src/features/enquiries/fetch-enquiries.test.ts`
 Expected: PASS, all tests green.
 
-- [ ] **Step 5: Delete the retired files**
-
-```bash
-git rm src/features/start-a-project/admin/build-enquiry-rows.ts src/features/start-a-project/admin/build-enquiry-rows.test.ts
-```
-
-- [ ] **Step 6: Commit**
+- [ ] **Step 5: Commit**
 
 ```bash
 git add src/features/enquiries/list-view-model.ts src/features/enquiries/list-view-model.test.ts src/features/enquiries/fetch-enquiries.ts src/features/enquiries/fetch-enquiries.test.ts
@@ -771,6 +767,8 @@ Co-Authored-By: Claude Sonnet 5 <noreply@anthropic.com>"
 - Test: `src/features/enquiries/components/enquiries-table.test.tsx`
 - Modify: `src/app/(app)/ops/enquiries/page.tsx` (full rewrite)
 - Modify: `src/components/layout/ops-nav.tsx:29` (flip `available` to `true`)
+- Delete: `src/features/start-a-project/admin/build-enquiry-rows.ts`
+- Delete: `src/features/start-a-project/admin/build-enquiry-rows.test.ts`
 
 **Interfaces:**
 - Consumes: `StatusBadge`/`StatCard` (Task 1), everything from
@@ -1117,7 +1115,18 @@ to:
   { label: "Enquiries", href: "/ops/enquiries", icon: Mail, available: true },
 ```
 
-- [ ] **Step 7: Manual smoke check**
+- [ ] **Step 7: Delete the retired files**
+
+The page rewrite in Step 5 removed the last import of
+`build-enquiry-rows.ts` (Task 3 deliberately left it in place, since deleting
+it before this step would have left the branch with a dangling import). Safe
+to delete now:
+
+```bash
+git rm src/features/start-a-project/admin/build-enquiry-rows.ts src/features/start-a-project/admin/build-enquiry-rows.test.ts
+```
+
+- [ ] **Step 8: Manual smoke check**
 
 With the dev server running (`preview_start` in this environment, or
 `pnpm dev` elsewhere), sign in as the admin and open `/ops/enquiries`.
@@ -1128,12 +1137,13 @@ clicking a row navigates to `/ops/enquiries/<that row's id>` (a 404 is
 expected here until Task 6 ships the detail page — that's fine, confirms the
 navigation itself works).
 
-- [ ] **Step 8: Run the full gate suite**
+- [ ] **Step 9: Run the full gate suite**
 
 Run: `pnpm format:check && pnpm typecheck && pnpm lint && pnpm test && pnpm build`
-Expected: all five pass.
+Expected: all five pass. `pnpm typecheck` and `pnpm build` specifically
+confirm no other file still imports the two files deleted in Step 7.
 
-- [ ] **Step 9: Commit**
+- [ ] **Step 10: Commit**
 
 ```bash
 git add src/features/enquiries/components/enquiries-table.tsx src/features/enquiries/components/enquiries-table.test.tsx "src/app/(app)/ops/enquiries/page.tsx" src/components/layout/ops-nav.tsx
