@@ -26,7 +26,7 @@ type NavItem = {
 // Order and labels follow the approved desktop shell (PRD §5).
 const NAV_ITEMS: NavItem[] = [
   { label: "Command Center", href: "/ops", icon: House, available: true },
-  { label: "Enquiries", href: "/ops/enquiries", icon: Mail, available: false },
+  { label: "Enquiries", href: "/ops/enquiries", icon: Mail, available: true },
   { label: "Projects", href: "/ops/projects", icon: Folder, available: false },
   { label: "Clients", href: "/ops/clients", icon: Users, available: false },
   { label: "Inbox", href: "/ops/inbox", icon: Inbox, available: false },
