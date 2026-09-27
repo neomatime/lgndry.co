@@ -1228,7 +1228,7 @@ describe("StartAProjectForm", () => {
 
     fireEvent.change(input, { target: { files: [pdfFile("huge.pdf", 15 * 1024 * 1024 + 1)] } });
 
-    expect(await screen.findByText(/15 MB/)).toBeInTheDocument();
+    expect(await screen.findByText(/over the 15 MB limit/)).toBeInTheDocument();
     expect(screen.queryByText("huge.pdf")).toBeNull();
   });
 
