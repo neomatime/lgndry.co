@@ -520,6 +520,30 @@ list page and a new `/ops/enquiries/[id]` detail page.
   carries `collection`/`record_id`, so the Activity tab can filter to just
   its own enquiry (previously the insert had no way to be attributed to one).
 
+### Verification
+
+Full gate suite green at every task and again at the end
+(`format:check`, `typecheck`, `lint`, `test`, `build`). Two review rounds
+during execution each caught pre-existing Prettier drift from an earlier
+task's files (fixed as small standalone commits) and one plan defect
+(Task 3 originally deleted two files a later task still needed — fixed
+by resequencing). The final whole-sub-project review found and fixed a
+malformed-id 404 bug, a keyboard-navigation gap, a date-formatting
+hydration risk, an uncached double-fetch on the detail page, and an
+attachment-count query that could have silently truncated at scale.
+
+**Not verified against real data.** The live database has zero enquiries
+and zero linked activity-log rows as of this writing — nothing in this
+sub-project has been exercised against a real submission. The planned
+manual smoke check (sign in, click through both pages, open a signed
+attachment link) was skipped both times it came up, for lack of dev-time
+browser/preview tooling matching this project. Do this before relying on
+the pages for real work: submit one throwaway enquiry through
+`/start-a-project` with an attachment, confirm it appears correctly on
+both pages (including a working attachment link and a populated Activity
+tab), confirm `/ops/enquiries/not-a-real-id` now 404s, then delete the
+test rows the same way sub-project 1's own live test was cleaned up.
+
 ### Deliberately different from the reference images
 
 Matches `docs/design-references/enquiries.png` / `view-enquiry.png` in
@@ -528,7 +552,13 @@ mockup's wording), renders `project_type` as one pill (not invented
 multi-tag "Services"), and omits assignee/owner UI (no multi-staff team
 concept exists yet), the Qualification Checklist, Communication tab, the
 Follow-ups tab, and the Opportunity Snapshot (all depend on systems not yet
-built). No trend deltas on stat cards (no status-history table exists).
+built). No trend deltas on stat cards (no status-history table exists). The
+list also omits the mockup's fuller inline-preview detail (attachment links,
+submitted date) and the detail page's right rail omits a Status row and an
+attachments preview with links — both are informational-completeness gaps
+versus the original design spec, deliberately deferred rather than built
+now, since the underlying data already carries every field needed and
+adding the rendering later is cheap.
 
 ### Deliberately unchanged
 
@@ -543,3 +573,7 @@ enquiry) are not built — this sub-project makes the *read* side real.
   backing system exists.
 - The website nav/IA change and legacy form retirement remain unrelated,
   unstarted sub-projects.
+- Sub-project 1's own "Still open" note about this page (further up this
+  file) is now resolved by this sub-project shipping — left as-is there per
+  this project's own rule of not editing previously-written sections, noted
+  here instead.
