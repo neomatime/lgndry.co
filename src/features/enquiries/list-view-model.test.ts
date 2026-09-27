@@ -27,10 +27,7 @@ const enquiryRecord = (over: Partial<EnquiryRecord> = {}): EnquiryRecord => ({
 
 describe("buildEnquiryListItems", () => {
   it("shapes an enquiry record with its attachment count", () => {
-    const items = buildEnquiryListItems(
-      [enquiryRecord()],
-      new Map([["e1", 2]]),
-    );
+    const items = buildEnquiryListItems([enquiryRecord()], new Map([["e1", 2]]));
     expect(items).toEqual([
       {
         id: "e1",
@@ -126,7 +123,13 @@ describe("countByStatus", () => {
 describe("filterEnquiries", () => {
   const rows = [
     item({ id: "1", fullName: "Thandi Mokoena", company: "Blackridge Hotels", status: "New" }),
-    item({ id: "2", fullName: "James Mitchell", company: null, status: "Quoted", projectType: "Film" }),
+    item({
+      id: "2",
+      fullName: "James Mitchell",
+      company: null,
+      status: "Quoted",
+      projectType: "Film",
+    }),
   ];
 
   it("returns everything for status All and an empty search", () => {
