@@ -29,7 +29,14 @@ type VerificationOptions = {
   supabaseUrl: string;
   serviceRoleKey: string;
   fetchImpl?: typeof fetch;
+  correlationId?: string;
 };
+
+function trace(options: VerificationOptions, stage: string) {
+  if (options.correlationId) {
+    console.info(`start-a-project: verify ${stage}`, options.correlationId);
+  }
+}
 
 function encodedObjectPath(path: string): string {
   return path.split("/").map(encodeURIComponent).join("/");
@@ -63,7 +70,9 @@ export async function verifyStoredObject(
   options: VerificationOptions,
 ): Promise<StoredObjectCheck> {
   const bucket = client.storage.from(BUCKET);
+  trace(options, "info start");
   const { data: info, error: infoError } = await bucket.info(file.storage_path);
+  trace(options, "info complete");
 
   if (infoError) return { ok: false, reason: "unavailable" };
   if (!info) return { ok: false, reason: "missing" };
@@ -73,6 +82,7 @@ export async function verifyStoredObject(
   const fetchImpl = options.fetchImpl ?? fetch;
   let response: Response;
   try {
+    trace(options, "prefix fetch start");
     response = await fetchImpl(
       `${options.supabaseUrl}/storage/v1/object/authenticated/${BUCKET}/${encodedObjectPath(file.storage_path)}`,
       {
@@ -83,12 +93,14 @@ export async function verifyStoredObject(
         },
       },
     );
+    trace(options, "prefix fetch complete");
   } catch {
     return { ok: false, reason: "unavailable" };
   }
 
   if (!response.ok) return { ok: false, reason: "unavailable" };
   const prefix = await readPrefix(response);
+  trace(options, "prefix read complete");
   if (!prefix) return { ok: false, reason: "unavailable" };
 
   return checkFileContent(file.file_name, prefix).ok

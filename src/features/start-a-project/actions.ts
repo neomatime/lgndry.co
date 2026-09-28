@@ -262,6 +262,7 @@ export async function finalizeProjectEnquiry(
       const verification = await verifyStoredObject(supabase, file, {
         supabaseUrl: publicEnv.NEXT_PUBLIC_SUPABASE_URL,
         serviceRoleKey: serverEnv.SUPABASE_SERVICE_ROLE_KEY,
+        correlationId: sessionId,
       });
       console.info("start-a-project: finalize verify complete", sessionId);
       if (!verification.ok) {
