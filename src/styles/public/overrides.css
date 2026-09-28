@@ -43,13 +43,51 @@ html[data-skip-loader] .loader {
 }
 
 .project-enquiry-form__file-list li {
-  display: flex;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(100px, 24%) auto;
   align-items: center;
-  justify-content: space-between;
   gap: 12px;
+  min-height: 54px;
   padding: 8px 12px;
   border: 1px solid var(--border);
   font-size: 0.85rem;
+}
+
+.project-enquiry-form__file-copy {
+  min-width: 0;
+  display: grid;
+  gap: 2px;
+}
+
+.project-enquiry-form__file-name {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.project-enquiry-form__file-status {
+  min-height: 1.2em;
+  color: var(--text-muted);
+  font-size: 0.76rem;
+}
+
+.project-enquiry-form__file-list progress {
+  width: 100%;
+  height: 3px;
+  border: 0;
+  background: var(--border);
+}
+
+.project-enquiry-form__file-list progress::-webkit-progress-bar {
+  background: var(--border);
+}
+
+.project-enquiry-form__file-list progress::-webkit-progress-value {
+  background: var(--text-primary);
+}
+
+.project-enquiry-form__file-list progress::-moz-progress-bar {
+  background: var(--text-primary);
 }
 
 .project-enquiry-form__file-list button {
@@ -59,4 +97,20 @@ html[data-skip-loader] .loader {
   text-decoration: underline;
   cursor: pointer;
   font: inherit;
+}
+
+.project-enquiry-form__file-list button:disabled {
+  cursor: default;
+  opacity: 0.45;
+}
+
+@media (max-width: 620px) {
+  .project-enquiry-form__file-list li {
+    grid-template-columns: minmax(0, 1fr) auto;
+  }
+
+  .project-enquiry-form__file-list progress {
+    grid-column: 1 / -1;
+    grid-row: 2;
+  }
 }
