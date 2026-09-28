@@ -8,6 +8,16 @@ const info = vi.fn();
 const remove = vi.fn();
 const client = { storage: { from: vi.fn(() => ({ info, remove })) } };
 
+function partialResponse(body: Uint8Array) {
+  return new Response(body.buffer as ArrayBuffer, {
+    status: 206,
+    headers: {
+      "content-length": String(body.byteLength),
+      "content-range": `bytes 0-${body.byteLength - 1}/${body.byteLength}`,
+    },
+  });
+}
+
 const file: UploadedFile = {
   storage_path: "session id/0-brief (final).pdf",
   file_name: "brief (final).pdf",
@@ -34,7 +44,7 @@ beforeEach(() => {
 
 describe("verifyStoredObject", () => {
   it("checks metadata and only requests the signature prefix", async () => {
-    const fetchImpl = vi.fn<typeof fetch>().mockResolvedValue(new Response(PDF, { status: 206 }));
+    const fetchImpl = vi.fn<typeof fetch>().mockResolvedValue(partialResponse(PDF));
 
     await expect(verifyStoredObject(client, file, options(fetchImpl))).resolves.toEqual({
       ok: true,
@@ -87,7 +97,7 @@ describe("verifyStoredObject", () => {
   });
 
   it("rejects an invalid signature and an unavailable byte read", async () => {
-    const badContent = vi.fn<typeof fetch>().mockResolvedValue(new Response(EXE, { status: 206 }));
+    const badContent = vi.fn<typeof fetch>().mockResolvedValue(partialResponse(EXE));
     await expect(verifyStoredObject(client, file, options(badContent))).resolves.toMatchObject({
       reason: "content",
     });
@@ -96,6 +106,25 @@ describe("verifyStoredObject", () => {
       .fn<typeof fetch>()
       .mockResolvedValue(new Response(null, { status: 503 }));
     await expect(verifyStoredObject(client, file, options(unavailable))).resolves.toMatchObject({
+      reason: "unavailable",
+    });
+  });
+
+  it("refuses to buffer a response when Storage ignores or exceeds the byte range", async () => {
+    const ignoredRange = vi
+      .fn<typeof fetch>()
+      .mockResolvedValue(new Response(PDF, { status: 200 }));
+    await expect(verifyStoredObject(client, file, options(ignoredRange))).resolves.toMatchObject({
+      reason: "unavailable",
+    });
+
+    const oversizedRange = vi.fn<typeof fetch>().mockResolvedValue(
+      new Response(PDF, {
+        status: 206,
+        headers: { "content-length": "32", "content-range": "bytes 0-31/100" },
+      }),
+    );
+    await expect(verifyStoredObject(client, file, options(oversizedRange))).resolves.toMatchObject({
       reason: "unavailable",
     });
   });

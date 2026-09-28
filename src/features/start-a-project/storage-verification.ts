@@ -43,25 +43,21 @@ function encodedObjectPath(path: string): string {
 }
 
 async function readPrefix(response: Response): Promise<Uint8Array | null> {
-  if (!response.body) return null;
+  const contentRange = response.headers.get("content-range");
+  const range = contentRange?.match(/^bytes 0-(\d+)\/(\d+)$/);
+  if (response.status !== 206 || !range) return null;
+  const lastByte = Number(range[1]);
+  const expectedBytes = lastByte + 1;
+  if (!Number.isSafeInteger(lastByte) || expectedBytes > FILE_SIGNATURE_BYTES) return null;
 
-  const reader = response.body.getReader();
-  const prefix = new Uint8Array(FILE_SIGNATURE_BYTES);
-  let written = 0;
-
+  const declaredLength = Number(response.headers.get("content-length"));
+  if (Number.isFinite(declaredLength) && declaredLength !== expectedBytes) return null;
   try {
-    while (written < prefix.length) {
-      const { done, value } = await reader.read();
-      if (done) break;
-      const take = Math.min(value.byteLength, prefix.length - written);
-      prefix.set(value.subarray(0, take), written);
-      written += take;
-    }
-  } finally {
-    await reader.cancel().catch(() => undefined);
+    const prefix = new Uint8Array(await response.arrayBuffer());
+    return prefix.byteLength === expectedBytes ? prefix : null;
+  } catch {
+    return null;
   }
-
-  return prefix.slice(0, written);
 }
 
 export async function verifyStoredObject(
@@ -98,7 +94,6 @@ export async function verifyStoredObject(
     return { ok: false, reason: "unavailable" };
   }
 
-  if (!response.ok) return { ok: false, reason: "unavailable" };
   const prefix = await readPrefix(response);
   trace(options, "prefix read complete");
   if (!prefix) return { ok: false, reason: "unavailable" };
