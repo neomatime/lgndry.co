@@ -195,14 +195,14 @@ export async function prepareProjectEnquiry(
         const { data, error } = await supabase.storage
           .from(BUCKET)
           .createSignedUploadUrl(file.storage_path, { upsert: false });
-        if (error || !data?.token) throw new Error("token creation failed");
+        if (error || !data?.signedUrl) throw new Error("signed upload URL creation failed");
         uploads.push({
           index,
           fileName: file.file_name,
           sizeBytes: file.size_bytes,
           mimeType: file.mime_type,
           storagePath: file.storage_path,
-          token: data.token,
+          uploadUrl: data.signedUrl,
         });
       } catch {
         await supabase.rpc("mark_enquiry_upload_session_failed", {

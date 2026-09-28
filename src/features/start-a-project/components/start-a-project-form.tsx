@@ -14,13 +14,11 @@ import {
   checkFileMeta,
 } from "@/features/start-a-project/file-validation";
 import { PROJECT_TYPES } from "@/features/start-a-project/schemas";
-import { startTusUpload, type TusUploadHandle } from "@/features/start-a-project/tus-upload";
 import {
-  descriptorForFile,
-  directStorageEndpoint,
-  type PreparedUpload,
-} from "@/features/start-a-project/upload-contract";
-import { getPublicEnv } from "@/lib/env";
+  startSignedUpload,
+  type SignedUploadHandle,
+} from "@/features/start-a-project/signed-upload";
+import { descriptorForFile, type PreparedUpload } from "@/features/start-a-project/upload-contract";
 
 const ACCEPT_ATTRIBUTE = ALLOWED_EXTENSIONS.map((extension) => `.${extension}`).join(",");
 const MAX_FILE_MB = Math.round(MAX_FILE_BYTES / (1024 * 1024));
@@ -75,7 +73,7 @@ export function StartAProjectForm() {
   const mountedRef = useRef(true);
   const filesRef = useRef<SelectedFile[]>([]);
   const sessionRef = useRef<ActiveSession | null>(null);
-  const handlesRef = useRef(new Map<string, TusUploadHandle>());
+  const handlesRef = useRef(new Map<string, SignedUploadHandle>());
   const selectionVersion = useRef(0);
   const [projectType, setProjectType] = useState<string>(PROJECT_TYPES[0]);
   const [files, setFiles] = useState<SelectedFile[]>([]);
@@ -159,21 +157,14 @@ export function StartAProjectForm() {
     setFileError("");
   };
 
-  const uploadFile = async (
-    selected: SelectedFile,
-    prepared: PreparedUpload,
-    endpoint: string,
-  ): Promise<boolean> => {
+  const uploadFile = async (selected: SelectedFile, prepared: PreparedUpload): Promise<boolean> => {
     updateFile(selected.id, { stage: "uploading", progress: 0, error: undefined });
-    let handle: TusUploadHandle | null = null;
+    let handle: SignedUploadHandle | null = null;
 
     try {
-      handle = startTusUpload({
+      handle = startSignedUpload({
         file: selected.file,
-        endpoint,
-        token: prepared.token,
-        storagePath: prepared.storagePath,
-        mimeType: prepared.mimeType,
+        uploadUrl: prepared.uploadUrl,
         onProgress: (progress) => updateFile(selected.id, { progress }),
       });
       handlesRef.current.set(selected.id, handle);
@@ -226,8 +217,7 @@ export function StartAProjectForm() {
     setStatus("uploading");
     setServerError(null);
     try {
-      const endpoint = directStorageEndpoint(getPublicEnv().NEXT_PUBLIC_SUPABASE_URL);
-      const succeeded = await uploadFile(selected, prepared, endpoint);
+      const succeeded = await uploadFile(selected, prepared);
       if (succeeded && filesRef.current.every((file) => file.stage === "uploaded")) {
         await finishSession(session);
       } else if (!succeeded || filesRef.current.some((file) => file.stage === "failed")) {
@@ -260,7 +250,6 @@ export function StartAProjectForm() {
     setServerError(null);
 
     try {
-      const endpoint = directStorageEndpoint(getPublicEnv().NEXT_PUBLIC_SUPABASE_URL);
       const formData = textFormData(form);
       const result = await prepareProjectEnquiry(
         formData,
@@ -299,9 +288,7 @@ export function StartAProjectForm() {
       setStatus("uploading");
       const selectedFiles = [...filesRef.current];
       const results = await Promise.all(
-        selectedFiles.map((selected, index) =>
-          uploadFile(selected, result.uploads[index]!, endpoint),
-        ),
+        selectedFiles.map((selected, index) => uploadFile(selected, result.uploads[index]!)),
       );
 
       if (results.every(Boolean)) {

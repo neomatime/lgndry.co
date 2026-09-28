@@ -66,6 +66,9 @@ const MANIFEST_FILE = {
   mime_type: "application/pdf",
   size_bytes: PDF_BYTES.byteLength,
 };
+const SIGNED_UPLOAD_URL =
+  `https://project.supabase.co/storage/v1/object/upload/sign/enquiry-attachments/` +
+  `${SESSION_ID}/0-brief.pdf?token=signed-token`;
 
 function sessionRow(
   over: Partial<{
@@ -90,7 +93,7 @@ function sessionRow(
 beforeEach(() => {
   createSignedUploadUrl
     .mockReset()
-    .mockResolvedValue({ data: { token: "signed-token" }, error: null });
+    .mockResolvedValue({ data: { signedUrl: SIGNED_UPLOAD_URL }, error: null });
   serviceInsert.mockReset().mockResolvedValue({ error: null });
   verifyStoredObject.mockReset().mockResolvedValue({ ok: true });
   cleanupSessionObjects.mockReset().mockResolvedValue(true);
@@ -118,7 +121,7 @@ describe("prepareProjectEnquiry", () => {
     mimeType: "application/pdf",
   };
 
-  it("creates a private session and returns path-specific upload tokens", async () => {
+  it("creates a private session and returns path-specific signed upload URLs", async () => {
     const { prepareProjectEnquiry } = await import("@/features/start-a-project/actions");
 
     const result = await prepareProjectEnquiry(baseFormData(), [descriptor]);
@@ -131,7 +134,7 @@ describe("prepareProjectEnquiry", () => {
           index: 0,
           fileName: "brief.pdf",
           mimeType: "application/pdf",
-          token: "signed-token",
+          uploadUrl: SIGNED_UPLOAD_URL,
         }),
       ],
     });
@@ -201,7 +204,7 @@ describe("prepareProjectEnquiry", () => {
     expect(createSignedUploadUrl).not.toHaveBeenCalled();
   });
 
-  it("marks a session failed when token creation fails", async () => {
+  it("marks a session failed when signed URL creation fails", async () => {
     createSignedUploadUrl.mockResolvedValue({
       data: null,
       error: { message: "storage unavailable" },

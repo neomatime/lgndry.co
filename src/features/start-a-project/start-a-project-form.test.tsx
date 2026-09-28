@@ -3,7 +3,7 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 
 const prepareProjectEnquiry = vi.fn();
 const finalizeProjectEnquiry = vi.fn();
-const startTusUpload = vi.fn();
+const startSignedUpload = vi.fn();
 const abortUpload = vi.fn();
 
 vi.mock("@/features/start-a-project/actions", () => ({
@@ -12,14 +12,8 @@ vi.mock("@/features/start-a-project/actions", () => ({
   finalizeProjectEnquiry: (formData: FormData, sessionId: string, sessionSecret: string) =>
     finalizeProjectEnquiry(formData, sessionId, sessionSecret),
 }));
-vi.mock("@/features/start-a-project/tus-upload", () => ({
-  startTusUpload: (options: unknown) => startTusUpload(options),
-}));
-vi.mock("@/lib/env", () => ({
-  getPublicEnv: () => ({
-    NEXT_PUBLIC_SUPABASE_URL: "https://project.supabase.co",
-    NEXT_PUBLIC_SUPABASE_ANON_KEY: "anon-key",
-  }),
+vi.mock("@/features/start-a-project/signed-upload", () => ({
+  startSignedUpload: (options: unknown) => startSignedUpload(options),
 }));
 
 const SESSION_ID = "123e4567-e89b-42d3-a456-426614174000";
@@ -28,10 +22,7 @@ const PDF_BYTES = new Uint8Array([0x25, 0x50, 0x44, 0x46, 0x2d]);
 
 type UploadOptions = {
   file: File;
-  endpoint: string;
-  token: string;
-  storagePath: string;
-  mimeType: string;
+  uploadUrl: string;
   onProgress: (percentage: number) => void;
 };
 
@@ -63,7 +54,9 @@ function readyResult(descriptors: { fileName: string; sizeBytes: number; mimeTyp
       ...descriptor,
       index,
       storagePath: `${SESSION_ID}/${index}-${descriptor.fileName}`,
-      token: `token-${index}`,
+      uploadUrl:
+        `https://project.supabase.co/storage/v1/object/upload/sign/enquiry-attachments/` +
+        `${SESSION_ID}/${index}-${descriptor.fileName}?token=token-${index}`,
     })),
   };
 }
@@ -81,7 +74,7 @@ beforeEach(() => {
       readyResult(descriptors),
   );
   finalizeProjectEnquiry.mockResolvedValue({ status: "complete" });
-  startTusUpload.mockImplementation((options: UploadOptions) => {
+  startSignedUpload.mockImplementation((options: UploadOptions) => {
     options.onProgress(100);
     return { done: Promise.resolve(), abort: abortUpload };
   });
@@ -164,7 +157,7 @@ describe("StartAProjectForm", () => {
     await waitFor(() => expect(finalizeProjectEnquiry).toHaveBeenCalledOnce());
     expectTextOnly(prepareProjectEnquiry.mock.calls[0]![0] as FormData);
     expectTextOnly(finalizeProjectEnquiry.mock.calls[0]![0] as FormData);
-    expect(startTusUpload).not.toHaveBeenCalled();
+    expect(startSignedUpload).not.toHaveBeenCalled();
     expect(await screen.findByText("Project received")).toBeInTheDocument();
   });
 
@@ -180,13 +173,13 @@ describe("StartAProjectForm", () => {
 
     fireEvent.submit(container.querySelector("form")!);
 
-    await waitFor(() => expect(startTusUpload).toHaveBeenCalledOnce());
-    expect(startTusUpload).toHaveBeenCalledWith(
+    await waitFor(() => expect(startSignedUpload).toHaveBeenCalledOnce());
+    expect(startSignedUpload).toHaveBeenCalledWith(
       expect.objectContaining({
-        endpoint: "https://project.storage.supabase.co/storage/v1/upload/resumable",
-        token: "token-0",
-        storagePath: `${SESSION_ID}/0-brief.pdf`,
-        mimeType: "application/pdf",
+        file: expect.objectContaining({ name: "brief.pdf" }),
+        uploadUrl:
+          `https://project.supabase.co/storage/v1/object/upload/sign/enquiry-attachments/` +
+          `${SESSION_ID}/0-brief.pdf?token=token-0`,
       }),
     );
     expectTextOnly(prepareProjectEnquiry.mock.calls[0]![0] as FormData);
@@ -196,7 +189,7 @@ describe("StartAProjectForm", () => {
 
   it("shows per-file progress without finalizing early", async () => {
     let resolveUpload: () => void = () => undefined;
-    startTusUpload.mockImplementation((options: UploadOptions) => {
+    startSignedUpload.mockImplementation((options: UploadOptions) => {
       options.onProgress(42);
       return {
         done: new Promise<void>((resolve) => {
@@ -225,7 +218,7 @@ describe("StartAProjectForm", () => {
   });
 
   it("retries only the failed file and preserves completed uploads", async () => {
-    startTusUpload
+    startSignedUpload
       .mockImplementationOnce((options: UploadOptions) => {
         options.onProgress(100);
         return { done: Promise.resolve(), abort: abortUpload };
@@ -257,13 +250,13 @@ describe("StartAProjectForm", () => {
     fireEvent.click(screen.getByRole("button", { name: "Retry" }));
 
     expect(await screen.findByText("Project received")).toBeInTheDocument();
-    expect(startTusUpload).toHaveBeenCalledTimes(3);
+    expect(startSignedUpload).toHaveBeenCalledTimes(3);
     expect(prepareProjectEnquiry).toHaveBeenCalledOnce();
   });
 
-  it("offers retry when TUS cannot start", async () => {
-    startTusUpload.mockImplementationOnce(() => {
-      throw new Error("TUS unavailable");
+  it("offers retry when signed upload cannot start", async () => {
+    startSignedUpload.mockImplementationOnce(() => {
+      throw new Error("Signed upload unavailable");
     });
     const { StartAProjectForm } =
       await import("@/features/start-a-project/components/start-a-project-form");
@@ -336,7 +329,7 @@ describe("StartAProjectForm", () => {
   });
 
   it("aborts active uploads when the form unmounts", async () => {
-    startTusUpload.mockReturnValue({
+    startSignedUpload.mockReturnValue({
       done: new Promise<void>(() => undefined),
       abort: abortUpload,
     });
@@ -349,7 +342,7 @@ describe("StartAProjectForm", () => {
     });
     await screen.findByText("brief.pdf");
     fireEvent.submit(container.querySelector("form")!);
-    await waitFor(() => expect(startTusUpload).toHaveBeenCalledOnce());
+    await waitFor(() => expect(startSignedUpload).toHaveBeenCalledOnce());
 
     unmount();
 

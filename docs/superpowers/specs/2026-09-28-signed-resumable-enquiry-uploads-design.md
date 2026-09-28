@@ -7,6 +7,34 @@ System)
 **Preceding work:**
 `docs/superpowers/specs/2026-09-27-attachment-pipeline-and-enquiry-record-design.md`
 
+## Approved implementation deviation — 2026-09-28
+
+This section is authoritative where it differs from the original TUS design
+below.
+
+The production-preview test reached hosted Supabase Storage `1.77.5`, but
+Storage rejected a correctly formed token created by its own signed resumable
+upload endpoint with `Invalid Compact JWS` (`ERR_JWS_INVALID`). This matches the
+open upstream Storage defect documented in
+<https://github.com/supabase/storage/issues/1268>. The user approved a temporary
+fallback to Supabase's standard path-scoped signed upload URL flow.
+
+The browser therefore sends each file directly to the exact URL returned by
+`createSignedUploadUrl()` using one multipart `PUT`. File bytes still never
+cross Vercel, progress and cancellation remain visible, paths remain unique,
+and finalization still performs the same authoritative Storage checks. A retry
+restarts only the failed file from byte zero; completed files and the form state
+are preserved. The fallback does not provide byte-range resume.
+
+For this implementation, references below to TUS headers, 6 MB chunks, the
+direct Storage hostname, resumable offsets, and `tus-js-client` are historical
+design intent. Deployed verification must instead prove that a file larger than
+Vercel's request limit travels in one direct signed Storage `PUT`, that an
+interrupted upload can be retried without re-preparing the session, and that no
+file bytes touch the Vercel origin. "Survive ordinary network interruption" in
+the success criteria means recovery through this preserved-state retry flow,
+not continuation from the last uploaded byte.
+
 ## Problem
 
 The current `/start-a-project` action receives the complete `FormData`, including
