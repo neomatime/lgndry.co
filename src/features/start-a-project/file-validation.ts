@@ -43,6 +43,7 @@ const EXTENSION_FAMILY: Record<string, FileFamily> = {
 export const ALLOWED_EXTENSIONS = Object.keys(EXTENSION_FAMILY);
 export const MAX_FILE_BYTES = 15 * 1024 * 1024;
 export const MAX_FILES = 5;
+export const FILE_SIGNATURE_BYTES = 16;
 
 export function extensionOf(fileName: string): string {
   const dot = fileName.lastIndexOf(".");

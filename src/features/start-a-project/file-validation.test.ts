@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
 import {
+  FILE_SIGNATURE_BYTES,
   MAX_FILES,
   canonicalMimeType,
   checkFileContent,
@@ -8,6 +9,10 @@ import {
   extensionOf,
   sanitizeFileName,
 } from "@/features/start-a-project/file-validation";
+
+it("reads only a small, shared signature prefix", () => {
+  expect(FILE_SIGNATURE_BYTES).toBe(16);
+});
 
 const PDF = new Uint8Array([0x25, 0x50, 0x44, 0x46, 0x2d, 0x31, 0x2e, 0x34]); // "%PDF-1.4"
 const JPEG = new Uint8Array([0xff, 0xd8, 0xff, 0xe0, 0, 0, 0, 0]);
