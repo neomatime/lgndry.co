@@ -35,6 +35,22 @@ file bytes touch the Vercel origin. "Survive ordinary network interruption" in
 the success criteria means recovery through this preserved-state retry flow,
 not continuation from the last uploaded byte.
 
+Deployed preview verification completed on 2026-09-28. A valid 10.2 MB PDF
+travelled in one 10,695,782-byte signed Storage `PUT`, while the largest Vercel
+Server Action request was 1,413 bytes. The progress UI was observed, an aborted
+upload recovered through a second `PUT`, and a byte-mutated PDF was rejected
+without creating an enquiry and was removed from Storage. Final cleanup and an
+independent database query both confirmed zero remaining test sessions,
+enquiries, clients, or objects.
+
+That verification also exposed a Vercel runtime incompatibility in the original
+prefix reader: awaiting `ReadableStream.cancel()` after the 16-byte response
+could hang until the 300-second function timeout. The final implementation
+accepts only a bounded `206 Partial Content` response whose `Content-Range` and
+`Content-Length` cannot exceed the signature prefix, then reads that tiny body
+with `arrayBuffer()`. A server that ignores or widens the range is treated as
+temporarily unavailable before its body is buffered.
+
 ## Problem
 
 The current `/start-a-project` action receives the complete `FormData`, including

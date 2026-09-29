@@ -236,12 +236,10 @@ export async function finalizeProjectEnquiry(
   if (input.data.hp_website) return { status: "complete" };
 
   try {
-    console.info("start-a-project: finalize start", sessionId);
     const publicEnv = getPublicEnv();
     const serverEnv = getServerEnv();
     const supabase = createSupabaseServiceClient();
     const loaded = await loadUploadSession(supabase, sessionId);
-    console.info("start-a-project: finalize session loaded", sessionId);
 
     if (loaded.status === "error") {
       console.error("start-a-project: finalize session error", sessionId);
@@ -258,13 +256,10 @@ export async function finalizeProjectEnquiry(
     if (session.status === "failed") return FINALIZE_INVALID;
 
     for (const file of session.file_manifest) {
-      console.info("start-a-project: finalize verify start", sessionId);
       const verification = await verifyStoredObject(supabase, file, {
         supabaseUrl: publicEnv.NEXT_PUBLIC_SUPABASE_URL,
         serviceRoleKey: serverEnv.SUPABASE_SERVICE_ROLE_KEY,
-        correlationId: sessionId,
       });
-      console.info("start-a-project: finalize verify complete", sessionId);
       if (!verification.ok) {
         if (verification.reason === "unavailable") {
           console.error("start-a-project: finalize verify unavailable", sessionId);
@@ -279,7 +274,6 @@ export async function finalizeProjectEnquiry(
       }
     }
 
-    console.info("start-a-project: finalize rpc start", sessionId);
     const { data: finalizerData, error: finalizerError } = await supabase.rpc(
       "finalize_enquiry_upload_session",
       {
@@ -296,7 +290,6 @@ export async function finalizeProjectEnquiry(
         p_client_notes: newClientNotes(input.data.company),
       },
     );
-    console.info("start-a-project: finalize rpc complete", sessionId);
     const finalizerResult = finalizerResultSchema.safeParse(finalizerData);
 
     if (finalizerError || !finalizerResult.success) {

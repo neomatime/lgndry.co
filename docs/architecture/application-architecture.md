@@ -577,3 +577,78 @@ enquiry) are not built — this sub-project makes the *read* side real.
   file) is now resolved by this sub-project shipping — left as-is there per
   this project's own rule of not editing previously-written sections, noted
   here instead.
+
+## Phase 5, sub-project 3 — Direct signed enquiry uploads
+
+The Vercel request-size risk from sub-project 1 is resolved on the
+`next-migration` preview. Attachment bytes no longer enter a Server Action: the
+browser prepares a private upload session with text metadata, uploads each file
+to a unique path in the private `enquiry-attachments` bucket, and sends only the
+session capability and form text back for authoritative finalization.
+
+### Upload implementation and deliberate deviation
+
+The approved design first used Supabase signed TUS uploads. Hosted Storage
+`1.77.5` rejected the correctly formed signed token it had issued with
+`Invalid Compact JWS` (`ERR_JWS_INVALID`), matching the open upstream defect at
+<https://github.com/supabase/storage/issues/1268>. With owner approval, the
+shipping fallback uses `createSignedUploadUrl()` and one multipart `PUT` to that
+exact path-scoped URL. Retry restarts only the failed file from byte zero;
+completed files and form state remain intact. `tus-js-client` and the derived
+direct-Storage endpoint were removed.
+
+The server-only client supports the live project's modern `sb_secret_` key and
+never serializes it to the browser. The service key and the separate HMAC
+rate-limit secret are configured in Vercel Preview and Production. Preview also
+needed the existing public Supabase URL and anon key added explicitly to both
+environments before Server Actions could initialize.
+
+### Session, verification and cleanup behavior
+
+`enquiry_upload_sessions` binds a capability hash, expiry, status and normalized
+manifest to random Storage paths. Preparation enforces three new sessions per
+IP hash per rolling hour. Finalization verifies metadata and magic bytes before
+one idempotent database function creates the client/enquiry/attachments and
+completes the session transactionally.
+
+Signature reads request only bytes `0-15`. Live preview testing found that
+awaiting `ReadableStream.cancel()` after that range response could hang on
+Vercel until the 300-second function timeout. Verification now requires a
+bounded `206 Partial Content` response with matching range/length headers before
+reading the tiny body with `arrayBuffer()`; a server that ignores or widens the
+range is rejected before its body is buffered.
+
+The deployed `cleanup-enquiry-upload-sessions` Edge Function and hourly Cron job
+remove expired pending/failed objects before expiring their sessions. Its
+project URL and modern secret are held in Supabase Vault/Edge Function secrets,
+not in migrations. Cleanup was exercised against temporary live data and is
+safe to retry.
+
+### Deployed verification
+
+The production-preview browser check used three owner-approved temporary live
+submissions:
+
+- a valid 10.2 MB PDF used one 10,695,782-byte Storage `PUT`; the largest Vercel
+  POST was 1,413 bytes, progress was visible, and finalization completed;
+- an interrupted upload exposed `Retry`, then succeeded through a second `PUT`
+  without creating another session; and
+- a PDF mutated after browser validation failed authoritative signature
+  verification, created no enquiry, and left no Storage object.
+
+The harness cleaned every temporary row/object in `finally`. A separate live
+SQL check then reported zero matching sessions, enquiries, clients and Storage
+objects. The complete repository gate passed before deployment.
+
+### Cutover boundary and remaining work
+
+The deferred permission-narrowing migration has **not** been applied. It must
+wait until this branch serves production, then remove the legacy anonymous
+Storage upload policy and direct public execution of `submit_enquiry()` only
+after compatible production code is live. `main` still serves the legacy site,
+and `/start-a-project` remains intentionally unlinked.
+
+The separate OPS smoke test is still outstanding because it needs an owner-
+supplied administrator login: submit one temporary enquiry, inspect both OPS
+pages and its attachment/activity, confirm a malformed detail id returns 404,
+then delete the test data.
