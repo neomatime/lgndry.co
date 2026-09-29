@@ -76,6 +76,17 @@ describe("navigation panel", () => {
     await waitFor(() => expect(panel()).toHaveAttribute("aria-hidden", "true"));
   });
 
+  it("closes when selecting a menu option, including the current page", async () => {
+    renderChrome();
+    fireEvent.click(screen.getByRole("button", { name: "Menu" }));
+    await waitFor(() => expect(panel()).toHaveAttribute("aria-hidden", "false"));
+
+    fireEvent.click(screen.getByRole("link", { name: "Home" }));
+
+    await waitFor(() => expect(panel()).toHaveAttribute("aria-hidden", "true"));
+    expect(document.body).not.toHaveClass("nav-is-open");
+  });
+
   it("keeps Tab inside the open panel", async () => {
     renderChrome();
     fireEvent.click(screen.getByRole("button", { name: "Menu" }));

@@ -149,6 +149,7 @@ export function NavPanel() {
                   onMouseEnter={() => setHovered(key)}
                   onFocus={() => setHovered(key)}
                   onPointerDown={() => setHovered(key)}
+                  onClick={closeNav}
                 >
                   {label}
                 </Link>
@@ -157,7 +158,11 @@ export function NavPanel() {
           })}
           {customer === "signed-in" ? (
             <li data-customer-nav="">
-              <Link className="nav-panel__item nav-panel__item--account" href="/account#orders">
+              <Link
+                className="nav-panel__item nav-panel__item--account"
+                href="/account#orders"
+                onClick={closeNav}
+              >
                 My Account
               </Link>
             </li>
@@ -165,9 +170,13 @@ export function NavPanel() {
           {customer === "signed-out" ? (
             <li data-customer-nav="">
               <div className="nav-panel__account-links">
-                <Link href="/auth?mode=login">Log In</Link>
+                <Link href="/auth?mode=login" onClick={closeNav}>
+                  Log In
+                </Link>
                 <span></span>
-                <Link href="/auth?mode=signup">Create Account</Link>
+                <Link href="/auth?mode=signup" onClick={closeNav}>
+                  Create Account
+                </Link>
               </div>
             </li>
           ) : null}
