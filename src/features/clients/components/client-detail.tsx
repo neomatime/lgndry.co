@@ -137,6 +137,41 @@ export function ClientDetailView({ client }: { client: ClientDetail }) {
             )}
           </Panel>
 
+          <Panel title={`Linked Projects (${client.projects.length})`}>
+            {client.projects.length ? (
+              <div className="overflow-x-auto">
+                <table className="w-full min-w-[560px] border-collapse text-sm">
+                  <thead>
+                    <tr className="border-line border-b text-left">
+                      <th className="pr-4 pb-2">Project</th>
+                      <th className="pr-4 pb-2">Timeline</th>
+                      <th className="pr-4 pb-2">Delivery</th>
+                      <th className="pb-2">Status</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {client.projects.map((project) => (
+                      <tr key={project.id} className="border-line border-b last:border-b-0">
+                        <td className="py-3 pr-4">
+                          <Link href={`/ops/projects/${project.id}`} className="underline">
+                            {project.name}
+                          </Link>
+                        </td>
+                        <td className="py-3 pr-4">
+                          {project.startDate ? localDate(project.startDate) : "Not scheduled"}
+                        </td>
+                        <td className="py-3 pr-4">{project.deliveryStatus}</td>
+                        <td className="py-3">{project.archived ? "Archived" : project.status}</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            ) : (
+              <p className="text-ink-muted text-sm">No projects are linked to this client.</p>
+            )}
+          </Panel>
+
           <Panel title="Relationship Notes">
             <p className="text-ink-muted text-sm whitespace-pre-line">
               {client.relationshipNotes ?? "No relationship notes recorded yet."}

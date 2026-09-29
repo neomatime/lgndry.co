@@ -24,6 +24,7 @@ function detail(over: Partial<EnquiryDetail> = {}): EnquiryDetail {
     activity: [
       { id: "a1", message: "New project enquiry from Thandi Mokoena", relativeTime: "2 hours ago" },
     ],
+    project: null,
     ...over,
   };
 }

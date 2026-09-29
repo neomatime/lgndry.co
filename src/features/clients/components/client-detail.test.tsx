@@ -49,6 +49,17 @@ function fixture(overrides: Partial<ClientDetail> = {}): ClientDetail {
         createdAt: "2026-09-27T10:00:00Z",
       },
     ],
+    projects: [
+      {
+        id: "33333333-3333-3333-3333-333333333333",
+        name: "Autumn Campaign",
+        status: "Production",
+        startDate: "2026-10-01",
+        endDate: "2026-10-10",
+        deliveryStatus: "In progress",
+        archived: false,
+      },
+    ],
     openEnquiryCount: 1,
     activity: [
       {
@@ -71,12 +82,22 @@ describe("ClientDetailView", () => {
     expect(screen.getByRole("heading", { name: "Preferred Services / Scope" })).toBeInTheDocument();
     expect(screen.getByText("Photography")).toBeInTheDocument();
     expect(screen.getByRole("heading", { name: "Linked Enquiries (1)" })).toBeInTheDocument();
+    expect(screen.getByRole("heading", { name: "Linked Projects (1)" })).toBeInTheDocument();
     expect(screen.getByRole("heading", { name: "Relationship Notes" })).toBeInTheDocument();
     expect(screen.getByRole("heading", { name: "Client Details" })).toBeInTheDocument();
     expect(screen.getByRole("heading", { name: "Contacts (2)" })).toBeInTheDocument();
     expect(screen.getByText("Primary")).toBeInTheDocument();
     expect(screen.getByRole("heading", { name: "Recent Activity" })).toBeInTheDocument();
     expect(screen.getByText("Client profile updated")).toBeInTheDocument();
+  });
+
+  it("links projects to their project record", () => {
+    render(<ClientDetailView client={fixture()} />);
+    expect(screen.getByRole("link", { name: "Autumn Campaign" })).toHaveAttribute(
+      "href",
+      "/ops/projects/33333333-3333-3333-3333-333333333333",
+    );
+    expect(screen.getByText("In progress")).toBeInTheDocument();
   });
 
   it("links enquiries and renders their existing status badge", () => {
@@ -104,7 +125,6 @@ describe("ClientDetailView", () => {
   it("does not invent panels for unfinished modules", () => {
     render(<ClientDetailView client={fixture()} />);
     expect(screen.queryByText("Owner")).not.toBeInTheDocument();
-    expect(screen.queryByText("Active Projects")).not.toBeInTheDocument();
     expect(screen.queryByText("Financial Snapshot")).not.toBeInTheDocument();
     expect(screen.queryByText("Communication Snapshot")).not.toBeInTheDocument();
     expect(screen.queryByText("Follow-ups")).not.toBeInTheDocument();
@@ -127,6 +147,7 @@ describe("ClientDetailView", () => {
           relationshipNotes: null,
           contacts: [],
           enquiries: [],
+          projects: [],
           activity: [],
           openEnquiryCount: 0,
         })}
@@ -135,6 +156,7 @@ describe("ClientDetailView", () => {
     expect(screen.getByText("No account overview recorded yet.")).toBeInTheDocument();
     expect(screen.getByText("No preferred services recorded yet.")).toBeInTheDocument();
     expect(screen.getByText("No enquiries are linked to this client.")).toBeInTheDocument();
+    expect(screen.getByText("No projects are linked to this client.")).toBeInTheDocument();
     expect(screen.getByText("No relationship notes recorded yet.")).toBeInTheDocument();
     expect(screen.getByText("No contacts recorded.")).toBeInTheDocument();
     expect(screen.getByText("No activity recorded yet.")).toBeInTheDocument();

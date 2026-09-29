@@ -66,4 +66,10 @@ describe("buildEnquiryDetail", () => {
     expect(detail.company).toBeNull();
     expect(detail.budget).toBeNull();
   });
+
+  it("includes the project created from the enquiry", () => {
+    const project = { id: "p1", name: "Autumn Campaign", status: "Production" };
+    const detail = buildEnquiryDetail(enquiry, [], new Map(), [], NOW, project);
+    expect(detail.project).toEqual(project);
+  });
 });

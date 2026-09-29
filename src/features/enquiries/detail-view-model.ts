@@ -17,6 +17,7 @@ export type EnquiryDetail = {
   createdAt: string;
   attachments: { fileName: string; sizeBytes: number; url: string | null }[];
   activity: { id: string; message: string; relativeTime: string }[];
+  project: { id: string; name: string; status: string } | null;
 };
 
 type EnquiryRecord = {
@@ -45,6 +46,7 @@ export function buildEnquiryDetail(
   signedUrlByPath: Map<string, string | null>,
   activity: ActivityRecord[],
   now: Date = new Date(),
+  project: { id: string; name: string; status: string } | null = null,
 ): EnquiryDetail {
   return {
     id: enquiry.id,
@@ -70,5 +72,6 @@ export function buildEnquiryDetail(
       message: entry.message,
       relativeTime: relativeTime(entry.created_at, now),
     })),
+    project,
   };
 }

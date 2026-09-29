@@ -40,11 +40,23 @@ describe("buildClientDetail", () => {
         { id: "old", project_type: "Film", status: "Closed", created_at: "2026-01-01T00:00:00Z" },
         { id: "new", project_type: "Event", status: "New", created_at: "2026-02-01T00:00:00Z" },
       ],
+      [
+        {
+          id: "project-1",
+          name: "Autumn Campaign",
+          status: "Production",
+          start_date: "2026-03-01",
+          end_date: "2026-03-10",
+          delivery_status: "In progress",
+          archived: false,
+        },
+      ],
       [{ id: "a", message: "Created", created_at: "2026-01-01T00:00:00Z" }],
       new Date("2026-01-02T00:00:00Z"),
     );
     expect(detail.contacts[0]?.id).toBe("1");
     expect(detail.enquiries[0]?.id).toBe("new");
+    expect(detail.projects[0]).toMatchObject({ id: "project-1", name: "Autumn Campaign" });
     expect(detail.openEnquiryCount).toBe(1);
     expect(detail.activity[0]?.relativeTime).toBe("yesterday");
   });

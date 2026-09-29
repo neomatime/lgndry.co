@@ -49,6 +49,17 @@ const record: ClientListRecord = {
       created_at: "2026-01-04T00:00:00Z",
     },
   ],
+  projects: [
+    {
+      id: "p1",
+      name: "Autumn Campaign",
+      status: "Production",
+      start_date: "2026-03-01",
+      end_date: "2026-03-10",
+      delivery_status: "In progress",
+      archived: false,
+    },
+  ],
 };
 
 describe("client list view model", () => {
@@ -64,6 +75,7 @@ describe("client list view model", () => {
     expect(rows[0]).toMatchObject({ openEnquiryCount: 1, lastActivityAt: "2026-01-05T00:00:00Z" });
     expect(rows[0]?.primaryContact?.fullName).toBe("Primary");
     expect(rows[0]?.enquiries[0]).toMatchObject({ projectType: "Photography" });
+    expect(rows[0]?.projects[0]).toMatchObject({ name: "Autumn Campaign" });
     expect(rows[0]?.activity[0]).toMatchObject({ message: "Updated", relativeTime: "yesterday" });
   });
 

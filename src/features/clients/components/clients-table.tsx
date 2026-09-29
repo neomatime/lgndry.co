@@ -235,7 +235,7 @@ export function ClientsTable({ rows }: { rows: ClientListItem[] }) {
               </dl>
             </div>
           </div>
-          {checked.enquiries.length || checked.activity.length ? (
+          {checked.enquiries.length || checked.projects.length || checked.activity.length ? (
             <div className="border-line mt-6 grid gap-6 border-t pt-5 md:grid-cols-2">
               {checked.enquiries.length ? (
                 <div>
@@ -250,6 +250,28 @@ export function ClientsTable({ rows }: { rows: ClientListItem[] }) {
                       </li>
                     ))}
                   </ul>
+                </div>
+              ) : null}
+              {checked.projects.length ? (
+                <div>
+                  <h3 className="text-sm font-medium">Recent Projects</h3>
+                  <ul className="mt-2 space-y-2 text-sm">
+                    {checked.projects
+                      .filter((project) => !project.archived)
+                      .slice(0, 3)
+                      .map((project) => (
+                        <li key={project.id} className="flex items-center justify-between gap-3">
+                          <Link href={`/ops/projects/${project.id}`} className="underline">
+                            {project.name}
+                          </Link>
+                          <span className="text-ink-muted text-xs">{project.status}</span>
+                        </li>
+                      ))}
+                  </ul>
+                  <p className="text-ink-muted mt-2 text-xs">
+                    {checked.projects.length} linked project
+                    {checked.projects.length === 1 ? "" : "s"}
+                  </p>
                 </div>
               ) : null}
               {checked.activity.length ? (

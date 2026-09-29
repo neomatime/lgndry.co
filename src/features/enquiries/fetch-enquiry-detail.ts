@@ -27,6 +27,7 @@ export const fetchEnquiryDetail = cache(async (id: string): Promise<EnquiryDetai
     const [
       { data: attachmentRows, error: attachmentsError },
       { data: activityRows, error: activityError },
+      { data: projectRow, error: projectError },
     ] = await Promise.all([
       supabase
         .from("enquiry_attachments")
@@ -38,9 +39,11 @@ export const fetchEnquiryDetail = cache(async (id: string): Promise<EnquiryDetai
         .eq("collection", "enquiries")
         .eq("record_id", id)
         .order("created_at", { ascending: false }),
+      supabase.from("projects").select("id, name, status").eq("enquiry_id", id).maybeSingle(),
     ]);
     if (attachmentsError) throw attachmentsError;
     if (activityError) throw activityError;
+    if (projectError) throw projectError;
 
     const signedUrlByPath = new Map<string, string | null>();
     for (const row of (attachmentRows ?? []) as { storage_path: string }[]) {
@@ -60,6 +63,8 @@ export const fetchEnquiryDetail = cache(async (id: string): Promise<EnquiryDetai
         attachmentRows ?? [],
         signedUrlByPath,
         activityRows ?? [],
+        new Date(),
+        projectRow,
       ),
     };
   } catch (error) {

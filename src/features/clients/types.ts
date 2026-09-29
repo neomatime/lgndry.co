@@ -50,6 +50,16 @@ export type LinkedEnquiry = {
   createdAt: string;
 };
 
+export type LinkedProject = {
+  id: string;
+  name: string;
+  status: string;
+  startDate: string;
+  endDate: string;
+  deliveryStatus: string;
+  archived: boolean;
+};
+
 export type ClientActivity = {
   id: string;
   message: string;

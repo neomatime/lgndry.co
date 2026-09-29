@@ -14,7 +14,7 @@ export async function fetchClients(): Promise<ClientListItem[] | null> {
       supabase
         .from("clients")
         .select(
-          "id, name, type, status, account_tier, industry, region, client_since, account_overview, preferred_services, relationship_notes, archived, created_at, updated_at, client_contacts(id, full_name, role_title, email, phone, is_primary), enquiries(id, project_type, status, created_at)",
+          "id, name, type, status, account_tier, industry, region, client_since, account_overview, preferred_services, relationship_notes, archived, created_at, updated_at, client_contacts(id, full_name, role_title, email, phone, is_primary), enquiries(id, project_type, status, created_at), projects(id, name, status, start_date, end_date, delivery_status, archived)",
         )
         .order("created_at", { ascending: false }),
       supabase

@@ -23,7 +23,7 @@ export const fetchClientDetail = cache(async (id: string): Promise<ClientDetailR
     if (clientError) throw clientError;
     if (!client) return { status: "not-found" };
 
-    const [contactsResult, enquiriesResult, activityResult] = await Promise.all([
+    const [contactsResult, enquiriesResult, projectsResult, activityResult] = await Promise.all([
       supabase
         .from("client_contacts")
         .select("id, full_name, role_title, email, phone, is_primary")
@@ -35,6 +35,11 @@ export const fetchClientDetail = cache(async (id: string): Promise<ClientDetailR
         .eq("client_id", id)
         .order("created_at", { ascending: false }),
       supabase
+        .from("projects")
+        .select("id, name, status, start_date, end_date, delivery_status, archived")
+        .eq("client", id)
+        .order("created_at", { ascending: false }),
+      supabase
         .from("ops_activity_log")
         .select("id, message, created_at")
         .eq("collection", "clients")
@@ -44,6 +49,7 @@ export const fetchClientDetail = cache(async (id: string): Promise<ClientDetailR
 
     if (contactsResult.error) throw contactsResult.error;
     if (enquiriesResult.error) throw enquiriesResult.error;
+    if (projectsResult.error) throw projectsResult.error;
     if (activityResult.error) throw activityResult.error;
 
     return {
@@ -52,6 +58,7 @@ export const fetchClientDetail = cache(async (id: string): Promise<ClientDetailR
         client,
         contactsResult.data ?? [],
         enquiriesResult.data ?? [],
+        projectsResult.data ?? [],
         activityResult.data ?? [],
       ),
     };

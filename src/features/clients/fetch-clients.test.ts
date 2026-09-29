@@ -69,6 +69,17 @@ const baseClient = {
       created_at: "2026-09-12T08:00:00Z",
     },
   ],
+  projects: [
+    {
+      id: "project-1",
+      name: "Autumn Campaign",
+      status: "Production",
+      start_date: "2026-10-01",
+      end_date: "2026-10-10",
+      delivery_status: "In progress",
+      archived: false,
+    },
+  ],
 };
 
 describe("fetchClients", () => {
@@ -99,9 +110,11 @@ describe("fetchClients", () => {
       lastActivityAt: "2026-09-20T08:00:00Z",
     });
     expect(result![0]!.enquiries[0]).toMatchObject({ projectType: "Documentary" });
+    expect(result![0]!.projects[0]).toMatchObject({ name: "Autumn Campaign" });
     expect(result![0]!.activity[0]).toMatchObject({ message: "Client updated" });
     expect(clientsSelect).toHaveBeenCalledWith(expect.stringContaining("client_contacts"));
     expect(clientsSelect).toHaveBeenCalledWith(expect.stringContaining("enquiries"));
+    expect(clientsSelect).toHaveBeenCalledWith(expect.stringContaining("projects"));
     expect(clientsOrder).toHaveBeenCalledWith("created_at", { ascending: false });
     expect(activityCollectionEq).toHaveBeenCalledWith("collection", "clients");
     expect(activityOrder).toHaveBeenCalledWith("created_at", { ascending: false });

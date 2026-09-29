@@ -6,6 +6,7 @@ import type {
   ClientStatus,
   ClientType,
   LinkedEnquiry,
+  LinkedProject,
 } from "@/features/clients/types";
 import type { EnquiryStatus } from "@/features/enquiries/types";
 
@@ -24,6 +25,7 @@ export type ClientDetail = {
   archived: boolean;
   contacts: ClientContact[];
   enquiries: LinkedEnquiry[];
+  projects: LinkedProject[];
   openEnquiryCount: number;
   activity: ClientActivity[];
 };
@@ -52,6 +54,15 @@ export function buildClientDetail(
     is_primary: boolean;
   }[],
   enquiries: { id: string; project_type: string; status: EnquiryStatus; created_at: string }[],
+  projects: {
+    id: string;
+    name: string;
+    status: string;
+    start_date: string | null;
+    end_date: string | null;
+    delivery_status: string;
+    archived: boolean;
+  }[],
   activity: { id: string; message: string; created_at: string }[],
   now = new Date(),
 ): ClientDetail {
@@ -88,6 +99,17 @@ export function buildClientDetail(
     archived: client.archived,
     contacts: shapedContacts,
     enquiries: shapedEnquiries,
+    projects: projects
+      .map((project) => ({
+        id: project.id,
+        name: project.name,
+        status: project.status,
+        startDate: project.start_date ?? "",
+        endDate: project.end_date ?? "",
+        deliveryStatus: project.delivery_status,
+        archived: project.archived,
+      }))
+      .sort((a, b) => b.startDate.localeCompare(a.startDate) || a.name.localeCompare(b.name)),
     openEnquiryCount: shapedEnquiries.filter(
       (item) => !["Completed", "Closed"].includes(item.status),
     ).length,

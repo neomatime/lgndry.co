@@ -6,6 +6,7 @@ import type {
   ClientStatus,
   ClientType,
   LinkedEnquiry,
+  LinkedProject,
 } from "@/features/clients/types";
 import type { EnquiryStatus } from "@/features/enquiries/types";
 import { relativeTime } from "@/features/enquiries/relative-time";
@@ -39,6 +40,15 @@ export type ClientListRecord = {
     status: EnquiryStatus;
     created_at: string;
   }[];
+  projects: {
+    id: string;
+    name: string;
+    status: string;
+    start_date: string | null;
+    end_date: string | null;
+    delivery_status: string;
+    archived: boolean;
+  }[];
 };
 
 export type ClientListActivityRecord = {
@@ -64,6 +74,7 @@ export type ClientListItem = {
   contacts: ClientContact[];
   primaryContact: ClientContact | null;
   enquiries: LinkedEnquiry[];
+  projects: LinkedProject[];
   activity: ClientActivity[];
   openEnquiryCount: number;
   lastActivityAt: string;
@@ -96,6 +107,17 @@ export function buildClientListItems(
       }))
       .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
     const activityRecords = activityByClient.get(record.id) ?? [];
+    const projects = (record.projects ?? [])
+      .map((project) => ({
+        id: project.id,
+        name: project.name,
+        status: project.status,
+        startDate: project.start_date ?? "",
+        endDate: project.end_date ?? "",
+        deliveryStatus: project.delivery_status,
+        archived: project.archived,
+      }))
+      .sort((a, b) => b.startDate.localeCompare(a.startDate));
     const activity = activityRecords.map((entry) => ({
       id: entry.id,
       message: entry.message,
@@ -128,6 +150,7 @@ export function buildClientListItems(
       contacts,
       primaryContact: contacts.find((contact) => contact.isPrimary) ?? contacts[0] ?? null,
       enquiries,
+      projects,
       activity,
       openEnquiryCount: enquiries.filter((enquiry) => OPEN(enquiry.status)).length,
       lastActivityAt,

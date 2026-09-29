@@ -53,12 +53,29 @@ export default async function EnquiryDetailPage({ params }: Props) {
         title={`${enquiry.company ?? enquiry.fullName} Enquiry`}
         description={enquiry.fullName}
         actions={
-          <Link
-            href="/ops/enquiries"
-            className="border-line-strong text-ink hover:bg-surface-soft inline-flex h-10 items-center justify-center gap-2 border bg-white px-4 text-sm font-medium transition-colors"
-          >
-            Back to Enquiries
-          </Link>
+          <div className="flex flex-wrap gap-2">
+            <Link
+              href="/ops/enquiries"
+              className="border-line-strong text-ink hover:bg-surface-soft inline-flex h-10 items-center justify-center gap-2 border bg-white px-4 text-sm font-medium transition-colors"
+            >
+              Back to Enquiries
+            </Link>
+            {enquiry.project ? (
+              <Link
+                href={`/ops/projects/${enquiry.project.id}`}
+                className="border-ink bg-ink inline-flex h-10 items-center border px-4 text-sm font-medium text-white"
+              >
+                Open Project
+              </Link>
+            ) : !["Completed", "Closed"].includes(enquiry.status) ? (
+              <Link
+                href={`/ops/projects/new?enquiry=${enquiry.id}`}
+                className="border-ink bg-ink inline-flex h-10 items-center border px-4 text-sm font-medium text-white"
+              >
+                Create Project
+              </Link>
+            ) : null}
+          </div>
         }
       />
 

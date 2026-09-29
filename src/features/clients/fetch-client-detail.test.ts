@@ -5,6 +5,7 @@ type Result = { data: unknown; error: { message: string } | null };
 const clientResult: Result = { data: null, error: null };
 const contactsResult: Result = { data: [], error: null };
 const enquiriesResult: Result = { data: [], error: null };
+const projectsResult: Result = { data: [], error: null };
 const activityResult: Result = { data: [], error: null };
 const fromMock = vi.fn();
 
@@ -26,6 +27,7 @@ fromMock.mockImplementation((table: string) => {
   }
   if (table === "client_contacts") return orderedResult(contactsResult);
   if (table === "enquiries") return orderedResult(enquiriesResult);
+  if (table === "projects") return orderedResult(projectsResult);
   if (table === "ops_activity_log") {
     return {
       select: vi.fn(() => ({
@@ -49,6 +51,8 @@ beforeEach(() => {
   contactsResult.error = null;
   enquiriesResult.data = [];
   enquiriesResult.error = null;
+  projectsResult.data = [];
+  projectsResult.error = null;
   activityResult.data = [];
   activityResult.error = null;
   fromMock.mockClear();
@@ -91,6 +95,17 @@ describe("fetchClientDetail", () => {
         created_at: "2026-09-20T08:00:00Z",
       },
     ];
+    projectsResult.data = [
+      {
+        id: "project-1",
+        name: "Autumn Campaign",
+        status: "Production",
+        start_date: "2026-10-01",
+        end_date: "2026-10-10",
+        delivery_status: "In progress",
+        archived: false,
+      },
+    ];
     activityResult.data = [
       {
         id: "activity-1",
@@ -106,10 +121,11 @@ describe("fetchClientDetail", () => {
     if (result.status === "ok") {
       expect(result.client.contacts[0]!.email).toBe("thandi@example.com");
       expect(result.client.enquiries[0]!.projectType).toBe("Documentary");
+      expect(result.client.projects[0]!.name).toBe("Autumn Campaign");
       expect(result.client.openEnquiryCount).toBe(1);
       expect(result.client.activity[0]!.message).toBe("Client created");
     }
-    expect(fromMock).toHaveBeenCalledTimes(4);
+    expect(fromMock).toHaveBeenCalledTimes(5);
   });
 
   it("returns an archived client with its contacts and no enquiries", async () => {
@@ -154,6 +170,7 @@ describe("fetchClientDetail", () => {
     ["client", clientResult],
     ["contacts", contactsResult],
     ["enquiries", enquiriesResult],
+    ["projects", projectsResult],
     ["activity", activityResult],
   ])("returns error when the %s query fails", async (_label, failedResult) => {
     clientResult.data = baseClient;
@@ -164,7 +181,8 @@ describe("fetchClientDetail", () => {
       client: "44444444-4444-4444-4444-444444444444",
       contacts: "55555555-5555-5555-5555-555555555555",
       enquiries: "66666666-6666-6666-6666-666666666666",
-      activity: "77777777-7777-7777-7777-777777777777",
+      projects: "77777777-7777-7777-7777-777777777777",
+      activity: "88888888-8888-8888-8888-888888888888",
     };
     expect(await fetchClientDetail(ids[_label]!)).toEqual({ status: "error" });
   });

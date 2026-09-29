@@ -52,6 +52,17 @@ function row(overrides: Partial<ClientListItem> = {}): ClientListItem {
         createdAt: "2026-09-27T10:00:00Z",
       },
     ],
+    projects: [
+      {
+        id: "project-1",
+        name: "Autumn Campaign",
+        status: "Production",
+        startDate: "2026-10-01",
+        endDate: "2026-10-10",
+        deliveryStatus: "In progress",
+        archived: false,
+      },
+    ],
     activity: [
       {
         id: "activity-1",
@@ -151,6 +162,11 @@ describe("ClientsTable", () => {
       "/ops/enquiries/enquiry-1",
     );
     expect(within(preview).getByText("Client profile updated")).toBeInTheDocument();
+    expect(within(preview).getByRole("heading", { name: "Recent Projects" })).toBeInTheDocument();
+    expect(within(preview).getByRole("link", { name: "Autumn Campaign" })).toHaveAttribute(
+      "href",
+      "/ops/projects/project-1",
+    );
   });
 
   it("uses real links for detail and edit actions", () => {
