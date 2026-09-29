@@ -11,7 +11,7 @@ beforeEach(() => {
 });
 
 describe("OpsNav", () => {
-  it("renders Clients as an available link in the mandated order", () => {
+  it("renders Projects and Clients as available links in the mandated order", () => {
     render(<OpsNav />);
     const labels = screen
       .getByRole("navigation", { name: "Command Center" })
@@ -26,8 +26,21 @@ describe("OpsNav", () => {
       "Invoices",
       "Settings",
     ]);
+    expect(screen.getByRole("link", { name: "Projects" })).toHaveAttribute("href", "/ops/projects");
     expect(screen.getByRole("link", { name: "Clients" })).toHaveAttribute("href", "/ops/clients");
   });
+
+  it.each(["/ops/projects", "/ops/projects/new", "/ops/projects/project-id/edit"])(
+    "marks Projects current on %s",
+    (pathname) => {
+      navigation.pathname = pathname;
+      render(<OpsNav />);
+      expect(screen.getByRole("link", { name: "Projects" })).toHaveAttribute(
+        "aria-current",
+        "page",
+      );
+    },
+  );
 
   it.each(["/ops/clients", "/ops/clients/new", "/ops/clients/client-id/edit"])(
     "marks Clients current on %s",
@@ -40,7 +53,7 @@ describe("OpsNav", () => {
 
   it("keeps unfinished modules disabled", () => {
     render(<OpsNav />);
-    for (const label of ["Projects", "Inbox", "Follow-ups", "Invoices", "Settings"]) {
+    for (const label of ["Inbox", "Follow-ups", "Invoices", "Settings"]) {
       expect(screen.queryByRole("link", { name: label })).not.toBeInTheDocument();
       expect(screen.getByText(label).closest("span[aria-disabled='true']")).toBeInTheDocument();
     }

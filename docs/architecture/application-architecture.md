@@ -757,3 +757,88 @@ live client or enquiry rows were created during migration verification.
 - Add Projects, Invoices, Communications, and Follow-ups to the client record as
   each backing module ships.
 - Add account ownership only after Settings supplies a real team/staff model.
+
+## Phase 5, sub-project 5 - Projects module
+
+The Projects area is now a production workspace rather than a legacy record
+list. It adds an ordered five-stage active board, searchable terminal outcomes,
+complete project records, structured plans, enquiry conversion, and focused
+quick actions while preserving the existing `projects` table and legacy
+relationships.
+
+### Product surface
+
+- `/ops/projects` has Active, Completed, On Hold, Cancelled, and Archived views;
+  factual summary counts; search and production filters; a checkbox-selected
+  preview; and an ordered kanban for Planning, Pre-Production, Production,
+  Review, and Delivery.
+- `@dnd-kit/core`, `@dnd-kit/sortable`, and `@dnd-kit/utilities` provide pointer
+  and keyboard movement. Every card also has an accessible Change stage menu;
+  failed persistence restores the prior board and reports the error inline.
+- `/ops/projects/[id]` provides Overview, Plan, and Activity views, project and
+  client links, schedule/resources, a lightweight financial snapshot, ordered
+  milestones/tasks/deliverables, and quick status controls. Archived projects
+  are read-only until restored.
+- `/ops/projects/new` supports standalone creation and conversion from an
+  eligible enquiry. `/ops/projects/[id]/edit` reuses the controlled project and
+  plan form. Projects is now enabled in the OPS navigation.
+
+### Data model and compatibility
+
+Migration `20260929123000_projects_module.sql` adds the production fields to
+the existing `projects` table, including its canonical optional `enquiry_id`,
+selected client contact, schedule, services, budget/payment/delivery state, and
+ordered stage position. It adds admin-only milestone, task, and deliverable
+tables with stable per-project ordering.
+
+The preflight rejects legacy projects without a usable name/client or with an
+unsupported status. Existing rows retain their ids, client and booking links.
+The additive backfill maps controlled legacy types, chooses the first active
+primary contact when available, copies booking date/location into empty
+schedule fields, assigns deterministic stage positions, and creates at most one
+task and one deliverable from the legacy text mirrors. Project writes continue
+to mirror type, brief, timeline, task titles, and deliverable titles into the
+legacy columns so older readers remain compatible; booking remains read-only
+context and is not rewritten by the module.
+
+Enquiry conversion is one-way and atomic: a project owns the unique canonical
+`enquiry_id`, the selected project client must match the enquiry client, and a
+successful conversion marks the enquiry Booked. Later project movement only
+synchronizes Production to `In Progress` and Completed to `Completed`; moving
+backwards never rewinds an enquiry. Client previews/details now show linked
+projects, while enquiry detail offers Create Project before conversion and Open
+Project afterwards.
+
+### Write and security boundary
+
+Create, convert, update, move, quick-plan updates, archive, and restore each use
+one admin-gated `SECURITY DEFINER` RPC. The RPCs validate relationships, lock
+records needed for ordered movement, keep plan replacement atomic, and write
+project-attributed activity. The migration explicitly revokes function access
+from `public`, `anon`, `authenticated`, and `service_role` before granting only
+the admin-gated public RPCs to `authenticated`; the contact-guard helper remains
+owner-only. Child tables use admin-only RLS and direct anonymous project access
+is revoked.
+
+### Deliberate scope
+
+The mockups' Owner, Files, Communication, and full Finance/Invoices panels are
+deferred because Settings, file management, Inbox, and Invoices do not yet
+provide backing systems. The financial view therefore shows only the project's
+budget and current payment status. No dependencies on those future modules are
+invented, and no project hard-delete action is exposed.
+
+### Verification and release boundary
+
+The implementation has colocated migration-domain, validation, view-model,
+fetch, action, board, detail, form, integration, and navigation tests. Before
+live SQL work, the complete repository gate passes with 76 test files and 590
+tests, followed by a successful Next.js production build containing all four
+Projects routes.
+
+Migration `20260929123000_projects_module.sql` is not yet applied to live
+project `tscaluhtfrvwlwjybfsg`. It still requires the planned single-transaction
+rolled-back verification, remote apply/inspection, security and performance
+advisor review, branch push, Vercel preview confirmation, and owner-approved
+authenticated smoke test with complete cleanup. Until that finishes, the code
+is complete locally but the Projects routes must not be treated as released.
