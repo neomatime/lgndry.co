@@ -1,0 +1,90 @@
+import type { ProjectDetail } from "@/features/projects/types";
+
+export function projectDetail(overrides: Partial<ProjectDetail> = {}): ProjectDetail {
+  return {
+    id: "11111111-1111-4111-8111-111111111111",
+    name: "Autumn Campaign",
+    clientId: "22222222-2222-4222-8222-222222222222",
+    clientName: "Blackridge",
+    contact: {
+      id: "33333333-3333-4333-8333-333333333333",
+      fullName: "Thandi Mokoena",
+      email: "thandi@example.com",
+      phone: "0761234567",
+      isPrimary: true,
+    },
+    projectType: "Film",
+    services: ["Film", "Photography"],
+    overview: "A quiet portrait of place.",
+    location: "Limpopo",
+    startDate: "2026-10-01",
+    endDate: "2026-10-03",
+    status: "Planning",
+    stagePosition: 0,
+    paymentStatus: "Deposit Pending",
+    deliveryStatus: "Not Ready",
+    archived: false,
+    createdAt: "2026-09-01T08:00:00Z",
+    updatedAt: "2026-09-20T08:00:00Z",
+    enquiryId: "44444444-4444-4444-8444-444444444444",
+    bookingId: "55555555-5555-4555-8555-555555555555",
+    scheduleNotes: "Golden-hour exterior work.",
+    peopleResources: "Director, photographer",
+    budgetMin: 12000,
+    budgetMax: 18000,
+    currency: "ZAR",
+    milestones: [
+      {
+        id: "66666666-6666-4666-8666-666666666666",
+        title: "Treatment approved",
+        description: "Creative direction confirmed.",
+        dueDate: "2026-09-30",
+        status: "Pending",
+        sortOrder: 0,
+        completedAt: null,
+      },
+    ],
+    tasks: [
+      {
+        id: "77777777-7777-4777-8777-777777777777",
+        title: "Confirm access",
+        dueDate: "2026-10-01",
+        isCompleted: false,
+        sortOrder: 0,
+        completedAt: null,
+      },
+    ],
+    deliverables: [
+      {
+        id: "88888888-8888-4888-8888-888888888888",
+        title: "Hero film",
+        dueDate: "2026-10-10",
+        status: "In Progress",
+        sortOrder: 0,
+        completedAt: null,
+      },
+    ],
+    activity: [
+      {
+        id: "activity-1",
+        message: "Project created",
+        action: "created",
+        createdAt: "2026-09-20T08:00:00Z",
+        relativeTime: "yesterday",
+      },
+    ],
+    enquiry: {
+      id: "44444444-4444-4444-8444-444444444444",
+      status: "Booked",
+      projectType: "Film",
+    },
+    booking: {
+      id: "55555555-5555-4555-8555-555555555555",
+      date: "2026-10-01",
+      location: "Limpopo",
+      status: "Confirmed",
+      deposit: "Paid",
+    },
+    ...overrides,
+  };
+}
