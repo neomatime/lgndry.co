@@ -717,18 +717,43 @@ directory, detail, archive/restore, and navigation tests. The complete repositor
 gate passes with 51 test files and 460 tests, followed by a successful Next.js
 production build containing all four Clients routes.
 
-The migration has **not yet been applied** to live project
-`tscaluhtfrvwlwjybfsg`. Before deployment it must pass the planned rolled-back
-live SQL verification, then be applied and inspected for columns, indexes,
-policies, grants, backfill counts, and advisor findings. No temporary live client
-or enquiry rows have been created for this module.
+The migration was verified in one rolled-back transaction against live project
+`tscaluhtfrvwlwjybfsg`, then applied as remote migration
+`20260929100353_clients_module`. The verification asserted the three-row legacy
+backfill, preserved client ids and enquiry foreign keys, duplicate-email and
+single-primary constraints, anon/non-admin denial, admin CRUD behavior, atomic
+rollback on invalid updates, archive/restore semantics, secondary-contact
+enquiry matching, and attributable activity entries. Post-apply inspection found
+all expected columns, indexes, functions, policies, grants, and contact rows,
+with no duplicate active email addresses or client missing exactly one primary
+contact.
+
+The project's default privileges grant function execution directly to API
+roles, so revoking from `PUBLIC` alone left the three admin-gated client RPCs
+and the trigger helper callable by `anon`. Additive migration
+`20260929110500_restrict_clients_function_grants.sql` was verified in a rolled-
+back transaction and applied remotely as
+`20260929100926_restrict_clients_function_grants`. Anonymous execution is now
+removed from all client write RPCs; authenticated and service-role execution is
+retained for the admin-gated RPCs, and only the function owner can invoke the
+trigger helper directly. Public execution of `submit_enquiry()` remains
+intentional.
+
+The post-migration security advisor no longer reports any anonymous Clients
+function. Its authenticated warnings for the three client RPCs are expected:
+each RPC independently checks `is_admin((select auth.uid()))`. The performance
+advisor still reports the legacy `public_insert_lead` policy alongside admin
+access on `clients`; that overlap is intentional while `main` still serves the
+legacy lead forms required by the approved compatibility boundary. Other
+advisor findings predate this module and remain outside its scope. No temporary
+live client or enquiry rows were created during migration verification.
 
 ### Still open
 
-- Run the owner-approved browser smoke test after deployment: create an
-  Individual with two contacts, edit and switch the primary contact, verify
-  duplicate blocking, archive/restore, inspect linked Enquiries and activity,
-  then remove all temporary data.
+- After deployment and explicit approval for temporary live rows, run the
+  browser smoke test: create an Individual with two contacts, edit and switch
+  the primary contact, verify duplicate blocking, archive/restore, inspect
+  linked Enquiries and activity, then remove all temporary data.
 - Add Projects, Invoices, Communications, and Follow-ups to the client record as
   each backing module ships.
 - Add account ownership only after Settings supplies a real team/staff model.

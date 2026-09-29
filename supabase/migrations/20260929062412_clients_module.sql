@@ -132,7 +132,8 @@ begin
 end;
 $$;
 
-revoke all on function public.create_primary_contact_for_legacy_client() from public;
+revoke all on function public.create_primary_contact_for_legacy_client()
+  from public, anon, authenticated, service_role;
 
 create trigger create_primary_contact_after_client_insert
   after insert on public.clients
@@ -400,12 +401,18 @@ begin
 end;
 $$;
 
-revoke all on function public.create_client_with_contacts(jsonb, jsonb) from public;
-revoke all on function public.update_client_with_contacts(uuid, jsonb, jsonb) from public;
-revoke all on function public.set_client_archived(uuid, boolean) from public;
-grant execute on function public.create_client_with_contacts(jsonb, jsonb) to authenticated;
-grant execute on function public.update_client_with_contacts(uuid, jsonb, jsonb) to authenticated;
-grant execute on function public.set_client_archived(uuid, boolean) to authenticated;
+revoke all on function public.create_client_with_contacts(jsonb, jsonb)
+  from public, anon, authenticated, service_role;
+revoke all on function public.update_client_with_contacts(uuid, jsonb, jsonb)
+  from public, anon, authenticated, service_role;
+revoke all on function public.set_client_archived(uuid, boolean)
+  from public, anon, authenticated, service_role;
+grant execute on function public.create_client_with_contacts(jsonb, jsonb)
+  to authenticated, service_role;
+grant execute on function public.update_client_with_contacts(uuid, jsonb, jsonb)
+  to authenticated, service_role;
+grant execute on function public.set_client_archived(uuid, boolean)
+  to authenticated, service_role;
 
 -- The current submit_enquiry body is retained in full, with contact-first
 -- matching and a safe empty search_path. Its public signature stays stable.
