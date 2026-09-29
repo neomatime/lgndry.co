@@ -113,6 +113,7 @@ describe("ClientForm", () => {
     fireEvent.click(screen.getByRole("button", { name: "Create Client" }));
 
     expect(screen.getByText("Role or title is required for company contacts.")).toBeInTheDocument();
+    expect(screen.getByRole("alert")).toHaveFocus();
     expect(mocks.createClient).not.toHaveBeenCalled();
   });
 

@@ -44,6 +44,22 @@ function row(overrides: Partial<ClientListItem> = {}): ClientListItem {
       phone: "0761234567",
       isPrimary: true,
     },
+    enquiries: [
+      {
+        id: "enquiry-1",
+        projectType: "Documentary",
+        status: "Reviewing",
+        createdAt: "2026-09-27T10:00:00Z",
+      },
+    ],
+    activity: [
+      {
+        id: "activity-1",
+        message: "Client profile updated",
+        createdAt: "2026-09-28T10:00:00Z",
+        relativeTime: "yesterday",
+      },
+    ],
     openEnquiryCount: 2,
     lastActivityAt: "2026-09-29T08:00:00Z",
     ...overrides,
@@ -123,6 +139,18 @@ describe("ClientsTable", () => {
       screen.queryByRole("region", { name: "Blackridge Hotels preview" }),
     ).not.toBeInTheDocument();
     expect(screen.getByRole("region", { name: "Lumen Partners preview" })).toBeInTheDocument();
+  });
+
+  it("shows recent enquiries and activity in the selected preview", () => {
+    render(<ClientsTable rows={[row()]} />);
+    fireEvent.click(screen.getByRole("checkbox", { name: "Preview Blackridge Hotels" }));
+    const preview = screen.getByRole("region", { name: "Blackridge Hotels preview" });
+    expect(within(preview).getByRole("heading", { name: "Recent Enquiries" })).toBeInTheDocument();
+    expect(within(preview).getByRole("link", { name: "Documentary" })).toHaveAttribute(
+      "href",
+      "/ops/enquiries/enquiry-1",
+    );
+    expect(within(preview).getByText("Client profile updated")).toBeInTheDocument();
   });
 
   it("uses real links for detail and edit actions", () => {

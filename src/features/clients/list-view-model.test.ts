@@ -41,17 +41,30 @@ const record: ClientListRecord = {
     },
   ],
   enquiries: [
-    { id: "e1", status: "New", created_at: "2026-01-03T00:00:00Z" },
-    { id: "e2", status: "Closed", created_at: "2026-01-04T00:00:00Z" },
+    { id: "e1", project_type: "Film", status: "New", created_at: "2026-01-03T00:00:00Z" },
+    {
+      id: "e2",
+      project_type: "Photography",
+      status: "Closed",
+      created_at: "2026-01-04T00:00:00Z",
+    },
   ],
 };
 
 describe("client list view model", () => {
-  const rows = buildClientListItems([record], new Map([["a", "2026-01-05T00:00:00Z"]]));
+  const rows = buildClientListItems(
+    [record],
+    new Map([
+      ["a", [{ id: "activity-1", message: "Updated", created_at: "2026-01-05T00:00:00Z" }]],
+    ]),
+    new Date("2026-01-06T00:00:00Z"),
+  );
 
   it("shapes contacts, enquiries, and latest activity", () => {
     expect(rows[0]).toMatchObject({ openEnquiryCount: 1, lastActivityAt: "2026-01-05T00:00:00Z" });
     expect(rows[0]?.primaryContact?.fullName).toBe("Primary");
+    expect(rows[0]?.enquiries[0]).toMatchObject({ projectType: "Photography" });
+    expect(rows[0]?.activity[0]).toMatchObject({ message: "Updated", relativeTime: "yesterday" });
   });
 
   it("computes approved stats and zeroes", () => {

@@ -179,6 +179,10 @@ export function ClientDetailView({ client }: { client: ClientDetail }) {
                   <AccountTierBadge tier={client.accountTier} />
                 </dd>
               </div>
+              <div className="flex justify-between gap-4">
+                <dt>Client since</dt>
+                <dd className="text-ink">{localDate(client.clientSince)}</dd>
+              </div>
             </dl>
           </Panel>
 

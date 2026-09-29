@@ -1,6 +1,7 @@
 import "server-only";
 import {
   buildClientListItems,
+  type ClientListActivityRecord,
   type ClientListItem,
   type ClientListRecord,
 } from "@/features/clients/list-view-model";
@@ -13,12 +14,12 @@ export async function fetchClients(): Promise<ClientListItem[] | null> {
       supabase
         .from("clients")
         .select(
-          "id, name, type, status, account_tier, industry, region, client_since, account_overview, preferred_services, relationship_notes, archived, created_at, updated_at, client_contacts(id, full_name, role_title, email, phone, is_primary), enquiries(id, status, created_at)",
+          "id, name, type, status, account_tier, industry, region, client_since, account_overview, preferred_services, relationship_notes, archived, created_at, updated_at, client_contacts(id, full_name, role_title, email, phone, is_primary), enquiries(id, project_type, status, created_at)",
         )
         .order("created_at", { ascending: false }),
       supabase
         .from("ops_activity_log")
-        .select("record_id, created_at")
+        .select("id, record_id, message, created_at")
         .eq("collection", "clients")
         .order("created_at", { ascending: false }),
     ]);
@@ -26,14 +27,18 @@ export async function fetchClients(): Promise<ClientListItem[] | null> {
     if (clientsResult.error) throw clientsResult.error;
     if (activityResult.error) throw activityResult.error;
 
-    const activityByClient = new Map<string, string>();
-    for (const activity of (activityResult.data ?? []) as {
+    const activityByClient = new Map<string, ClientListActivityRecord[]>();
+    for (const activity of (activityResult.data ?? []) as (ClientListActivityRecord & {
       record_id: string | null;
-      created_at: string;
-    }[]) {
-      if (activity.record_id && !activityByClient.has(activity.record_id)) {
-        activityByClient.set(activity.record_id, activity.created_at);
-      }
+    })[]) {
+      if (!activity.record_id) continue;
+      const entries = activityByClient.get(activity.record_id) ?? [];
+      entries.push({
+        id: activity.id,
+        message: activity.message,
+        created_at: activity.created_at,
+      });
+      activityByClient.set(activity.record_id, entries);
     }
 
     return buildClientListItems((clientsResult.data ?? []) as ClientListRecord[], activityByClient);

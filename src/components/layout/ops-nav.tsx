@@ -28,7 +28,7 @@ const NAV_ITEMS: NavItem[] = [
   { label: "Command Center", href: "/ops", icon: House, available: true },
   { label: "Enquiries", href: "/ops/enquiries", icon: Mail, available: true },
   { label: "Projects", href: "/ops/projects", icon: Folder, available: false },
-  { label: "Clients", href: "/ops/clients", icon: Users, available: false },
+  { label: "Clients", href: "/ops/clients", icon: Users, available: true },
   { label: "Inbox", href: "/ops/inbox", icon: Inbox, available: false },
   { label: "Follow-ups", href: "/ops/follow-ups", icon: CalendarCheck, available: false },
   { label: "Invoices", href: "/ops/invoices", icon: FileText, available: false },

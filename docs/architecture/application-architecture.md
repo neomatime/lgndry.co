@@ -652,3 +652,83 @@ The separate OPS smoke test is still outstanding because it needs an owner-
 supplied administrator login: submit one temporary enquiry, inspect both OPS
 pages and its attachment/activity, confirm a malformed detail id returns 404,
 then delete the test data.
+
+## Phase 5, sub-project 4 - Clients module
+
+The Clients area is the first complete read/write OPS module. It preserves the
+existing `clients` table and ids while adding normalized contacts, richer account
+metadata, atomic write functions, and `/ops/clients` create, read, update,
+archive, and restore workflows.
+
+### What's new
+
+- `/ops/clients` now has the approved four summary counts, seven filters,
+  contact-aware search, four sort modes, semantic detail/edit links, and a
+  checkbox-selected preview with profile, contacts, recent enquiries, and
+  client activity.
+- `/ops/clients/new` and `/ops/clients/[id]/edit` share one controlled form for
+  the client profile, repeatable preferred services, and multiple reorderable
+  contacts. Exactly one contact is primary. Role/title is required for Company
+  contacts and optional for Individuals.
+- `/ops/clients/[id]` shows account overview, preferred services, linked
+  Enquiries, relationship notes, client details, contacts, and client activity.
+  Archive and restore require inline confirmation; restore email conflicts link
+  to the active client that owns the address.
+- Clients is enabled in the OPS sidebar for list, create, detail, and edit
+  routes. Projects, Inbox, Follow-ups, Invoices, and Settings remain disabled.
+
+### Data model and write boundary
+
+Migration `20260929062412_clients_module.sql` adds account tier, industry,
+region, client-since date, account overview, preferred services, and
+relationship notes to `clients`. The new `client_contacts` table has admin-only
+RLS, one active primary contact per client, and a case-insensitive unique email
+index across non-archived contacts. Existing client email/contact/phone columns
+remain as a compatibility mirror of the primary contact.
+
+The migration backfills eligible existing clients and installs a narrow trigger
+for legacy client inserts. OPS writes use admin-gated `SECURITY DEFINER`
+functions for atomic create, edit, archive, and restore behavior. Those functions
+write attributable entries to `ops_activity_log`; there is no client hard-delete
+action in the application.
+
+`submit_enquiry()` now matches active normalized contacts before the legacy
+client email fallback. A newly created website client receives one primary
+contact, while a matched enquiry only links the client and never overwrites its
+saved profile or contacts.
+
+### Deliberate scope and visual deviations
+
+The reference screens include account ownership, projects, financial summaries,
+communications, invoices, and follow-ups. None is rendered here because those
+backing modules or staff model do not exist yet. Linked Enquiries are the only
+cross-module records shown. Export, merge, bulk actions, and permanent deletion
+also remain out of scope.
+
+The visual treatment keeps the existing monochrome OPS tokens and uses plain
+counts rather than unsupported trends. Narrow tables scroll horizontally. The
+list follows the established Enquiries interaction: a checkbox controls one
+inline preview, while navigation remains on real links.
+
+### Verification and release boundary
+
+The implementation has colocated schema, view-model, fetch, action, form,
+directory, detail, archive/restore, and navigation tests. The complete repository
+gate passes with 51 test files and 460 tests, followed by a successful Next.js
+production build containing all four Clients routes.
+
+The migration has **not yet been applied** to live project
+`tscaluhtfrvwlwjybfsg`. Before deployment it must pass the planned rolled-back
+live SQL verification, then be applied and inspected for columns, indexes,
+policies, grants, backfill counts, and advisor findings. No temporary live client
+or enquiry rows have been created for this module.
+
+### Still open
+
+- Run the owner-approved browser smoke test after deployment: create an
+  Individual with two contacts, edit and switch the primary contact, verify
+  duplicate blocking, archive/restore, inspect linked Enquiries and activity,
+  then remove all temporary data.
+- Add Projects, Invoices, Communications, and Follow-ups to the client record as
+  each backing module ships.
+- Add account ownership only after Settings supplies a real team/staff model.

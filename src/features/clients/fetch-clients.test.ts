@@ -61,7 +61,14 @@ const baseClient = {
       is_primary: true,
     },
   ],
-  enquiries: [{ id: "enquiry-1", status: "New", created_at: "2026-09-12T08:00:00Z" }],
+  enquiries: [
+    {
+      id: "enquiry-1",
+      project_type: "Documentary",
+      status: "New",
+      created_at: "2026-09-12T08:00:00Z",
+    },
+  ],
 };
 
 describe("fetchClients", () => {
@@ -69,11 +76,15 @@ describe("fetchClients", () => {
     clientsResult.data = [baseClient];
     activityResult.data = [
       {
+        id: "activity-1",
         record_id: baseClient.id,
+        message: "Client updated",
         created_at: "2026-09-20T08:00:00Z",
       },
       {
+        id: "activity-2",
         record_id: baseClient.id,
+        message: "Client created",
         created_at: "2026-09-15T08:00:00Z",
       },
     ];
@@ -87,6 +98,8 @@ describe("fetchClients", () => {
       openEnquiryCount: 1,
       lastActivityAt: "2026-09-20T08:00:00Z",
     });
+    expect(result![0]!.enquiries[0]).toMatchObject({ projectType: "Documentary" });
+    expect(result![0]!.activity[0]).toMatchObject({ message: "Client updated" });
     expect(clientsSelect).toHaveBeenCalledWith(expect.stringContaining("client_contacts"));
     expect(clientsSelect).toHaveBeenCalledWith(expect.stringContaining("enquiries"));
     expect(clientsOrder).toHaveBeenCalledWith("created_at", { ascending: false });

@@ -3,6 +3,7 @@
 import { Eye, Pencil } from "lucide-react";
 import Link from "next/link";
 import { useMemo, useState } from "react";
+import { StatusBadge } from "@/components/ops/status-badge";
 import { AccountTierBadge, ClientStatusBadge } from "@/features/clients/components/client-badges";
 import {
   filterClients,
@@ -175,20 +176,27 @@ export function ClientsTable({ rows }: { rows: ClientListItem[] }) {
             </Link>
           </div>
           <div className="mt-6 grid gap-6 md:grid-cols-3">
-            <div>
-              <h3 className="text-sm font-medium">Account Overview</h3>
-              <p className="text-ink-muted mt-2 text-sm">
-                {checked.accountOverview ?? "No account overview yet."}
-              </p>
-              <p className="text-ink-muted mt-3 text-xs">
-                Client since {dateFormatter.format(new Date(`${checked.clientSince}T12:00:00Z`))}
-              </p>
-            </div>
-            <div>
-              <h3 className="text-sm font-medium">Contacts ({checked.contacts.length})</h3>
-              {checked.contacts.length ? (
+            {checked.accountOverview ? (
+              <div>
+                <h3 className="text-sm font-medium">Account Overview</h3>
+                <p className="text-ink-muted mt-2 text-sm">{checked.accountOverview}</p>
+                <p className="text-ink-muted mt-3 text-xs">
+                  Client since {dateFormatter.format(new Date(`${checked.clientSince}T12:00:00Z`))}
+                </p>
+              </div>
+            ) : (
+              <div>
+                <h3 className="text-sm font-medium">Client Profile</h3>
+                <p className="text-ink-muted mt-2 text-sm">
+                  Client since {dateFormatter.format(new Date(`${checked.clientSince}T12:00:00Z`))}
+                </p>
+              </div>
+            )}
+            {checked.contacts.length ? (
+              <div>
+                <h3 className="text-sm font-medium">Contacts ({checked.contacts.length})</h3>
                 <ul className="text-ink-muted mt-2 space-y-2 text-sm">
-                  {checked.contacts.map((contact) => (
+                  {checked.contacts.slice(0, 4).map((contact) => (
                     <li key={contact.id}>
                       <span className="text-ink block">
                         {contact.fullName}
@@ -198,10 +206,13 @@ export function ClientsTable({ rows }: { rows: ClientListItem[] }) {
                     </li>
                   ))}
                 </ul>
-              ) : (
-                <p className="text-ink-muted mt-2 text-sm">No contacts recorded.</p>
-              )}
-            </div>
+                {checked.contacts.length > 4 ? (
+                  <p className="text-ink-muted mt-2 text-xs">
+                    +{checked.contacts.length - 4} more contacts
+                  </p>
+                ) : null}
+              </div>
+            ) : null}
             <div>
               <h3 className="text-sm font-medium">Relationship</h3>
               <dl className="text-ink-muted mt-2 space-y-2 text-sm">
@@ -224,6 +235,38 @@ export function ClientsTable({ rows }: { rows: ClientListItem[] }) {
               </dl>
             </div>
           </div>
+          {checked.enquiries.length || checked.activity.length ? (
+            <div className="border-line mt-6 grid gap-6 border-t pt-5 md:grid-cols-2">
+              {checked.enquiries.length ? (
+                <div>
+                  <h3 className="text-sm font-medium">Recent Enquiries</h3>
+                  <ul className="mt-2 space-y-2 text-sm">
+                    {checked.enquiries.slice(0, 3).map((enquiry) => (
+                      <li key={enquiry.id} className="flex items-center justify-between gap-3">
+                        <Link href={`/ops/enquiries/${enquiry.id}`} className="underline">
+                          {enquiry.projectType}
+                        </Link>
+                        <StatusBadge status={enquiry.status} />
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              ) : null}
+              {checked.activity.length ? (
+                <div>
+                  <h3 className="text-sm font-medium">Recent Activity</h3>
+                  <ul className="mt-2 space-y-2 text-sm">
+                    {checked.activity.slice(0, 3).map((entry) => (
+                      <li key={entry.id}>
+                        <p>{entry.message}</p>
+                        <p className="text-ink-muted text-xs">{entry.relativeTime}</p>
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              ) : null}
+            </div>
+          ) : null}
         </section>
       ) : null}
     </div>

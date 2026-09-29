@@ -3,7 +3,7 @@
 import { ArrowDown, ArrowUp, Plus, Trash2, X } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { useRef, useState, useTransition } from "react";
+import { useEffect, useRef, useState, useTransition } from "react";
 import { Button } from "@/components/ui/button";
 import { createClient, updateClient } from "@/features/clients/actions";
 import { clientInputSchema } from "@/features/clients/schemas";
@@ -90,7 +90,8 @@ function initialState(props: ClientFormProps): EditableValue {
 function validationErrors(error: { issues: { path: PropertyKey[]; message: string }[] }) {
   const errors: Record<string, string[]> = {};
   for (const issue of error.issues) {
-    const key = issue.path.join(".") || "form";
+    const key =
+      issue.path[0] === "preferredServices" ? "preferredServices" : issue.path.join(".") || "form";
     (errors[key] ??= []).push(issue.message);
   }
   return errors;
@@ -113,6 +114,11 @@ export function ClientForm(props: ClientFormProps) {
   const [pending, startTransition] = useTransition();
   const submitting = useRef(false);
   const nextContactKey = useRef(value.contacts.length);
+  const feedbackRef = useRef<HTMLParagraphElement>(null);
+
+  useEffect(() => {
+    if (feedback) feedbackRef.current?.focus();
+  }, [feedback]);
 
   const setField = <Key extends keyof Omit<EditableValue, "contacts">>(
     key: Key,
@@ -315,6 +321,7 @@ export function ClientForm(props: ClientFormProps) {
               value={value.clientSince}
               onChange={(event) => setField("clientSince", event.target.value)}
               aria-invalid={Boolean(fieldErrors.clientSince?.length)}
+              aria-describedby={fieldErrors.clientSince?.length ? "client-since-error" : undefined}
               className={inputClass}
             />
             <FieldError id="client-since-error" messages={fieldErrors.clientSince} />
@@ -325,8 +332,11 @@ export function ClientForm(props: ClientFormProps) {
             <input
               value={value.industry}
               onChange={(event) => setField("industry", event.target.value)}
+              aria-invalid={Boolean(fieldErrors.industry?.length)}
+              aria-describedby={fieldErrors.industry?.length ? "industry-error" : undefined}
               className={inputClass}
             />
+            <FieldError id="industry-error" messages={fieldErrors.industry} />
           </label>
 
           <label className="flex flex-col gap-1.5">
@@ -334,8 +344,11 @@ export function ClientForm(props: ClientFormProps) {
             <input
               value={value.region}
               onChange={(event) => setField("region", event.target.value)}
+              aria-invalid={Boolean(fieldErrors.region?.length)}
+              aria-describedby={fieldErrors.region?.length ? "region-error" : undefined}
               className={inputClass}
             />
+            <FieldError id="region-error" messages={fieldErrors.region} />
           </label>
 
           <label className="flex flex-col gap-1.5 sm:col-span-2">
@@ -343,9 +356,14 @@ export function ClientForm(props: ClientFormProps) {
             <textarea
               value={value.accountOverview}
               onChange={(event) => setField("accountOverview", event.target.value)}
+              aria-invalid={Boolean(fieldErrors.accountOverview?.length)}
+              aria-describedby={
+                fieldErrors.accountOverview?.length ? "account-overview-error" : undefined
+              }
               className={textAreaClass}
               rows={4}
             />
+            <FieldError id="account-overview-error" messages={fieldErrors.accountOverview} />
           </label>
 
           <div className="sm:col-span-2">
@@ -363,6 +381,10 @@ export function ClientForm(props: ClientFormProps) {
                     addService();
                   }
                 }}
+                aria-invalid={Boolean(fieldErrors.preferredServices?.length)}
+                aria-describedby={
+                  fieldErrors.preferredServices?.length ? "preferred-services-error" : undefined
+                }
                 className={inputClass}
                 placeholder="e.g. Photography"
               />
@@ -400,9 +422,14 @@ export function ClientForm(props: ClientFormProps) {
             <textarea
               value={value.relationshipNotes}
               onChange={(event) => setField("relationshipNotes", event.target.value)}
+              aria-invalid={Boolean(fieldErrors.relationshipNotes?.length)}
+              aria-describedby={
+                fieldErrors.relationshipNotes?.length ? "relationship-notes-error" : undefined
+              }
               className={textAreaClass}
               rows={4}
             />
+            <FieldError id="relationship-notes-error" messages={fieldErrors.relationshipNotes} />
           </label>
         </div>
       </section>
@@ -483,6 +510,11 @@ export function ClientForm(props: ClientFormProps) {
                       value={contact.fullName}
                       onChange={(event) => setContact(index, { fullName: event.target.value })}
                       aria-invalid={Boolean(fieldErrors[`${prefix}.fullName`]?.length)}
+                      aria-describedby={
+                        fieldErrors[`${prefix}.fullName`]?.length
+                          ? `${prefix}-full-name-error`
+                          : undefined
+                      }
                       className={inputClass}
                       autoComplete="name"
                     />
@@ -501,6 +533,11 @@ export function ClientForm(props: ClientFormProps) {
                       value={contact.roleTitle}
                       onChange={(event) => setContact(index, { roleTitle: event.target.value })}
                       aria-invalid={Boolean(fieldErrors[`${prefix}.roleTitle`]?.length)}
+                      aria-describedby={
+                        fieldErrors[`${prefix}.roleTitle`]?.length
+                          ? `${prefix}-role-title-error`
+                          : undefined
+                      }
                       className={inputClass}
                       autoComplete="organization-title"
                     />
@@ -518,6 +555,9 @@ export function ClientForm(props: ClientFormProps) {
                       value={contact.email}
                       onChange={(event) => setContact(index, { email: event.target.value })}
                       aria-invalid={Boolean(fieldErrors[`${prefix}.email`]?.length)}
+                      aria-describedby={
+                        fieldErrors[`${prefix}.email`]?.length ? `${prefix}-email-error` : undefined
+                      }
                       className={inputClass}
                       autoComplete="email"
                     />
@@ -534,8 +574,16 @@ export function ClientForm(props: ClientFormProps) {
                       aria-label={`Contact ${index + 1} phone`}
                       value={contact.phone}
                       onChange={(event) => setContact(index, { phone: event.target.value })}
+                      aria-invalid={Boolean(fieldErrors[`${prefix}.phone`]?.length)}
+                      aria-describedby={
+                        fieldErrors[`${prefix}.phone`]?.length ? `${prefix}-phone-error` : undefined
+                      }
                       className={inputClass}
                       autoComplete="tel"
+                    />
+                    <FieldError
+                      id={`${prefix}-phone-error`}
+                      messages={fieldErrors[`${prefix}.phone`]}
                     />
                   </label>
                 </div>
@@ -546,7 +594,12 @@ export function ClientForm(props: ClientFormProps) {
       </section>
 
       {feedback ? (
-        <p role="alert" className="border-line-strong border p-4 text-sm">
+        <p
+          ref={feedbackRef}
+          role="alert"
+          tabIndex={-1}
+          className="border-line-strong border p-4 text-sm"
+        >
           {feedback.message}{" "}
           {feedback.status === "conflict" ? (
             <Link href={`/ops/clients/${feedback.clientId}`} className="font-medium underline">

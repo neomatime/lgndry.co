@@ -1,11 +1,14 @@
 import type {
   AccountTier,
+  ClientActivity,
   ClientContact,
   ClientFilter,
   ClientStatus,
   ClientType,
+  LinkedEnquiry,
 } from "@/features/clients/types";
 import type { EnquiryStatus } from "@/features/enquiries/types";
+import { relativeTime } from "@/features/enquiries/relative-time";
 
 export type ClientListRecord = {
   id: string;
@@ -30,7 +33,18 @@ export type ClientListRecord = {
     phone: string | null;
     is_primary: boolean;
   }[];
-  enquiries: { id: string; status: EnquiryStatus; created_at: string }[];
+  enquiries: {
+    id: string;
+    project_type: string;
+    status: EnquiryStatus;
+    created_at: string;
+  }[];
+};
+
+export type ClientListActivityRecord = {
+  id: string;
+  message: string;
+  created_at: string;
 };
 
 export type ClientListItem = {
@@ -49,6 +63,8 @@ export type ClientListItem = {
   createdAt: string;
   contacts: ClientContact[];
   primaryContact: ClientContact | null;
+  enquiries: LinkedEnquiry[];
+  activity: ClientActivity[];
   openEnquiryCount: number;
   lastActivityAt: string;
 };
@@ -57,7 +73,8 @@ const OPEN = (status: EnquiryStatus) => status !== "Completed" && status !== "Cl
 
 export function buildClientListItems(
   records: ClientListRecord[],
-  activityByClient: Map<string, string>,
+  activityByClient: Map<string, ClientListActivityRecord[]>,
+  now = new Date(),
 ): ClientListItem[] {
   return records.map((record) => {
     const contacts = record.client_contacts
@@ -70,10 +87,25 @@ export function buildClientListItems(
         isPrimary: contact.is_primary,
       }))
       .sort((a, b) => Number(b.isPrimary) - Number(a.isPrimary));
+    const enquiries = record.enquiries
+      .map((enquiry) => ({
+        id: enquiry.id,
+        projectType: enquiry.project_type,
+        status: enquiry.status,
+        createdAt: enquiry.created_at,
+      }))
+      .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+    const activityRecords = activityByClient.get(record.id) ?? [];
+    const activity = activityRecords.map((entry) => ({
+      id: entry.id,
+      message: entry.message,
+      createdAt: entry.created_at,
+      relativeTime: relativeTime(entry.created_at, now),
+    }));
     const candidates = [
       record.updated_at,
-      activityByClient.get(record.id),
-      ...record.enquiries.map((enquiry) => enquiry.created_at),
+      ...activityRecords.map((entry) => entry.created_at),
+      ...enquiries.map((enquiry) => enquiry.createdAt),
     ].filter((value): value is string => Boolean(value));
     const lastActivityAt = candidates.sort(
       (a, b) => new Date(b).getTime() - new Date(a).getTime(),
@@ -95,7 +127,9 @@ export function buildClientListItems(
       createdAt: record.created_at,
       contacts,
       primaryContact: contacts.find((contact) => contact.isPrimary) ?? contacts[0] ?? null,
-      openEnquiryCount: record.enquiries.filter((enquiry) => OPEN(enquiry.status)).length,
+      enquiries,
+      activity,
+      openEnquiryCount: enquiries.filter((enquiry) => OPEN(enquiry.status)).length,
       lastActivityAt,
     };
   });
