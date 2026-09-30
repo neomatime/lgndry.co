@@ -7,7 +7,7 @@ const enquiry = {
   company: "Blackridge Hotels",
   email: "thandi@example.com",
   phone: "0761234567",
-  project_type: "Documentary",
+  project_type: "Documentary" as const,
   location: "Polokwane",
   timeline: "Next 1-3 months",
   description: "A short documentary series.",

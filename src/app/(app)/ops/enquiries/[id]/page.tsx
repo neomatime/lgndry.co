@@ -1,4 +1,4 @@
-import { Calendar, FileText, Paperclip, Tag, Wallet } from "lucide-react";
+import { Calendar, FileText, Paperclip, Pencil, Tag, Wallet } from "lucide-react";
 import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
@@ -7,6 +7,7 @@ import { PageHeader } from "@/components/layout/page-header";
 import { StatCard } from "@/components/ops/stat-card";
 import { StatusBadge } from "@/components/ops/status-badge";
 import { EnquiryDetailTabs } from "@/features/enquiries/components/enquiry-detail-tabs";
+import { EnquiryStatusControl } from "@/features/enquiries/components/enquiry-status-control";
 import { fetchEnquiryDetail } from "@/features/enquiries/fetch-enquiry-detail";
 import { requireOpsUser } from "@/lib/auth/guards";
 
@@ -60,6 +61,13 @@ export default async function EnquiryDetailPage({ params }: Props) {
             >
               Back to Enquiries
             </Link>
+            <Link
+              href={`/ops/enquiries/${enquiry.id}/edit`}
+              className="border-line-strong text-ink hover:bg-surface-soft inline-flex h-10 items-center justify-center gap-2 border bg-white px-4 text-sm font-medium transition-colors"
+            >
+              <Pencil className="size-4" aria-hidden="true" />
+              Edit Enquiry
+            </Link>
             {enquiry.project ? (
               <Link
                 href={`/ops/projects/${enquiry.project.id}`}
@@ -86,6 +94,25 @@ export default async function EnquiryDetailPage({ params }: Props) {
         <StatCard icon={Calendar} label="Timeline" value={enquiry.timeline} />
         <StatCard icon={Paperclip} label="Attachments" value={enquiry.attachments.length} />
       </div>
+
+      {enquiry.project ? (
+        <section className="border-line flex flex-wrap items-center justify-between gap-4 border p-4">
+          <div>
+            <h2 className="text-sm font-medium">Enquiry Status</h2>
+            <p className="text-ink-muted mt-1 text-sm">
+              This status is managed by the linked project.
+            </p>
+          </div>
+          <Link
+            href={`/ops/projects/${enquiry.project.id}`}
+            className="text-sm font-medium underline"
+          >
+            Open {enquiry.project.name}
+          </Link>
+        </section>
+      ) : (
+        <EnquiryStatusControl enquiryId={enquiry.id} status={enquiry.status} />
+      )}
 
       <div className="grid gap-8 lg:grid-cols-[2fr_1fr]">
         <EnquiryDetailTabs enquiry={enquiry} />

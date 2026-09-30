@@ -1,5 +1,6 @@
 import { relativeTime } from "@/features/enquiries/relative-time";
 import type { EnquiryStatus } from "@/features/enquiries/types";
+import type { ProjectEnquiryInput } from "@/features/start-a-project/schemas";
 
 export type EnquiryDetail = {
   id: string;
@@ -7,7 +8,7 @@ export type EnquiryDetail = {
   company: string | null;
   email: string;
   phone: string;
-  projectType: string;
+  projectType: ProjectEnquiryInput["project_type"];
   location: string;
   timeline: string;
   description: string;
@@ -26,7 +27,7 @@ type EnquiryRecord = {
   company: string | null;
   email: string;
   phone: string;
-  project_type: string;
+  project_type: ProjectEnquiryInput["project_type"];
   location: string;
   timeline: string;
   description: string;

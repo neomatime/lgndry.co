@@ -61,9 +61,11 @@ describe("navigation panel", () => {
 
     fireEvent.keyDown(document, { key: "Escape" });
 
-    await waitFor(() => expect(panel()).toHaveAttribute("aria-hidden", "true"));
+    await waitFor(() => {
+      expect(panel()).toHaveAttribute("aria-hidden", "true");
+      expect(document.body).not.toHaveClass("nav-is-open");
+    });
     expect(screen.getByRole("button", { name: "Menu" })).toHaveFocus();
-    expect(document.body).not.toHaveClass("nav-is-open");
   });
 
   it("closes when clicking outside the panel", async () => {
@@ -83,8 +85,10 @@ describe("navigation panel", () => {
 
     fireEvent.click(screen.getByRole("link", { name: "Home" }));
 
-    await waitFor(() => expect(panel()).toHaveAttribute("aria-hidden", "true"));
-    expect(document.body).not.toHaveClass("nav-is-open");
+    await waitFor(() => {
+      expect(panel()).toHaveAttribute("aria-hidden", "true");
+      expect(document.body).not.toHaveClass("nav-is-open");
+    });
   });
 
   it("keeps Tab inside the open panel", async () => {

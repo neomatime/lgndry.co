@@ -11,6 +11,7 @@ const { fetchMock, requireOpsUserMock } = vi.hoisted(() => ({
 vi.mock("@/features/enquiries/fetch-enquiry-detail", () => ({ fetchEnquiryDetail: fetchMock }));
 vi.mock("@/lib/auth/guards", () => ({ requireOpsUser: requireOpsUserMock }));
 vi.mock("next/navigation", () => ({
+  useRouter: () => ({ refresh: vi.fn() }),
   notFound: vi.fn(() => {
     throw new Error("NEXT_NOT_FOUND");
   }),
@@ -46,6 +47,16 @@ function enquiry(overrides: Partial<EnquiryDetail> = {}): EnquiryDetail {
 const props = { params: Promise.resolve({ id: "11111111-1111-4111-8111-111111111111" }) };
 
 describe("EnquiryDetailPage project action", () => {
+  it("offers editing and manual status management", async () => {
+    fetchMock.mockResolvedValue({ status: "ok", enquiry: enquiry() });
+    render(await EnquiryDetailPage(props));
+    expect(screen.getByRole("link", { name: "Edit Enquiry" })).toHaveAttribute(
+      "href",
+      "/ops/enquiries/11111111-1111-4111-8111-111111111111/edit",
+    );
+    expect(screen.getByLabelText("Enquiry status")).toBeInTheDocument();
+  });
+
   it("offers conversion for an eligible unconverted enquiry", async () => {
     fetchMock.mockResolvedValue({ status: "ok", enquiry: enquiry() });
     render(await EnquiryDetailPage(props));
@@ -69,6 +80,8 @@ describe("EnquiryDetailPage project action", () => {
       "/ops/projects/project-1",
     );
     expect(screen.queryByRole("link", { name: "Create Project" })).not.toBeInTheDocument();
+    expect(screen.queryByLabelText("Enquiry status")).not.toBeInTheDocument();
+    expect(screen.getByText("This status is managed by the linked project.")).toBeInTheDocument();
   });
 
   it.each(["Completed", "Closed"] as const)(

@@ -872,3 +872,31 @@ public-policy surfaces and remain outside this module.
 
 Branch push, Vercel preview confirmation, and the owner-authenticated browser
 smoke test remain the final release steps.
+
+## Phase 5, sub-project 6 - Enquiry write flow
+
+The Enquiries area now supports authenticated editing and status management rather than using its
+status tabs as read-only labels. `/ops/enquiries/[id]` exposes Edit Enquiry and an explicit status
+control; `/ops/enquiries/[id]/edit` updates contact and project-brief fields with the same limits as
+the public submission form.
+
+Status ownership is intentionally split. OPS admins manage New, Reviewing, Quoted, Follow-up, and
+Closed. Project conversion remains the only path to Booked, and the linked Project remains the
+owner of In Production and Completed. Once linked, the enquiry control is read-only and points to
+the project. Source enquiry edits never rewrite the linked Client or Project.
+
+Migration `20260930113000_enquiry_write_flow.sql` adds two atomic admin-gated RPCs. They validate
+payloads, update the enquiry, and write changed-field or status-transition entries to
+`ops_activity_log` in one transaction. Function execution is denied to anon and granted to
+authenticated callers only after each RPC independently verifies `is_admin(auth.uid())`.
+
+Qualification checklists, assignees, communications, follow-ups, opportunity data, manual enquiry
+creation, export, and attachment mutation remain deferred to their backing modules or separate
+scope.
+
+The migration was compiled and exercised against the live schema inside a rolled-back transaction,
+then applied as remote migration `20260930103719_enquiry_write_flow`. Post-apply verification
+confirmed edit and status behavior, exactly matched activity writes, project-owned status rejection,
+non-admin denial, explicit function grants, and complete rollback of the synthetic enquiry. The
+security advisor reports no new anonymous Enquiry write function; its authenticated
+`SECURITY DEFINER` notices are expected because both RPCs independently enforce the admin check.
