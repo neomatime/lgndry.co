@@ -33,7 +33,7 @@ export function EnquiriesTable({ rows }: { rows: EnquiryListItem[] }) {
   return (
     <div className="flex flex-col gap-4">
       <div className="border-line flex items-center justify-between border-b">
-        <div role="tablist" className="flex gap-1 overflow-x-auto">
+        <div role="tablist" className="scrollbar-hidden flex gap-1 overflow-x-auto">
           <button
             type="button"
             role="tab"

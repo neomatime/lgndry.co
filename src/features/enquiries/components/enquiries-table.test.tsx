@@ -23,6 +23,11 @@ function row(over: Partial<EnquiryListItem> = {}): EnquiryListItem {
 }
 
 describe("EnquiriesTable", () => {
+  it("hides the filter scrollbar while keeping horizontal overflow", () => {
+    render(<EnquiriesTable rows={[row()]} />);
+    expect(screen.getByRole("tablist")).toHaveClass("scrollbar-hidden", "overflow-x-auto");
+  });
+
   it("renders every row", () => {
     render(
       <EnquiriesTable
