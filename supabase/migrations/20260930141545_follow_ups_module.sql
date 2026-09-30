@@ -596,6 +596,16 @@ begin
     return jsonb_build_object('status', 'invalid', 'message', 'Follow-up is no longer open.');
   end if;
   select * into v_item from public.follow_up_checklist_items where id = p_item_id for update;
+  -- The item existed on the unlocked read above, but another transaction
+  -- could have deleted it while this call waited on the follow-up lock.
+  -- Without this check v_item would be all-NULL, the version comparison
+  -- below would silently evaluate to NULL (never TRUE), and both writes
+  -- below would target a NULL id and affect zero rows while still
+  -- returning 'ok' - caught here instead of relying on an incidental
+  -- NOT NULL constraint elsewhere.
+  if not found then
+    return jsonb_build_object('status', 'not-found');
+  end if;
   if v_item.version <> p_version then
     return jsonb_build_object('status', 'conflict', 'message', 'Checklist changed elsewhere.');
   end if;
@@ -605,14 +615,14 @@ begin
     completed_by = case when p_completed then (select auth.uid()) else null end,
     version = version + 1
   where id = p_item_id;
-  update public.follow_ups set version = version + 1 where id = v_item.follow_up_id;
+  update public.follow_ups set version = version + 1 where id = v_follow_up_id;
   insert into public.ops_activity_log (message, collection, record_id, action)
   values (
     case when p_completed then 'Checklist item completed: ' else 'Checklist item reopened: ' end
       || v_item.label,
-    'follow_ups', v_item.follow_up_id, 'checklist_updated'
+    'follow_ups', v_follow_up_id, 'checklist_updated'
   );
-  return jsonb_build_object('status', 'ok', 'follow_up_id', v_item.follow_up_id);
+  return jsonb_build_object('status', 'ok', 'follow_up_id', v_follow_up_id);
 end;
 $$;
 

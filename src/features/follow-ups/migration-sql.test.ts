@@ -248,4 +248,42 @@ describe("follow-ups migration", () => {
       expect(followUpLockIndex).toBeLessThan(checklistWriteIndex);
     });
   });
+
+  describe("set_follow_up_checklist_item guards the second, locked read of the item", () => {
+    it("checks the locked re-read actually found the item, after the follow-up lock reorder", () => {
+      const body = extractFunctionBody("set_follow_up_checklist_item");
+      const lockedItemReadIndex = body.indexOf(
+        "from public.follow_up_checklist_items where id = p_item_id for update",
+      );
+      const notFoundGuardIndex = body.indexOf(
+        "if not found then\n    return jsonb_build_object('status', 'not-found');\n  end if;",
+      );
+      const versionCheckIndex = body.indexOf("if v_item.version <> p_version then");
+      // Between the unlocked lookup (used to get the lock order right) and
+      // this locked re-read, another transaction could have deleted the
+      // item while this call waited on the follow-up lock. Without a
+      // not-found guard here, v_item would come back all-NULL: the version
+      // comparison would silently evaluate to NULL (never matching, never
+      // catching anything) and the later UPDATEs would target a NULL id and
+      // affect zero rows while still returning 'ok'.
+      expect(lockedItemReadIndex).toBeGreaterThan(-1);
+      expect(notFoundGuardIndex).toBeGreaterThan(-1);
+      expect(versionCheckIndex).toBeGreaterThan(-1);
+      expect(lockedItemReadIndex).toBeLessThan(notFoundGuardIndex);
+      expect(notFoundGuardIndex).toBeLessThan(versionCheckIndex);
+    });
+
+    it("uses the id captured before the lock, not the (possibly stale) locked row, for later writes", () => {
+      const body = extractFunctionBody("set_follow_up_checklist_item");
+      // v_item could be all-NULL past the not-found guard in a differently
+      // ordered rewrite; v_follow_up_id was captured from the initial
+      // unlocked read and is never reassigned, so relying on it for the
+      // follow-up version bump, the activity log, and the returned
+      // follow_up_id is the more robust choice.
+      expect(body).not.toContain("v_item.follow_up_id");
+      expect(body.match(/= v_follow_up_id/g)?.length ?? 0).toBeGreaterThanOrEqual(1);
+      expect(body).toContain("'follow_ups', v_follow_up_id, 'checklist_updated'");
+      expect(body).toContain("'status', 'ok', 'follow_up_id', v_follow_up_id");
+    });
+  });
 });

@@ -270,7 +270,12 @@ async function nextDateFor(id: string, supabase: SupabaseServerClient): Promise<
     );
     return { ok: false };
   }
-  if (!data) return { ok: false };
+  // A vanished row (never existed, or deleted since) is not a lookup
+  // failure - it's a legitimate "no data" result. Treat it the same as "no
+  // series" and let the caller proceed to the RPC call, which has its own
+  // correct not-found handling; short-circuiting to `ok: false` here would
+  // surface the generic failure message instead of that proper not-found.
+  if (!data) return { ok: true, date: null };
   const series = Array.isArray(data.series) ? data.series[0] : data.series;
   const date = series?.recurrence_rule
     ? nextOccurrenceDate(data.due_date, series.recurrence_rule)

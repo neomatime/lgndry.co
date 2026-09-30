@@ -479,6 +479,29 @@ describe("completeFollowUp", () => {
     spy.mockRestore();
   });
 
+  it("proceeds to call the RPC (not short-circuited) when the follow-up itself has vanished", async () => {
+    // A genuinely missing row (the follow-up was deleted, or never existed)
+    // is not a lookup failure - it must not be treated the same as the
+    // error case above. It should reach the RPC call exactly as before this
+    // fix, since the RPC's own lookup correctly reports not-found for it.
+    nextDateResult.data = null;
+    nextDateResult.error = null;
+    mocks.rpc.mockResolvedValueOnce({ data: { status: "not-found" }, error: null });
+
+    const result = await completeFollowUp(id, 4, { outcome: "Done" });
+
+    expect(mocks.rpc).toHaveBeenCalledWith("complete_follow_up", {
+      p_follow_up_id: id,
+      p_outcome: "Done",
+      p_next_due_date: null,
+      p_version: 4,
+    });
+    expect(result).toEqual({
+      status: "not-found",
+      message: "That follow-up is no longer available.",
+    });
+  });
+
   it("maps not-found/conflict/invalid RPC results and the generic failure message", async () => {
     await expectRpcResultMapping(() => completeFollowUp(id, 1, { outcome: "" }));
   });
@@ -555,6 +578,29 @@ describe("cancelFollowUp", () => {
     expect(mocks.rpc).not.toHaveBeenCalled();
     expect(spy).toHaveBeenCalled();
     spy.mockRestore();
+  });
+
+  it("proceeds to call the RPC (not short-circuited) when the follow-up itself has vanished", async () => {
+    nextDateResult.data = null;
+    nextDateResult.error = null;
+    mocks.rpc.mockResolvedValueOnce({ data: { status: "not-found" }, error: null });
+
+    const result = await cancelFollowUp(id, 2, {
+      reason: "Rescheduling later",
+      scope: "occurrence",
+    });
+
+    expect(mocks.rpc).toHaveBeenCalledWith("cancel_follow_up", {
+      p_follow_up_id: id,
+      p_reason: "Rescheduling later",
+      p_scope: "occurrence",
+      p_next_due_date: null,
+      p_version: 2,
+    });
+    expect(result).toEqual({
+      status: "not-found",
+      message: "That follow-up is no longer available.",
+    });
   });
 
   it("maps not-found/conflict/invalid RPC results and the generic failure message", async () => {
