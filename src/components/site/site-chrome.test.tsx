@@ -107,8 +107,12 @@ describe("navigation panel", () => {
       "Practice",
       "Collections",
       "About",
-      "Contact",
+      "Start a Project",
     ]);
+    expect(screen.getByRole("link", { name: "Start a Project", hidden: true })).toHaveAttribute(
+      "href",
+      "/start-a-project",
+    );
     expect(screen.getByRole("link", { name: "Home", hidden: true })).toHaveAttribute(
       "aria-current",
       "page",

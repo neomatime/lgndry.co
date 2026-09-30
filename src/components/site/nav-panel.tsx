@@ -16,7 +16,7 @@ const ITEMS: { key: NavKey; label: string; href: string }[] = [
   { key: "practice", label: "Practice", href: "/services" },
   { key: "collections", label: "Collections", href: "/collection" },
   { key: "about", label: "About", href: "/about" },
-  { key: "contact", label: "Contact", href: "/contact" },
+  { key: "contact", label: "Start a Project", href: "/start-a-project" },
 ];
 
 const PHOTOS: Record<NavKey, { src: string; width: number; height: number }> = {

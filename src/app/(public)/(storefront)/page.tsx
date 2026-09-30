@@ -186,7 +186,7 @@ export default function HomePage() {
               <h2 className="closing__text">
                 Not everything beautiful asks for attention. Some things simply wait to be noticed.
               </h2>
-              <Link className="closing__cta" href="/contact">
+              <Link className="closing__cta" href="/start-a-project">
                 Start a project
               </Link>
             </Reveal>
