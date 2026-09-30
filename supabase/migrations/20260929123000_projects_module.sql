@@ -350,10 +350,7 @@ begin
 
   delete from public.project_milestones m
   where m.project_id = p_project_id
-    and not exists (
-      select 1 from jsonb_array_elements(p_milestones) item
-      where nullif(item ->> 'id', '')::uuid = m.id
-    );
+    and m.sort_order >= 1000;
 
   v_order := 0;
   for v_item in select value from jsonb_array_elements(p_tasks)
@@ -391,10 +388,7 @@ begin
 
   delete from public.project_tasks t
   where t.project_id = p_project_id
-    and not exists (
-      select 1 from jsonb_array_elements(p_tasks) item
-      where nullif(item ->> 'id', '')::uuid = t.id
-    );
+    and t.sort_order >= 1000;
 
   v_order := 0;
   for v_item in select value from jsonb_array_elements(p_deliverables)
@@ -432,18 +426,15 @@ begin
 
   delete from public.project_deliverables d
   where d.project_id = p_project_id
-    and not exists (
-      select 1 from jsonb_array_elements(p_deliverables) item
-      where nullif(item ->> 'id', '')::uuid = d.id
-    );
+    and d.sort_order >= 1000;
 
   update public.projects p set
     tasks = (
-      select nullif(string_agg(t.title, E'\\n' order by t.sort_order), '')
+      select nullif(string_agg(t.title, E'\n' order by t.sort_order), '')
       from public.project_tasks t where t.project_id = p_project_id
     ),
     deliverables = (
-      select nullif(string_agg(d.title, E'\\n' order by d.sort_order), '')
+      select nullif(string_agg(d.title, E'\n' order by d.sort_order), '')
       from public.project_deliverables d where d.project_id = p_project_id
     )
   where p.id = p_project_id;
@@ -929,7 +920,7 @@ begin
       completed_at = case when p_completed then now() else null end
     where id = p_task_id;
     update public.projects set tasks = (
-      select nullif(string_agg(t.title, E'\\n' order by t.sort_order), '')
+      select nullif(string_agg(t.title, E'\n' order by t.sort_order), '')
       from public.project_tasks t where t.project_id = v_item.project_id
     ) where id = v_item.project_id;
     insert into public.ops_activity_log (message, collection, record_id, action)
@@ -972,7 +963,7 @@ begin
       completed_at = case when p_status = 'Delivered' then now() else null end
     where id = p_deliverable_id;
     update public.projects set deliverables = (
-      select nullif(string_agg(d.title, E'\\n' order by d.sort_order), '')
+      select nullif(string_agg(d.title, E'\n' order by d.sort_order), '')
       from public.project_deliverables d where d.project_id = v_item.project_id
     ) where id = v_item.project_id;
     insert into public.ops_activity_log (message, collection, record_id, action)
