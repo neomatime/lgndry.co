@@ -136,7 +136,11 @@ create table public.follow_up_checklist_items (
   constraint follow_up_checklist_completion_check check (
     (is_completed and completed_at is not null) or (not is_completed and completed_at is null)
   ),
-  unique (follow_up_id, sort_order)
+  -- Deferred so update_follow_up can rewrite every item's sort_order in one
+  -- transaction (e.g. swapping two items) without a spurious duplicate-key
+  -- violation on an intermediate write; Postgres checks the constraint once,
+  -- at commit, instead of after each row-level UPDATE.
+  unique (follow_up_id, sort_order) deferrable initially deferred
 );
 
 create trigger set_updated_at before update on public.follow_up_series
@@ -171,6 +175,11 @@ grant select on table public.follow_up_checklist_items to authenticated;
 grant all on table public.follow_up_series to service_role;
 grant all on table public.follow_ups to service_role;
 grant all on table public.follow_up_checklist_items to service_role;
+-- Supabase grants anon/authenticated default USAGE+SELECT+UPDATE on new
+-- sequences; the identity column's backing sequence must never be readable
+-- or advanceable by anything but service_role.
+revoke all on sequence public.follow_ups_reference_number_seq
+  from public, anon, authenticated;
 grant usage, select on sequence public.follow_ups_reference_number_seq to service_role;
 
 create policy admin_select_follow_up_series on public.follow_up_series
@@ -221,6 +230,62 @@ $$;
 revoke all on function public.follow_up_relationships_valid(uuid, uuid, uuid, uuid)
   from public, anon, authenticated, service_role;
 
+-- Edit-time variant of follow_up_relationships_valid: an archived client,
+-- contact, enquiry, or project may only be blocked when it is being newly
+-- selected or changed. A relation id carried forward unchanged from the
+-- existing row is exempt from the archived check (but still must satisfy
+-- the "belongs to this client" shape), so an existing follow-up whose linked
+-- record was later archived stays editable.
+create or replace function public.follow_up_relationships_valid_for_edit(
+  p_client_id uuid,
+  p_contact_id uuid,
+  p_enquiry_id uuid,
+  p_project_id uuid,
+  p_existing_client_id uuid,
+  p_existing_contact_id uuid,
+  p_existing_enquiry_id uuid,
+  p_existing_project_id uuid
+)
+returns boolean
+language sql
+security definer
+set search_path = ''
+stable
+as $$
+  select
+    p_client_id is not null
+    and num_nonnulls(p_enquiry_id, p_project_id) <= 1
+    and exists (
+      select 1 from public.clients c where c.id = p_client_id
+        and (c.archived = false or p_client_id = p_existing_client_id)
+    )
+    and (
+      p_contact_id is null or exists (
+        select 1 from public.client_contacts cc
+        where cc.id = p_contact_id and cc.client_id = p_client_id
+          and (cc.archived = false or p_contact_id = p_existing_contact_id)
+      )
+    )
+    and (
+      p_enquiry_id is null or exists (
+        select 1 from public.enquiries e
+        where e.id = p_enquiry_id and e.client_id = p_client_id
+          and (e.archived = false or p_enquiry_id = p_existing_enquiry_id)
+      )
+    )
+    and (
+      p_project_id is null or exists (
+        select 1 from public.projects p
+        where p.id = p_project_id and p.client = p_client_id
+          and (p.archived = false or p_project_id = p_existing_project_id)
+      )
+    );
+$$;
+
+revoke all on function public.follow_up_relationships_valid_for_edit(
+  uuid, uuid, uuid, uuid, uuid, uuid, uuid, uuid
+) from public, anon, authenticated, service_role;
+
 create or replace function public.create_follow_up(
   p_follow_up jsonb,
   p_checklist jsonb,
@@ -251,12 +316,18 @@ begin
   if not public.is_admin(v_user_id) then
     raise exception using errcode = '42501', message = 'admin access required';
   end if;
+  if not public.follow_up_relationships_valid(
+    v_client_id, v_contact_id, v_enquiry_id, v_project_id
+  ) then
+    return jsonb_build_object(
+      'status', 'invalid',
+      'message', 'The selected contact, enquiry, or project doesn''t belong to this client.'
+    );
+  end if;
+
   if jsonb_typeof(p_follow_up) <> 'object'
     or jsonb_typeof(coalesce(p_checklist, '[]'::jsonb)) <> 'array'
     or jsonb_array_length(coalesce(p_checklist, '[]'::jsonb)) > 50
-    or not public.follow_up_relationships_valid(
-      v_client_id, v_contact_id, v_enquiry_id, v_project_id
-    )
     or v_type not in (
       'Client Check-in', 'Quote Follow-up', 'Proposal Review', 'Deposit Reminder',
       'Approval', 'Delivery Confirmation', 'Other'
@@ -367,12 +438,19 @@ begin
   if v_existing.status <> 'Open' then
     return jsonb_build_object('status', 'invalid', 'message', 'Only open follow-ups can be edited.');
   end if;
+  if not public.follow_up_relationships_valid_for_edit(
+    v_client_id, v_contact_id, v_enquiry_id, v_project_id,
+    v_existing.client_id, v_existing.contact_id, v_existing.enquiry_id, v_existing.project_id
+  ) then
+    return jsonb_build_object(
+      'status', 'invalid',
+      'message', 'The selected contact, enquiry, or project doesn''t belong to this client.'
+    );
+  end if;
+
   if p_scope not in ('occurrence', 'future')
     or jsonb_typeof(coalesce(p_checklist, '[]'::jsonb)) <> 'array'
     or jsonb_array_length(coalesce(p_checklist, '[]'::jsonb)) > 50
-    or not public.follow_up_relationships_valid(
-      v_client_id, v_contact_id, v_enquiry_id, v_project_id
-    )
     or v_type not in (
       'Client Check-in', 'Quote Follow-up', 'Proposal Review', 'Deposit Reminder',
       'Approval', 'Delivery Confirmation', 'Other'
@@ -381,6 +459,20 @@ begin
     or (v_type <> 'Other' and v_custom_type is not null)
     or v_title = '' or cardinality(v_methods) = 0 then
     return jsonb_build_object('status', 'invalid', 'message', 'invalid follow-up payload');
+  end if;
+
+  -- Every checklist item id referenced by the payload must already belong to
+  -- this follow-up. Validated up front, before any write, so a stray/invalid
+  -- id can never leave the follow-up row or checklist half-updated.
+  if exists (
+    select 1 from jsonb_array_elements(coalesce(p_checklist, '[]'::jsonb)) as elem
+    where nullif(elem ->> 'id', '') is not null
+      and not exists (
+        select 1 from public.follow_up_checklist_items ci
+        where ci.id = (elem ->> 'id')::uuid and ci.follow_up_id = p_follow_up_id
+      )
+  ) then
+    return jsonb_build_object('status', 'invalid', 'message', 'invalid checklist item');
   end if;
 
   update public.follow_ups set
@@ -413,7 +505,10 @@ begin
         version = version + 1
       where id = v_item_id and follow_up_id = p_follow_up_id;
       if not found then
-        return jsonb_build_object('status', 'invalid', 'message', 'invalid checklist item');
+        -- Unreachable given the upfront existence check above; raised (not
+        -- returned) as defense-in-depth so a write already committed in
+        -- this transaction is rolled back rather than partially applied.
+        raise exception using errcode = 'P0001', message = 'invalid checklist item';
       end if;
     end if;
   end loop;
@@ -485,16 +580,22 @@ as $$
 declare
   v_item public.follow_up_checklist_items%rowtype;
   v_follow_up public.follow_ups%rowtype;
+  v_follow_up_id uuid;
 begin
   if not public.is_admin((select auth.uid())) then
     raise exception using errcode = '42501', message = 'admin access required';
   end if;
-  select * into v_item from public.follow_up_checklist_items where id = p_item_id for update;
+  -- Locks the parent follow-up row before the checklist item, the same
+  -- order update_follow_up uses, so the two functions can never deadlock
+  -- by taking these two locks in opposite orders.
+  select follow_up_id into v_follow_up_id from public.follow_up_checklist_items
+  where id = p_item_id;
   if not found then return jsonb_build_object('status', 'not-found'); end if;
-  select * into v_follow_up from public.follow_ups where id = v_item.follow_up_id for update;
+  select * into v_follow_up from public.follow_ups where id = v_follow_up_id for update;
   if v_follow_up.status <> 'Open' then
     return jsonb_build_object('status', 'invalid', 'message', 'Follow-up is no longer open.');
   end if;
+  select * into v_item from public.follow_up_checklist_items where id = p_item_id for update;
   if v_item.version <> p_version then
     return jsonb_build_object('status', 'conflict', 'message', 'Checklist changed elsewhere.');
   end if;
