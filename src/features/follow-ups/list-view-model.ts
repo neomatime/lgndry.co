@@ -128,7 +128,7 @@ export function shapeFollowUp(record: FollowUpRecord, now = new Date()): FollowU
       : null;
   return {
     id: record.id,
-    reference: `FUP-${String(record.reference_number).padStart(5, "0")}`,
+    reference: `FUP-${String(record.reference_number).padStart(4, "0")}`,
     clientId: record.client_id,
     clientName: record.client_record?.name ?? "Unnamed client",
     contact: record.contact_record

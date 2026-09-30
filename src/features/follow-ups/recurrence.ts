@@ -31,6 +31,25 @@ function frequency(value: RecurrenceFrequency) {
   return Frequency.DAILY;
 }
 
+function lastDayOfMonth(year: number, monthIndex: number) {
+  // Day 0 of the following month is the last day of `monthIndex`.
+  return new Date(Date.UTC(year, monthIndex + 1, 0)).getUTCDate();
+}
+
+/**
+ * Adds `months` to `date`, clamping to the target month's last day when
+ * `anchorDay` doesn't exist there (e.g. day 31 in a 30-day month, or day 29
+ * in a non-leap February) instead of skipping ahead to the next month that
+ * happens to have that day.
+ */
+function addMonthsClamped(date: Date, months: number, anchorDay: number) {
+  const totalMonths = date.getUTCFullYear() * 12 + date.getUTCMonth() + months;
+  const year = Math.floor(totalMonths / 12);
+  const monthIndex = totalMonths % 12;
+  const day = Math.min(anchorDay, lastDayOfMonth(year, monthIndex));
+  return new Date(Date.UTC(year, monthIndex, day, 12));
+}
+
 export function createRecurrenceRule(startDate: string, input: FollowUpRecurrenceInput) {
   if (!input.enabled) return "";
   const options = {
@@ -52,12 +71,31 @@ export function createRecurrenceRule(startDate: string, input: FollowUpRecurrenc
 export function nextOccurrenceDate(currentDate: string, rule: string) {
   if (!rule) return null;
   try {
-    const next = RRule.fromString(rule).after(utcDate(currentDate), false);
+    const parsed = RRule.fromString(rule);
+    const { freq, interval, bymonthday, dtstart, until } = parsed.options;
+    if (freq === Frequency.MONTHLY) {
+      // rrule (and the RFC 5545 default it implements) skips any month that
+      // doesn't have the anchor day, drifting Jan 31 -> Mar 31 -> May 31 and
+      // silently omitting Feb/Apr. Compute the clamped sequence ourselves
+      // instead: Jan 31 -> Feb 28/29 -> Mar 31 -> Apr 30 -> May 31.
+      const anchorDay = bymonthday?.[0] ?? dtstart.getUTCDate();
+      const candidate = addMonthsClamped(utcDate(currentDate), interval || 1, anchorDay);
+      if (until && candidate.getTime() > until.getTime()) return null;
+      return dateString(candidate);
+    }
+    const next = parsed.after(utcDate(currentDate), false);
     return next ? dateString(next) : null;
   } catch {
     return null;
   }
 }
+
+const FREQUENCY_PLURAL_UNIT: Record<RecurrenceFrequency, string> = {
+  Daily: "days",
+  Weekly: "weeks",
+  Monthly: "months",
+  Custom: "days",
+};
 
 export function recurrenceSummary(
   input: Pick<
@@ -77,7 +115,7 @@ export function recurrenceSummary(
       ? `Every ${input.intervalCount} days`
       : input.intervalCount === 1
         ? input.frequency
-        : `Every ${input.intervalCount} ${input.frequency.toLowerCase().replace(/ly$/, "")}s`;
+        : `Every ${input.intervalCount} ${FREQUENCY_PLURAL_UNIT[input.frequency]}`;
   if (input.frequency === "Weekly" && input.weekdays.length) {
     text += ` on ${input.weekdays.map((day) => ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"][day]).join(", ")}`;
   }

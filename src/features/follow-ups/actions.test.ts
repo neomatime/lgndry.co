@@ -29,22 +29,61 @@ import {
 } from "@/features/follow-ups/actions";
 
 const FAILED = "We couldn't save this follow-up just now. Please try again.";
+const NOT_FOUND = { status: "not-found", message: "That follow-up is no longer available." };
 
 const id = "123e4567-e89b-42d3-a456-426614174000";
 const clientId = "223e4567-e89b-42d3-a456-426614174000";
 const enquiryId = "323e4567-e89b-42d3-a456-426614174000";
+const otherClientId = "423e4567-e89b-42d3-a456-426614174000";
 const successorId = "523e4567-e89b-42d3-a456-426614174000";
 
 // `nextDateFor` (used by completeFollowUp always, and cancelFollowUp only for
-// an "occurrence" scope) reads `follow_ups` directly, separately from the rpc
-// call made through the same client.
-const nextDateResult = {
-  data: { due_date: "2026-10-01", series: null as { recurrence_rule: string } | null },
-  error: null as { message: string } | null,
+// an "occurrence" scope) reads `due_date`/series from `follow_ups`, separate
+// from `fetchRelationIds`/`fetchChecklistItemRelationIds` (used by every
+// lifecycle action, so Client/Enquiry/Project pages revalidate too), which
+// read client_id/enquiry_id/project_id. The mock routes `.from("follow_ups")`
+// by the requested columns so the two kinds of lookups stay independently
+// assertable, matching two separate reads in the real implementation.
+const nextDateResult: {
+  data: { due_date: string; series: { recurrence_rule: string } | null } | null;
+  error: { message: string } | null;
+} = {
+  data: { due_date: "2026-10-01", series: null },
+  error: null,
 };
+const relationsResult: {
+  data: { client_id: string | null; enquiry_id: string | null; project_id: string | null } | null;
+  error: { message: string } | null;
+} = {
+  data: { client_id: clientId, enquiry_id: enquiryId, project_id: null },
+  error: null,
+};
+const checklistRelationsResult: {
+  data: {
+    follow_ups: { client_id: string | null; enquiry_id: string | null; project_id: string | null };
+  } | null;
+  error: { message: string } | null;
+} = {
+  data: { follow_ups: { client_id: clientId, enquiry_id: enquiryId, project_id: null } },
+  error: null,
+};
+
 const nextDateEq = vi.fn(() => ({ maybeSingle: () => Promise.resolve(nextDateResult) }));
+const relationsEq = vi.fn(() => ({ maybeSingle: () => Promise.resolve(relationsResult) }));
+const checklistRelationsEq = vi.fn(() => ({
+  maybeSingle: () => Promise.resolve(checklistRelationsResult),
+}));
 const fromMock = vi.fn((table: string) => {
-  if (table === "follow_ups") return { select: () => ({ eq: nextDateEq }) };
+  if (table === "follow_ups") {
+    return {
+      select: (columns: string) => ({
+        eq: columns.includes("due_date") ? nextDateEq : relationsEq,
+      }),
+    };
+  }
+  if (table === "follow_up_checklist_items") {
+    return { select: () => ({ eq: checklistRelationsEq }) };
+  }
   throw new Error(`unexpected table: ${table}`);
 });
 
@@ -84,6 +123,12 @@ beforeEach(() => {
   mocks.nextOccurrenceDate.mockReturnValue("2026-10-08");
   nextDateResult.data = { due_date: "2026-10-01", series: null };
   nextDateResult.error = null;
+  relationsResult.data = { client_id: clientId, enquiry_id: enquiryId, project_id: null };
+  relationsResult.error = null;
+  checklistRelationsResult.data = {
+    follow_ups: { client_id: clientId, enquiry_id: enquiryId, project_id: null },
+  };
+  checklistRelationsResult.error = null;
 });
 
 /** Exercises the shared not-found/conflict/invalid/error RPC-result mapping for one action. */
@@ -201,11 +246,8 @@ describe("createFollowUp", () => {
 });
 
 describe("updateFollowUp", () => {
-  it("returns an error without calling the database for a malformed id", async () => {
-    await expect(updateFollowUp("not-a-uuid", 1, followUpInput)).resolves.toEqual({
-      status: "error",
-      message: FAILED,
-    });
+  it("returns a not-found result without calling the database for a malformed id", async () => {
+    await expect(updateFollowUp("not-a-uuid", 1, followUpInput)).resolves.toEqual(NOT_FOUND);
     expect(mocks.createServer).not.toHaveBeenCalled();
     expect(mocks.rpc).not.toHaveBeenCalled();
   });
@@ -232,17 +274,37 @@ describe("updateFollowUp", () => {
     expect(call[1].p_follow_up).not.toHaveProperty("owner_email");
   });
 
+  it("revalidates the new client/enquiry paths from the parsed input", async () => {
+    await updateFollowUp(id, 3, followUpInput);
+
+    expect(mocks.revalidatePath).toHaveBeenCalledWith(`/ops/clients/${clientId}`);
+    expect(mocks.revalidatePath).toHaveBeenCalledWith(`/ops/enquiries/${enquiryId}`);
+  });
+
+  it("also revalidates the OLD client when the follow-up is relinked to a different client", async () => {
+    relationsResult.data = { client_id: otherClientId, enquiry_id: null, project_id: null };
+
+    await updateFollowUp(id, 3, followUpInput);
+
+    expect(relationsEq).toHaveBeenCalledWith("id", id);
+    // The pre-update relation fetch must happen before the RPC call, since
+    // the row (and its current relations) could change underneath us once
+    // the RPC commits.
+    const relationsOrder = relationsEq.mock.invocationCallOrder[0]!;
+    const rpcOrder = mocks.rpc.mock.invocationCallOrder[0]!;
+    expect(relationsOrder).toBeLessThan(rpcOrder);
+    expect(mocks.revalidatePath).toHaveBeenCalledWith(`/ops/clients/${otherClientId}`);
+    expect(mocks.revalidatePath).toHaveBeenCalledWith(`/ops/clients/${clientId}`);
+  });
+
   it("maps not-found/conflict/invalid RPC results and the generic failure message", async () => {
     await expectRpcResultMapping(() => updateFollowUp(id, 1, followUpInput));
   });
 });
 
 describe("setFollowUpChecklistItem", () => {
-  it("returns an error without calling the database for a malformed id", async () => {
-    await expect(setFollowUpChecklistItem("not-a-uuid", true, 1)).resolves.toEqual({
-      status: "error",
-      message: FAILED,
-    });
+  it("returns a not-found result without calling the database for a malformed id", async () => {
+    await expect(setFollowUpChecklistItem("not-a-uuid", true, 1)).resolves.toEqual(NOT_FOUND);
     expect(mocks.rpc).not.toHaveBeenCalled();
   });
 
@@ -255,8 +317,23 @@ describe("setFollowUpChecklistItem", () => {
       p_completed: true,
       p_version: 2,
     });
-    // No client/enquiry/project relation is known for a checklist toggle.
-    expect(mocks.revalidatePath).toHaveBeenCalledWith("/ops/follow-ups");
+  });
+
+  it("revalidates the checklist item's linked client/enquiry pages via the parent follow-up", async () => {
+    await setFollowUpChecklistItem(id, true, 2);
+
+    expect(checklistRelationsEq).toHaveBeenCalledWith("id", id);
+    expect(mocks.revalidatePath).toHaveBeenCalledWith(`/ops/clients/${clientId}`);
+    expect(mocks.revalidatePath).toHaveBeenCalledWith(`/ops/enquiries/${enquiryId}`);
+  });
+
+  it("skips relation revalidation (but still succeeds) when the relation lookup fails", async () => {
+    checklistRelationsResult.data = null;
+    checklistRelationsResult.error = { message: "connection refused" };
+
+    const result = await setFollowUpChecklistItem(id, true, 2);
+
+    expect(result).toEqual({ status: "success", followUpId: id, successorId: undefined });
     expect(mocks.revalidatePath).not.toHaveBeenCalledWith(expect.stringContaining("/ops/clients/"));
   });
 
@@ -268,11 +345,8 @@ describe("setFollowUpChecklistItem", () => {
 describe("rescheduleFollowUp", () => {
   const rescheduleInput = { dueDate: "2026-10-10", dueTime: "09:00", scope: "future" as const };
 
-  it("returns an error without calling the database for a malformed id", async () => {
-    await expect(rescheduleFollowUp("not-a-uuid", 1, rescheduleInput)).resolves.toEqual({
-      status: "error",
-      message: FAILED,
-    });
+  it("returns a not-found result without calling the database for a malformed id", async () => {
+    await expect(rescheduleFollowUp("not-a-uuid", 1, rescheduleInput)).resolves.toEqual(NOT_FOUND);
     expect(mocks.rpc).not.toHaveBeenCalled();
   });
 
@@ -305,17 +379,23 @@ describe("rescheduleFollowUp", () => {
     );
   });
 
+  it("revalidates the linked client/enquiry/project pages", async () => {
+    relationsResult.data = { client_id: clientId, enquiry_id: null, project_id: "proj-1" };
+
+    await rescheduleFollowUp(id, 5, rescheduleInput);
+
+    expect(mocks.revalidatePath).toHaveBeenCalledWith(`/ops/clients/${clientId}`);
+    expect(mocks.revalidatePath).toHaveBeenCalledWith("/ops/projects/proj-1");
+  });
+
   it("maps not-found/conflict/invalid RPC results and the generic failure message", async () => {
     await expectRpcResultMapping(() => rescheduleFollowUp(id, 1, rescheduleInput));
   });
 });
 
 describe("completeFollowUp", () => {
-  it("returns an error without touching the database for a malformed id", async () => {
-    await expect(completeFollowUp("not-a-uuid", 1, { outcome: "" })).resolves.toEqual({
-      status: "error",
-      message: FAILED,
-    });
+  it("returns a not-found result without touching the database for a malformed id", async () => {
+    await expect(completeFollowUp("not-a-uuid", 1, { outcome: "" })).resolves.toEqual(NOT_FOUND);
     expect(mocks.createServer).not.toHaveBeenCalled();
     expect(mocks.rpc).not.toHaveBeenCalled();
   });
@@ -373,16 +453,42 @@ describe("completeFollowUp", () => {
     expect(mocks.revalidatePath).toHaveBeenCalledWith(`/ops/follow-ups/${successorId}`);
   });
 
+  it("revalidates the linked client/enquiry pages", async () => {
+    await completeFollowUp(id, 1, { outcome: "" });
+
+    expect(mocks.revalidatePath).toHaveBeenCalledWith(`/ops/clients/${clientId}`);
+    expect(mocks.revalidatePath).toHaveBeenCalledWith(`/ops/enquiries/${enquiryId}`);
+  });
+
+  it("aborts without calling the RPC when the next-occurrence lookup fails", async () => {
+    // A transient read failure here must never be treated as "no next
+    // occurrence" (which the RPC reasonably interprets as "series ended"),
+    // or a flaky read at the wrong moment silently and permanently kills an
+    // otherwise-active recurring series.
+    nextDateResult.data = null;
+    nextDateResult.error = { message: "connection refused" };
+    const spy = vi.spyOn(console, "error").mockImplementation(() => undefined);
+
+    await expect(completeFollowUp(id, 4, { outcome: "Done" })).resolves.toEqual({
+      status: "error",
+      message: FAILED,
+    });
+
+    expect(mocks.rpc).not.toHaveBeenCalled();
+    expect(spy).toHaveBeenCalled();
+    spy.mockRestore();
+  });
+
   it("maps not-found/conflict/invalid RPC results and the generic failure message", async () => {
     await expectRpcResultMapping(() => completeFollowUp(id, 1, { outcome: "" }));
   });
 });
 
 describe("cancelFollowUp", () => {
-  it("returns an error without touching the database for a malformed id", async () => {
+  it("returns a not-found result without touching the database for a malformed id", async () => {
     await expect(
       cancelFollowUp("not-a-uuid", 1, { reason: "Not needed", scope: "series" }),
-    ).resolves.toEqual({ status: "error", message: FAILED });
+    ).resolves.toEqual(NOT_FOUND);
     expect(mocks.createServer).not.toHaveBeenCalled();
     expect(mocks.rpc).not.toHaveBeenCalled();
   });
@@ -408,6 +514,13 @@ describe("cancelFollowUp", () => {
     });
   });
 
+  it("still revalidates the linked client/enquiry pages for a this-and-future cancellation", async () => {
+    await cancelFollowUp(id, 2, { reason: "Client cancelled", scope: "series" });
+
+    expect(relationsEq).toHaveBeenCalledWith("id", id);
+    expect(mocks.revalidatePath).toHaveBeenCalledWith(`/ops/clients/${clientId}`);
+  });
+
   it("looks up the next occurrence date before calling the RPC for a this-occurrence-only cancellation", async () => {
     nextDateResult.data = {
       due_date: "2026-10-01",
@@ -430,6 +543,20 @@ describe("cancelFollowUp", () => {
     expect(nextDateOrder).toBeLessThan(rpcOrder);
   });
 
+  it("aborts without calling the RPC when the next-occurrence lookup fails for an occurrence-scoped cancel", async () => {
+    nextDateResult.data = null;
+    nextDateResult.error = { message: "connection refused" };
+    const spy = vi.spyOn(console, "error").mockImplementation(() => undefined);
+
+    await expect(
+      cancelFollowUp(id, 2, { reason: "Rescheduling later", scope: "occurrence" }),
+    ).resolves.toEqual({ status: "error", message: FAILED });
+
+    expect(mocks.rpc).not.toHaveBeenCalled();
+    expect(spy).toHaveBeenCalled();
+    spy.mockRestore();
+  });
+
   it("maps not-found/conflict/invalid RPC results and the generic failure message", async () => {
     await expectRpcResultMapping(() =>
       cancelFollowUp(id, 1, { reason: "No longer needed", scope: "series" }),
@@ -438,11 +565,8 @@ describe("cancelFollowUp", () => {
 });
 
 describe("reopenFollowUp", () => {
-  it("returns an error without calling the database for a malformed id", async () => {
-    await expect(reopenFollowUp("not-a-uuid", 1)).resolves.toEqual({
-      status: "error",
-      message: FAILED,
-    });
+  it("returns a not-found result without calling the database for a malformed id", async () => {
+    await expect(reopenFollowUp("not-a-uuid", 1)).resolves.toEqual(NOT_FOUND);
     expect(mocks.rpc).not.toHaveBeenCalled();
   });
 
@@ -453,6 +577,13 @@ describe("reopenFollowUp", () => {
       p_follow_up_id: id,
       p_version: 6,
     });
+  });
+
+  it("revalidates the linked client/enquiry pages", async () => {
+    await reopenFollowUp(id, 6);
+
+    expect(mocks.revalidatePath).toHaveBeenCalledWith(`/ops/clients/${clientId}`);
+    expect(mocks.revalidatePath).toHaveBeenCalledWith(`/ops/enquiries/${enquiryId}`);
   });
 
   it("maps not-found/conflict/invalid RPC results and the generic failure message", async () => {

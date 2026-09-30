@@ -98,7 +98,7 @@ describe("fetchFollowUps", () => {
     expect(result).not.toBeNull();
     expect(result![0]).toMatchObject({
       id: "f1",
-      reference: "FUP-00012",
+      reference: "FUP-0012",
       clientId: "client-1",
       clientName: "Blackridge Hotels",
       contact: {
@@ -114,6 +114,15 @@ describe("fetchFollowUps", () => {
     });
     // Checklist items are sorted by sort_order regardless of row order.
     expect(result![0]!.checklist.map((item) => item.id)).toEqual(["item-1", "item-2"]);
+  });
+
+  it("formats the reference number with the spec's exact padding width (FUP-0312, not FUP-00312)", async () => {
+    followUpsResult.data = [buildRow({ reference_number: 312 })];
+
+    const { fetchFollowUps } = await import("@/features/follow-ups/fetch-follow-ups");
+    const result = await fetchFollowUps();
+
+    expect(result![0]!.reference).toBe("FUP-0312");
   });
 
   it("prefers the linked project over an enquiry when both records are present", async () => {
