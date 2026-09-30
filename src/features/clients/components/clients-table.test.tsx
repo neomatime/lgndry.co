@@ -78,6 +78,11 @@ function row(overrides: Partial<ClientListItem> = {}): ClientListItem {
 }
 
 describe("ClientsTable", () => {
+  it("fills the available content width", () => {
+    render(<ClientsTable rows={[row()]} />);
+    expect(screen.getByRole("table")).toHaveClass("w-full");
+  });
+
   it("shows every approved filter with its count", () => {
     render(
       <ClientsTable

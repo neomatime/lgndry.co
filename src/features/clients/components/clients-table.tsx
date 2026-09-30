@@ -85,7 +85,7 @@ export function ClientsTable({ rows }: { rows: ClientListItem[] }) {
         <p className="text-ink-muted py-14 text-center text-sm">No clients match this filter.</p>
       ) : (
         <div className="overflow-x-auto">
-          <table className="min-w-[960px] border-collapse text-sm">
+          <table className="w-full min-w-[960px] border-collapse text-sm">
             <thead>
               <tr className="border-line border-b text-left">
                 <th className="w-10 py-2" />
