@@ -796,7 +796,8 @@ unsupported status. Existing rows retain their ids, client and booking links.
 The additive backfill maps controlled legacy types, chooses the first active
 primary contact when available, copies booking date/location into empty
 schedule fields, assigns deterministic stage positions, and creates at most one
-task and one deliverable from the legacy text mirrors. Project writes continue
+ordered task or deliverable per non-empty line in the legacy text mirrors.
+Project writes continue
 to mirror type, brief, timeline, task titles, and deliverable titles into the
 legacy columns so older readers remain compatible; booking remains read-only
 context and is not rewritten by the module.
@@ -831,14 +832,43 @@ invented, and no project hard-delete action is exposed.
 ### Verification and release boundary
 
 The implementation has colocated migration-domain, validation, view-model,
-fetch, action, board, detail, form, integration, and navigation tests. Before
-live SQL work, the complete repository gate passes with 76 test files and 590
-tests, followed by a successful Next.js production build containing all four
-Projects routes.
+fetch, action, board, detail, form, integration, navigation, and migration-SQL
+regression tests. The complete repository gate passes with 77 test files and
+594 tests, followed by a successful Next.js production build containing all
+four Projects routes.
 
-Migration `20260929123000_projects_module.sql` is not yet applied to live
-project `tscaluhtfrvwlwjybfsg`. It still requires the planned single-transaction
-rolled-back verification, remote apply/inspection, security and performance
-advisor review, branch push, Vercel preview confirmation, and owner-approved
-authenticated smoke test with complete cleanup. Until that finishes, the code
-is complete locally but the Projects routes must not be treated as released.
+The complete migration was first compiled against live schema and data inside a
+rolled-back transaction. The full verification then exercised synthetic client,
+contact, enquiry, project, milestone, task, deliverable, and activity records;
+non-admin denial and zero-row RLS behavior; admin CRUD; invalid and atomic
+payload handling; conversion and conflict behavior; ordered movement and
+one-way enquiry status synchronization; quick actions; archive/restore; and
+function/table ACLs. It ended at the exact live baseline of one project, three
+clients, three contacts, zero enquiries, and 187 activity rows, with every
+synthetic record and schema change removed.
+
+That verification found and fixed two pre-apply defects in
+`replace_project_plan()`: newly inserted plan rows were being mistaken for
+stale rows and removed, and legacy task/deliverable mirrors used a literal
+`\\n` separator instead of a newline. The regression test now fixes both
+contracts in place.
+
+Supabase applied the reviewed SQL as remote migration
+`20260930072944_projects_module` to live project `tscaluhtfrvwlwjybfsg`.
+Post-apply inspection found the original project id and count preserved, all 14
+columns, three RLS-enabled child tables, four admin policies, eight public RPCs,
+the owner-only helpers, contact guard, seven indexes, and no invalid contact or
+duplicate enquiry relationships. The legacy project backfilled four ordered
+tasks and no unsupported values. Anonymous execution is absent from every
+Projects RPC; authenticated execution exists only for the functions that each
+independently verify `is_admin((select auth.uid()))`.
+
+The security advisor reports no new Projects-specific defect. Its authenticated
+`SECURITY DEFINER` notices for the eight public Projects RPCs are expected from
+their intentionally callable, internally admin-gated design. Fresh unused-index
+notices are expected before production traffic. Remaining advisor findings
+belong to pre-existing auth, gallery, upload-session, extension, and legacy
+public-policy surfaces and remain outside this module.
+
+Branch push, Vercel preview confirmation, and the owner-authenticated browser
+smoke test remain the final release steps.
