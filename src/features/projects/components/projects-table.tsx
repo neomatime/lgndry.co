@@ -22,7 +22,7 @@ export function ProjectsTable({
   onSelect: (id: string | null) => void;
 }) {
   return (
-    <div className="overflow-x-auto">
+    <div className="scrollbar-hidden overflow-x-auto">
       <table className="min-w-[840px] border-collapse text-sm">
         <thead>
           <tr className="border-line border-b text-left">

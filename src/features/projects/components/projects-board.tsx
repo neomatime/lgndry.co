@@ -206,7 +206,11 @@ export function ProjectsBoard({ rows }: { rows: ProjectListItem[] }) {
   return (
     <div className="flex flex-col gap-4">
       <div className="border-line flex flex-col gap-3 border-b xl:flex-row xl:items-end xl:justify-between">
-        <div role="tablist" aria-label="Project views" className="flex gap-1 overflow-x-auto">
+        <div
+          role="tablist"
+          aria-label="Project views"
+          className="scrollbar-hidden flex gap-1 overflow-x-auto"
+        >
           {VIEWS.map((value) => (
             <button
               key={value}
@@ -307,7 +311,7 @@ export function ProjectsBoard({ rows }: { rows: ProjectListItem[] }) {
       ) : view === "Active" ? (
         <div className="flex min-w-0 flex-col gap-4 xl:flex-row xl:items-start">
           <DndContext sensors={sensors} onDragEnd={handleDragEnd}>
-            <div className="flex min-w-0 snap-x gap-3 overflow-x-auto pb-4">
+            <div className="scrollbar-hidden flex min-w-0 snap-x gap-3 overflow-x-auto pb-4">
               {ACTIVE_PROJECT_STAGES.map((stage) => (
                 <BoardColumn
                   key={stage}
