@@ -767,7 +767,14 @@ begin
     completed_at = now(), cancellation_reason = null, cancelled_at = null,
     successor_id = v_next_id, version = version + 1 where id = p_follow_up_id;
   insert into public.ops_activity_log (message, collection, record_id, action)
-  values ('Follow-up completed: ' || v_current.title, 'follow_ups', p_follow_up_id, 'completed');
+  values (
+    -- ops_activity_log rejects messages over 200 characters, so every user-supplied part is
+    -- capped: 21 prefix + 80 title + 12 label + 80 outcome = 193 at most.
+    'Follow-up completed: ' || left(v_current.title, 80)
+      || case when nullif(btrim(p_outcome), '') is null then ''
+         else ' | Outcome: ' || left(btrim(p_outcome), 80) end,
+    'follow_ups', p_follow_up_id, 'completed'
+  );
   return jsonb_build_object(
     'status', 'ok', 'follow_up_id', p_follow_up_id, 'successor_id', v_next_id
   );
@@ -828,7 +835,12 @@ begin
     cancelled_at = now(), outcome = null, completed_at = null,
     successor_id = v_next_id, version = version + 1 where id = p_follow_up_id;
   insert into public.ops_activity_log (message, collection, record_id, action)
-  values ('Follow-up cancelled: ' || btrim(p_reason), 'follow_ups', p_follow_up_id, 'cancelled');
+  -- Capped (21 prefix + 170 reason = 191) so a long reason, which the schema allows up to
+  -- 1000 characters, can never push the message past ops_activity_log's 200-character limit.
+  values (
+    'Follow-up cancelled: ' || left(btrim(p_reason), 170),
+    'follow_ups', p_follow_up_id, 'cancelled'
+  );
   return jsonb_build_object(
     'status', 'ok', 'follow_up_id', p_follow_up_id, 'successor_id', v_next_id
   );
@@ -867,7 +879,19 @@ begin
     completed_at = null, cancelled_at = null, version = version + 1
   where id = p_follow_up_id;
   insert into public.ops_activity_log (message, collection, record_id, action)
-  values ('Follow-up reopened: ' || v_current.title, 'follow_ups', p_follow_up_id, 'reopened');
+  -- Reopening clears the outcome / cancellation reason columns, so the activity log is where
+  -- that history is kept. Capped to stay within 200 characters:
+  -- 20 prefix + 60 title + 3 separator + 29 label + 80 text = 192 at most.
+  values (
+    'Follow-up reopened: ' || left(v_current.title, 60)
+      || case
+        when nullif(btrim(v_current.outcome), '') is not null
+          then ' | Cleared outcome: ' || left(btrim(v_current.outcome), 80)
+        when nullif(btrim(v_current.cancellation_reason), '') is not null
+          then ' | Cleared cancellation reason: ' || left(btrim(v_current.cancellation_reason), 80)
+        else '' end,
+    'follow_ups', p_follow_up_id, 'reopened'
+  );
   return jsonb_build_object('status', 'ok', 'follow_up_id', p_follow_up_id);
 end;
 $$;

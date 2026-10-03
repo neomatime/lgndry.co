@@ -90,6 +90,46 @@ describe("follow-ups migration", () => {
     expect(migration).toContain("'follow_ups', p_follow_up_id, 'reopened'");
   });
 
+  describe("lifecycle activity messages keep outcome and cancellation history within 200 characters", () => {
+    // ops_activity_log rejects messages over 200 characters, so every user-supplied part must be
+    // capped with left(); the literal prefixes plus the caps below must add up to at most 200.
+    const LIMIT = 200;
+
+    it("records the outcome in the completion message, capped", () => {
+      const body = extractFunctionBody("complete_follow_up");
+      expect(body).toContain("'Follow-up completed: ' || left(v_current.title, 80)");
+      expect(body).toContain("' | Outcome: ' || left(btrim(p_outcome), 80)");
+      expect(body).toContain("nullif(btrim(p_outcome), '') is null then ''");
+      const worstCase = "Follow-up completed: ".length + 80 + " | Outcome: ".length + 80;
+      expect(worstCase).toBeLessThanOrEqual(LIMIT);
+    });
+
+    it("caps the cancellation reason in the cancellation message", () => {
+      const body = extractFunctionBody("cancel_follow_up");
+      expect(body).toContain("'Follow-up cancelled: ' || left(btrim(p_reason), 170)");
+      expect("Follow-up cancelled: ".length + 170).toBeLessThanOrEqual(LIMIT);
+    });
+
+    it("records what the reopen cleared, capped", () => {
+      const body = extractFunctionBody("reopen_follow_up");
+      expect(body).toContain("'Follow-up reopened: ' || left(v_current.title, 60)");
+      expect(body).toContain("' | Cleared outcome: ' || left(btrim(v_current.outcome), 80)");
+      expect(body).toContain(
+        "' | Cleared cancellation reason: ' || left(btrim(v_current.cancellation_reason), 80)",
+      );
+      const longest = Math.max(
+        " | Cleared outcome: ".length,
+        " | Cleared cancellation reason: ".length,
+      );
+      expect("Follow-up reopened: ".length + 60 + longest + 80).toBeLessThanOrEqual(LIMIT);
+    });
+
+    it("still nulls the columns on reopen: the history lives in the activity log", () => {
+      const body = extractFunctionBody("reopen_follow_up");
+      expect(body).toContain("outcome = null, cancellation_reason = null");
+    });
+  });
+
   describe("checklist reordering does not violate the sort_order uniqueness constraint", () => {
     it("declares the (follow_up_id, sort_order) constraint deferrable so a swap can commit", () => {
       // Without this, update_follow_up's per-row UPDATE loop fails on the
