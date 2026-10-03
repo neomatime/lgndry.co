@@ -1,6 +1,5 @@
 import "server-only";
 import { cache } from "react";
-import { fetchRelatedFollowUps } from "@/features/follow-ups/fetch-related-follow-ups";
 import { buildEnquiryDetail, type EnquiryDetail } from "@/features/enquiries/detail-view-model";
 import { createSupabaseServerClient } from "@/lib/db/server";
 
@@ -18,7 +17,7 @@ export const fetchEnquiryDetail = cache(async (id: string): Promise<EnquiryDetai
     const { data: enquiry, error: enquiryError } = await supabase
       .from("enquiries")
       .select(
-        "id, full_name, company, email, phone, project_type, location, timeline, description, budget, status, source, created_at, client_id, archived",
+        "id, full_name, company, email, phone, project_type, location, timeline, description, budget, status, source, created_at",
       )
       .eq("id", id)
       .maybeSingle();
@@ -29,8 +28,6 @@ export const fetchEnquiryDetail = cache(async (id: string): Promise<EnquiryDetai
       { data: attachmentRows, error: attachmentsError },
       { data: activityRows, error: activityError },
       { data: projectRow, error: projectError },
-      { data: clientRow, error: clientError },
-      followUps,
     ] = await Promise.all([
       supabase
         .from("enquiry_attachments")
@@ -43,18 +40,10 @@ export const fetchEnquiryDetail = cache(async (id: string): Promise<EnquiryDetai
         .eq("record_id", id)
         .order("created_at", { ascending: false }),
       supabase.from("projects").select("id, name, status").eq("enquiry_id", id).maybeSingle(),
-      enquiry.client_id
-        ? supabase.from("clients").select("archived").eq("id", enquiry.client_id).maybeSingle()
-        : Promise.resolve({ data: null, error: null }),
-      fetchRelatedFollowUps("enquiry_id", id),
     ]);
     if (attachmentsError) throw attachmentsError;
     if (activityError) throw activityError;
     if (projectError) throw projectError;
-    if (clientError) throw clientError;
-    // An unavailable follow-ups query must not read as "no follow-ups": that would hide real
-    // work, so it fails the page like any other required child query.
-    if (!followUps) throw new Error("Follow-ups are unavailable");
 
     const signedUrlByPath = new Map<string, string | null>();
     for (const row of (attachmentRows ?? []) as { storage_path: string }[]) {
@@ -76,8 +65,6 @@ export const fetchEnquiryDetail = cache(async (id: string): Promise<EnquiryDetai
         activityRows ?? [],
         new Date(),
         projectRow,
-        followUps,
-        clientRow?.archived === true,
       ),
     };
   } catch (error) {

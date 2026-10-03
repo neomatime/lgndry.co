@@ -2,7 +2,6 @@ import { render, screen } from "@testing-library/react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import EditEnquiryPage from "@/app/(app)/ops/enquiries/[id]/edit/page";
 import type { EnquiryDetail } from "@/features/enquiries/detail-view-model";
-import { buildRelatedFollowUps } from "@/features/follow-ups/related-view-model";
 
 const mocks = vi.hoisted(() => ({
   fetch: vi.fn(),
@@ -39,10 +38,6 @@ const detail: EnquiryDetail = {
   attachments: [],
   activity: [],
   project: null,
-  clientId: "22222222-2222-4222-8222-222222222222",
-  archived: false,
-  clientArchived: false,
-  followUps: buildRelatedFollowUps([], new Date("2026-09-30T08:00:00Z")),
 };
 const props = { params: Promise.resolve({ id }) };
 

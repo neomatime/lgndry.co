@@ -1,7 +1,10 @@
 import { Tabs } from "@/components/ui/tabs";
 import type { EnquiryDetail } from "@/features/enquiries/detail-view-model";
 import { RelatedFollowUps } from "@/features/follow-ups/components/related-follow-ups";
-import { relatedAddAvailability } from "@/features/follow-ups/related-view-model";
+import {
+  relatedAddAvailability,
+  type ParentFollowUps,
+} from "@/features/follow-ups/related-view-model";
 
 function formatBytes(bytes: number): string {
   return bytes >= 1_000_000
@@ -9,12 +12,14 @@ function formatBytes(bytes: number): string {
     : `${Math.ceil(bytes / 1000)} KB`;
 }
 
-export function EnquiryDetailTabs({ enquiry }: { enquiry: EnquiryDetail }) {
-  const followUpAdd = relatedAddAvailability("enquiry", {
-    archived: enquiry.archived,
-    clientId: enquiry.clientId,
-    clientArchived: enquiry.clientArchived,
-  });
+export function EnquiryDetailTabs({
+  enquiry,
+  followUps,
+}: {
+  enquiry: EnquiryDetail;
+  followUps: ParentFollowUps;
+}) {
+  const followUpAdd = relatedAddAvailability("enquiry", followUps);
   return (
     <Tabs
       items={[
@@ -71,12 +76,12 @@ export function EnquiryDetailTabs({ enquiry }: { enquiry: EnquiryDetail }) {
         },
         {
           id: "follow-ups",
-          label: `Follow-ups (${enquiry.followUps.total})`,
+          label: `Follow-ups (${followUps.related.total})`,
           content: (
             <RelatedFollowUps
-              related={enquiry.followUps}
+              related={followUps.related}
               subject="enquiry"
-              add={{ clientId: enquiry.clientId ?? "", enquiryId: enquiry.id }}
+              add={{ clientId: followUps.clientId ?? "", enquiryId: enquiry.id }}
               canAdd={followUpAdd.canAdd}
               addBlockedReason={followUpAdd.canAdd ? undefined : followUpAdd.reason}
             />

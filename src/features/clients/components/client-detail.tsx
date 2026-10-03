@@ -7,7 +7,10 @@ import { ClientArchiveControl } from "@/features/clients/components/client-archi
 import { AccountTierBadge, ClientStatusBadge } from "@/features/clients/components/client-badges";
 import type { ClientDetail } from "@/features/clients/detail-view-model";
 import { RelatedFollowUps } from "@/features/follow-ups/components/related-follow-ups";
-import { relatedAddAvailability } from "@/features/follow-ups/related-view-model";
+import {
+  relatedAddAvailability,
+  type ParentFollowUps,
+} from "@/features/follow-ups/related-view-model";
 
 const dateFormatter = new Intl.DateTimeFormat("en-ZA", {
   dateStyle: "medium",
@@ -27,12 +30,14 @@ function Panel({ title, children }: { title: string; children: React.ReactNode }
   );
 }
 
-export function ClientDetailView({ client }: { client: ClientDetail }) {
-  const followUpAdd = relatedAddAvailability("client", {
-    archived: client.archived,
-    clientId: client.id,
-    clientArchived: client.archived,
-  });
+export function ClientDetailView({
+  client,
+  followUps,
+}: {
+  client: ClientDetail;
+  followUps: ParentFollowUps;
+}) {
+  const followUpAdd = relatedAddAvailability("client", followUps);
   return (
     <div className="flex flex-col gap-8">
       <div className="text-ink-muted flex items-center gap-1 text-sm">
@@ -179,9 +184,9 @@ export function ClientDetailView({ client }: { client: ClientDetail }) {
             )}
           </Panel>
 
-          <Panel title={`Follow-ups (${client.followUps.total})`}>
+          <Panel title={`Follow-ups (${followUps.related.total})`}>
             <RelatedFollowUps
-              related={client.followUps}
+              related={followUps.related}
               subject="client"
               add={{ clientId: client.id }}
               canAdd={followUpAdd.canAdd}

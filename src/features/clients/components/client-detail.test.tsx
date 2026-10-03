@@ -1,15 +1,38 @@
 import { render, screen } from "@testing-library/react";
 import { describe, expect, it, vi } from "vitest";
-import { ClientDetailView } from "@/features/clients/components/client-detail";
+import { ClientDetailView as BaseClientDetailView } from "@/features/clients/components/client-detail";
 import type { ClientDetail } from "@/features/clients/detail-view-model";
-import { followUpDetail } from "@/features/follow-ups/components/follow-up-test-data";
-import { buildRelatedFollowUps } from "@/features/follow-ups/related-view-model";
+import { parentFollowUps, sampleFollowUpRows } from "@/features/follow-ups/related-test-data";
+import type { ParentFollowUps } from "@/features/follow-ups/related-view-model";
 
 vi.mock("@/features/clients/components/client-archive-control", () => ({
   ClientArchiveControl: ({ archived }: { archived: boolean }) => (
     <button>{archived ? "Restore Client" : "Archive Client"}</button>
   ),
 }));
+
+/** The follow-ups section is covered below; every other test renders it empty. */
+function ClientDetailView({
+  client,
+  followUps,
+}: {
+  client: ClientDetail;
+  followUps?: ParentFollowUps;
+}) {
+  return (
+    <BaseClientDetailView
+      client={client}
+      followUps={
+        followUps ??
+        parentFollowUps([], {
+          archived: client.archived,
+          clientId: client.id,
+          clientArchived: client.archived,
+        })
+      }
+    />
+  );
+}
 
 function fixture(overrides: Partial<ClientDetail> = {}): ClientDetail {
   return {
@@ -71,29 +94,9 @@ function fixture(overrides: Partial<ClientDetail> = {}): ClientDetail {
         relativeTime: "yesterday",
       },
     ],
-    followUps: buildRelatedFollowUps([], new Date("2026-09-30T08:00:00Z")),
     ...overrides,
   };
 }
-
-const CLIENT_ID = "11111111-1111-1111-1111-111111111111";
-const followUps = buildRelatedFollowUps(
-  [
-    followUpDetail({
-      id: "fu-open",
-      title: "Chase the autumn quote",
-      dueDate: "2026-10-05",
-      dueTime: "",
-    }),
-    followUpDetail({
-      id: "fu-done",
-      title: "Thank the client",
-      status: "Completed",
-      completedAt: "2026-09-29T08:00:00Z",
-    }),
-  ],
-  new Date("2026-09-30T08:00:00Z"),
-);
 
 describe("ClientDetailView", () => {
   it("renders every approved data panel", () => {
@@ -149,6 +152,7 @@ describe("ClientDetailView", () => {
     expect(screen.queryByText("Owner")).not.toBeInTheDocument();
     expect(screen.queryByText("Financial Snapshot")).not.toBeInTheDocument();
     expect(screen.queryByText("Communication Snapshot")).not.toBeInTheDocument();
+    expect(screen.queryByText("Follow-ups")).not.toBeInTheDocument();
     expect(screen.queryByRole("link", { name: "New Project" })).not.toBeInTheDocument();
   });
 
@@ -185,8 +189,16 @@ describe("ClientDetailView", () => {
 });
 
 describe("ClientDetailView follow-ups", () => {
+  const CLIENT_ID = "11111111-1111-1111-1111-111111111111";
+  const live = { archived: false, clientId: CLIENT_ID, clientArchived: false };
+
   it("lists every linked follow-up in a headed section with an Add Follow-up link", () => {
-    render(<ClientDetailView client={fixture({ followUps })} />);
+    render(
+      <ClientDetailView
+        client={fixture()}
+        followUps={parentFollowUps(sampleFollowUpRows(), live)}
+      />,
+    );
     expect(screen.getByRole("heading", { name: "Follow-ups (2)" })).toBeInTheDocument();
     expect(screen.getByRole("link", { name: "Chase the autumn quote" })).toHaveAttribute(
       "href",
@@ -205,14 +217,23 @@ describe("ClientDetailView follow-ups", () => {
   });
 
   it("shows a friendly empty state and still offers to add one", () => {
-    render(<ClientDetailView client={fixture()} />);
+    render(<ClientDetailView client={fixture()} followUps={parentFollowUps([], live)} />);
     expect(screen.getByRole("heading", { name: "Follow-ups (0)" })).toBeInTheDocument();
     expect(screen.getByText(/No follow-ups are linked to this client yet/)).toBeInTheDocument();
     expect(screen.getByRole("link", { name: "Add Follow-up" })).toBeInTheDocument();
   });
 
   it("keeps the history of an archived client but does not offer to add", () => {
-    render(<ClientDetailView client={fixture({ archived: true, followUps })} />);
+    render(
+      <ClientDetailView
+        client={fixture({ archived: true })}
+        followUps={parentFollowUps(sampleFollowUpRows(), {
+          archived: true,
+          clientId: CLIENT_ID,
+          clientArchived: true,
+        })}
+      />,
+    );
     expect(screen.getByRole("heading", { name: "Follow-ups (2)" })).toBeInTheDocument();
     expect(screen.getByRole("link", { name: "Chase the autumn quote" })).toBeInTheDocument();
     expect(screen.queryByRole("link", { name: "Add Follow-up" })).not.toBeInTheDocument();

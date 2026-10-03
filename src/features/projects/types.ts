@@ -1,5 +1,3 @@
-import type { RelatedFollowUps } from "@/features/follow-ups/related-view-model";
-
 export const ACTIVE_PROJECT_STAGES = [
   "Planning",
   "Pre-Production",
@@ -152,9 +150,6 @@ export type ProjectDetail = ProjectListItem & {
   budgetMin: number | null;
   budgetMax: number | null;
   currency: string;
-  /** The project's client is archived: the follow-up form can't pre-fill an archived client. */
-  clientArchived: boolean;
-  followUps: RelatedFollowUps;
   milestones: ProjectMilestone[];
   enquiry: { id: string; status: string; projectType: string } | null;
   booking: {

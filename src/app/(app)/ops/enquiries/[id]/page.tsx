@@ -8,7 +8,7 @@ import { StatCard } from "@/components/ops/stat-card";
 import { StatusBadge } from "@/components/ops/status-badge";
 import { EnquiryDetailTabs } from "@/features/enquiries/components/enquiry-detail-tabs";
 import { EnquiryStatusControl } from "@/features/enquiries/components/enquiry-status-control";
-import { fetchEnquiryDetail } from "@/features/enquiries/fetch-enquiry-detail";
+import { fetchEnquiryDetailPage } from "@/features/enquiries/fetch-enquiry-detail-page";
 import { requireOpsUser } from "@/lib/auth/guards";
 
 type Props = { params: Promise<{ id: string }> };
@@ -16,7 +16,7 @@ type Props = { params: Promise<{ id: string }> };
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
   await requireOpsUser();
   const { id } = await params;
-  const result = await fetchEnquiryDetail(id);
+  const result = await fetchEnquiryDetailPage(id);
   if (result.status !== "ok") return { title: "Enquiry" };
   return { title: `${result.enquiry.company ?? result.enquiry.fullName} Enquiry` };
 }
@@ -24,7 +24,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
 export default async function EnquiryDetailPage({ params }: Props) {
   await requireOpsUser();
   const { id } = await params;
-  const result = await fetchEnquiryDetail(id);
+  const result = await fetchEnquiryDetailPage(id);
 
   if (result.status === "not-found") notFound();
 
@@ -39,7 +39,7 @@ export default async function EnquiryDetailPage({ params }: Props) {
     );
   }
 
-  const { enquiry } = result;
+  const { enquiry, followUps } = result;
 
   return (
     <div className="flex flex-col gap-8">
@@ -115,7 +115,7 @@ export default async function EnquiryDetailPage({ params }: Props) {
       )}
 
       <div className="grid gap-8 lg:grid-cols-[2fr_1fr]">
-        <EnquiryDetailTabs enquiry={enquiry} />
+        <EnquiryDetailTabs enquiry={enquiry} followUps={followUps} />
 
         <div className="flex flex-col gap-6">
           <div className="border-line border p-5">

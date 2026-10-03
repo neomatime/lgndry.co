@@ -1,8 +1,7 @@
 import { fireEvent, render, screen } from "@testing-library/react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import ProjectDetailPage, { generateMetadata } from "@/app/(app)/ops/projects/[id]/page";
-import { followUpDetail } from "@/features/follow-ups/components/follow-up-test-data";
-import { buildRelatedFollowUps } from "@/features/follow-ups/related-view-model";
+import { parentFollowUps, sampleFollowUpRows } from "@/features/follow-ups/related-test-data";
 import { projectDetail } from "@/features/projects/components/project-test-data";
 
 const { fetchMock, notFoundMock, requireOpsUserMock } = vi.hoisted(() => ({
@@ -13,7 +12,9 @@ const { fetchMock, notFoundMock, requireOpsUserMock } = vi.hoisted(() => ({
   requireOpsUserMock: vi.fn(),
 }));
 
-vi.mock("@/features/projects/fetch-project-detail", () => ({ fetchProjectDetail: fetchMock }));
+vi.mock("@/features/projects/fetch-project-detail-page", () => ({
+  fetchProjectDetailPage: fetchMock,
+}));
 vi.mock("@/lib/auth/guards", () => ({ requireOpsUser: requireOpsUserMock }));
 vi.mock("next/navigation", () => ({
   notFound: notFoundMock,
@@ -35,7 +36,7 @@ describe("ProjectDetailPage", () => {
     requireOpsUserMock.mockImplementation(async () => order.push("auth"));
     fetchMock.mockImplementation(async () => {
       order.push("fetch");
-      return { status: "ok", project: projectDetail() };
+      return { status: "ok", project: projectDetail(), followUps: parentFollowUps() };
     });
     render(await ProjectDetailPage(props()));
     expect(order).toEqual(["auth", "fetch"]);
@@ -43,7 +44,11 @@ describe("ProjectDetailPage", () => {
   });
 
   it("authenticates metadata and uses the project name", async () => {
-    fetchMock.mockResolvedValue({ status: "ok", project: projectDetail() });
+    fetchMock.mockResolvedValue({
+      status: "ok",
+      project: projectDetail(),
+      followUps: parentFollowUps(),
+    });
     expect(await generateMetadata(props())).toEqual({ title: "Autumn Campaign Project" });
     expect(requireOpsUserMock).toHaveBeenCalledBefore(fetchMock);
   });
@@ -65,25 +70,31 @@ describe("ProjectDetailPage follow-ups", () => {
   it("renders the Follow-ups tab with the project's follow-ups", async () => {
     fetchMock.mockResolvedValue({
       status: "ok",
-      project: projectDetail({
-        followUps: buildRelatedFollowUps(
-          [followUpDetail({ id: "fu-1", title: "Chase the autumn quote", dueDate: "2026-10-05" })],
-          new Date("2026-09-30T08:00:00Z"),
-        ),
-      }),
+      project: projectDetail(),
+      followUps: parentFollowUps(sampleFollowUpRows()),
     });
     render(await ProjectDetailPage(props()));
-    fireEvent.click(screen.getByRole("tab", { name: "Follow-ups (1)" }));
+    fireEvent.click(screen.getByRole("tab", { name: "Follow-ups (2)" }));
     expect(screen.getByRole("link", { name: "Chase the autumn quote" })).toHaveAttribute(
       "href",
-      "/ops/follow-ups/fu-1",
+      "/ops/follow-ups/fu-open",
     );
     expect(screen.getByRole("link", { name: "Add Follow-up" })).toBeInTheDocument();
   });
 
-  it("shows the temporary error state, not an empty tab, when loading fails", async () => {
+  it("shows an empty tab for no follow-ups, but the unavailable state when loading fails", async () => {
+    fetchMock.mockResolvedValue({
+      status: "ok",
+      project: projectDetail(),
+      followUps: parentFollowUps(),
+    });
+    const { unmount } = render(await ProjectDetailPage(props()));
+    expect(screen.getByRole("tab", { name: "Follow-ups (0)" })).toBeInTheDocument();
+    unmount();
+
     fetchMock.mockResolvedValue({ status: "error" });
     render(await ProjectDetailPage(props()));
+    expect(screen.getByText("This project is temporarily unavailable")).toBeInTheDocument();
     expect(screen.queryByRole("tab", { name: /Follow-ups/ })).not.toBeInTheDocument();
   });
 });

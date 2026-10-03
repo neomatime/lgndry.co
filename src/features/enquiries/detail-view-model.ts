@@ -1,9 +1,4 @@
 import { relativeTime } from "@/features/enquiries/relative-time";
-import {
-  buildRelatedFollowUps,
-  type RelatedFollowUps,
-} from "@/features/follow-ups/related-view-model";
-import type { FollowUpListItem } from "@/features/follow-ups/types";
 import type { EnquiryStatus } from "@/features/enquiries/types";
 import type { ProjectEnquiryInput } from "@/features/start-a-project/schemas";
 
@@ -24,12 +19,6 @@ export type EnquiryDetail = {
   attachments: { fileName: string; sizeBytes: number; url: string | null }[];
   activity: { id: string; message: string; relativeTime: string }[];
   project: { id: string; name: string; status: string } | null;
-  /** `null` for legacy enquiries that were never linked to a client. */
-  clientId: string | null;
-  archived: boolean;
-  /** The enquiry's client is archived: the follow-up form can't pre-fill an archived client. */
-  clientArchived: boolean;
-  followUps: RelatedFollowUps;
 };
 
 type EnquiryRecord = {
@@ -46,8 +35,6 @@ type EnquiryRecord = {
   status: EnquiryStatus;
   source: string;
   created_at: string;
-  client_id: string | null;
-  archived: boolean;
 };
 
 type AttachmentRecord = { file_name: string; storage_path: string; size_bytes: number };
@@ -61,8 +48,6 @@ export function buildEnquiryDetail(
   activity: ActivityRecord[],
   now: Date = new Date(),
   project: { id: string; name: string; status: string } | null = null,
-  followUps: FollowUpListItem[] = [],
-  clientArchived = false,
 ): EnquiryDetail {
   return {
     id: enquiry.id,
@@ -89,9 +74,5 @@ export function buildEnquiryDetail(
       relativeTime: relativeTime(entry.created_at, now),
     })),
     project,
-    clientId: enquiry.client_id ?? null,
-    archived: enquiry.archived === true,
-    clientArchived,
-    followUps: buildRelatedFollowUps(followUps, now),
   };
 }

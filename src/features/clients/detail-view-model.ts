@@ -9,11 +9,6 @@ import type {
   LinkedProject,
 } from "@/features/clients/types";
 import type { EnquiryStatus } from "@/features/enquiries/types";
-import {
-  buildRelatedFollowUps,
-  type RelatedFollowUps,
-} from "@/features/follow-ups/related-view-model";
-import type { FollowUpListItem } from "@/features/follow-ups/types";
 
 export type ClientDetail = {
   id: string;
@@ -33,7 +28,6 @@ export type ClientDetail = {
   projects: LinkedProject[];
   openEnquiryCount: number;
   activity: ClientActivity[];
-  followUps: RelatedFollowUps;
 };
 
 export function buildClientDetail(
@@ -71,7 +65,6 @@ export function buildClientDetail(
   }[],
   activity: { id: string; message: string; created_at: string }[],
   now = new Date(),
-  followUps: FollowUpListItem[] = [],
 ): ClientDetail {
   const shapedContacts = contacts
     .map((contact) => ({
@@ -126,6 +119,5 @@ export function buildClientDetail(
       createdAt: entry.created_at,
       relativeTime: relativeTime(entry.created_at, now),
     })),
-    followUps: buildRelatedFollowUps(followUps, now),
   };
 }

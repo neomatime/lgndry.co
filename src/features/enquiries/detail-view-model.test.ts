@@ -1,6 +1,5 @@
 import { describe, expect, it } from "vitest";
 import { buildEnquiryDetail } from "@/features/enquiries/detail-view-model";
-import { followUpDetail } from "@/features/follow-ups/components/follow-up-test-data";
 
 const enquiry = {
   id: "e1",
@@ -16,8 +15,6 @@ const enquiry = {
   status: "New" as const,
   source: "Website",
   created_at: "2026-09-27T10:00:00Z",
-  client_id: "client-1" as string | null,
-  archived: false,
 };
 
 const NOW = new Date("2026-09-27T12:00:00Z");
@@ -74,43 +71,5 @@ describe("buildEnquiryDetail", () => {
     const project = { id: "p1", name: "Autumn Campaign", status: "Production" };
     const detail = buildEnquiryDetail(enquiry, [], new Map(), [], NOW, project);
     expect(detail.project).toEqual(project);
-  });
-});
-
-describe("buildEnquiryDetail follow-ups and client link", () => {
-  it("carries the client link and archived flags", () => {
-    const detail = buildEnquiryDetail(
-      { ...enquiry, archived: true },
-      [],
-      new Map(),
-      [],
-      NOW,
-      null,
-      [],
-      true,
-    );
-    expect(detail.clientId).toBe("client-1");
-    expect(detail.archived).toBe(true);
-    expect(detail.clientArchived).toBe(true);
-  });
-
-  it("keeps a missing client as null and defaults the flags to live", () => {
-    const detail = buildEnquiryDetail({ ...enquiry, client_id: null }, [], new Map(), [], NOW);
-    expect(detail.clientId).toBeNull();
-    expect(detail.archived).toBe(false);
-    expect(detail.clientArchived).toBe(false);
-    expect(detail.followUps).toMatchObject({ total: 0, actionable: [] });
-  });
-
-  it("groups the supplied follow-ups against the same now", () => {
-    const detail = buildEnquiryDetail(enquiry, [], new Map(), [], NOW, null, [
-      followUpDetail({ id: "late", scheduleState: "Upcoming", dueDate: "2026-09-26", dueTime: "" }),
-      followUpDetail({ id: "done", status: "Completed", completedAt: "2026-09-26T08:00:00Z" }),
-    ]);
-    expect(detail.followUps.now).toBe("2026-09-27T12:00:00.000Z");
-    expect(detail.followUps.actionable.map((row) => [row.id, row.scheduleState])).toEqual([
-      ["late", "Overdue"],
-    ]);
-    expect(detail.followUps.completed.map((row) => row.id)).toEqual(["done"]);
   });
 });

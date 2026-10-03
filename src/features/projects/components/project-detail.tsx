@@ -11,7 +11,10 @@ import { PageHeader } from "@/components/layout/page-header";
 import { StatCard } from "@/components/ops/stat-card";
 import { Tabs } from "@/components/ui/tabs";
 import { RelatedFollowUps } from "@/features/follow-ups/components/related-follow-ups";
-import { relatedAddAvailability } from "@/features/follow-ups/related-view-model";
+import {
+  relatedAddAvailability,
+  type ParentFollowUps,
+} from "@/features/follow-ups/related-view-model";
 import { ProjectArchiveControl } from "@/features/projects/components/project-archive-control";
 import {
   DeliveryStatusBadge,
@@ -41,7 +44,13 @@ function Panel({ title, children }: { title: string; children: React.ReactNode }
   );
 }
 
-export function ProjectDetailView({ project }: { project: ProjectDetail }) {
+export function ProjectDetailView({
+  project,
+  followUps: parentFollowUps,
+}: {
+  project: ProjectDetail;
+  followUps: ParentFollowUps;
+}) {
   const summary = buildProjectDetailSummary(project);
   const money = new Intl.NumberFormat("en-ZA", {
     style: "currency",
@@ -55,14 +64,10 @@ export function ProjectDetailView({ project }: { project: ProjectDetail }) {
         .join(" - ")
     : "Not recorded";
 
-  const followUpAdd = relatedAddAvailability("project", {
-    archived: project.archived,
-    clientId: project.clientId,
-    clientArchived: project.clientArchived,
-  });
+  const followUpAdd = relatedAddAvailability("project", parentFollowUps);
   const followUps = (
     <RelatedFollowUps
-      related={project.followUps}
+      related={parentFollowUps.related}
       subject="project"
       add={{ clientId: project.clientId, projectId: project.id }}
       canAdd={followUpAdd.canAdd}
@@ -232,7 +237,7 @@ export function ProjectDetailView({ project }: { project: ProjectDetail }) {
             { id: "plan", label: "Plan", content: <ProjectPlan project={project} /> },
             {
               id: "follow-ups",
-              label: `Follow-ups (${project.followUps.total})`,
+              label: `Follow-ups (${parentFollowUps.related.total})`,
               content: followUps,
             },
             { id: "activity", label: "Activity", content: activity },

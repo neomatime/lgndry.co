@@ -1,7 +1,6 @@
 import "server-only";
 
 import { cache } from "react";
-import { fetchRelatedFollowUps } from "@/features/follow-ups/fetch-related-follow-ups";
 import {
   buildProjectDetail,
   type ProjectBookingRecord,
@@ -24,7 +23,7 @@ const PROJECT_DETAIL_SELECT = `
   start_date, end_date, timeline, people_resources, budget_min, budget_max,
   currency, status, stage_position, payment_status, delivery_status, archived,
   created_at, updated_at, enquiry_id, booking,
-  client_record:clients!projects_client_fkey(id, name, archived),
+  client_record:clients!projects_client_fkey(id, name),
   contact_record:client_contacts!projects_client_contact_id_fkey(
     id, full_name, email, phone, is_primary
   )
@@ -46,52 +45,47 @@ export const fetchProjectDetail = cache(async (id: string): Promise<FetchProject
     if (projectError) throw projectError;
     if (!project) return { status: "not-found" };
 
-    const [milestones, tasks, deliverables, activity, enquiry, booking, followUps] =
-      await Promise.all([
-        supabase
-          .from("project_milestones")
-          .select("id, title, description, due_date, status, sort_order, completed_at")
-          .eq("project_id", id)
-          .order("sort_order", { ascending: true }),
-        supabase
-          .from("project_tasks")
-          .select("id, title, due_date, is_completed, sort_order, completed_at")
-          .eq("project_id", id)
-          .order("sort_order", { ascending: true }),
-        supabase
-          .from("project_deliverables")
-          .select("id, title, due_date, status, sort_order, completed_at")
-          .eq("project_id", id)
-          .order("sort_order", { ascending: true }),
-        supabase
-          .from("ops_activity_log")
-          .select("id, message, action, created_at")
-          .eq("collection", "projects")
-          .eq("record_id", id)
-          .order("created_at", { ascending: false }),
-        project.enquiry_id
-          ? supabase
-              .from("enquiries")
-              .select("id, status, project_type")
-              .eq("id", project.enquiry_id)
-              .maybeSingle()
-          : Promise.resolve({ data: null, error: null }),
-        project.booking
-          ? supabase
-              .from("bookings")
-              .select("id, date, location, status, deposit")
-              .eq("id", project.booking)
-              .maybeSingle()
-          : Promise.resolve({ data: null, error: null }),
-        fetchRelatedFollowUps("project_id", id),
-      ]);
+    const [milestones, tasks, deliverables, activity, enquiry, booking] = await Promise.all([
+      supabase
+        .from("project_milestones")
+        .select("id, title, description, due_date, status, sort_order, completed_at")
+        .eq("project_id", id)
+        .order("sort_order", { ascending: true }),
+      supabase
+        .from("project_tasks")
+        .select("id, title, due_date, is_completed, sort_order, completed_at")
+        .eq("project_id", id)
+        .order("sort_order", { ascending: true }),
+      supabase
+        .from("project_deliverables")
+        .select("id, title, due_date, status, sort_order, completed_at")
+        .eq("project_id", id)
+        .order("sort_order", { ascending: true }),
+      supabase
+        .from("ops_activity_log")
+        .select("id, message, action, created_at")
+        .eq("collection", "projects")
+        .eq("record_id", id)
+        .order("created_at", { ascending: false }),
+      project.enquiry_id
+        ? supabase
+            .from("enquiries")
+            .select("id, status, project_type")
+            .eq("id", project.enquiry_id)
+            .maybeSingle()
+        : Promise.resolve({ data: null, error: null }),
+      project.booking
+        ? supabase
+            .from("bookings")
+            .select("id, date, location, status, deposit")
+            .eq("id", project.booking)
+            .maybeSingle()
+        : Promise.resolve({ data: null, error: null }),
+    ]);
 
     for (const result of [milestones, tasks, deliverables, activity, enquiry, booking]) {
       if (result.error) throw result.error;
     }
-    // An unavailable follow-ups query must not read as "no follow-ups": that would hide real
-    // work, so it fails the page like any other required child query.
-    if (!followUps) throw new Error("Follow-ups are unavailable");
 
     return {
       status: "ok",
@@ -103,8 +97,6 @@ export const fetchProjectDetail = cache(async (id: string): Promise<FetchProject
         (enquiry.data ?? null) as ProjectEnquiryRecord | null,
         (booking.data ?? null) as ProjectBookingRecord | null,
         (activity.data ?? []) as ProjectActivityRecord[],
-        new Date(),
-        followUps,
       ),
     };
   } catch (error) {

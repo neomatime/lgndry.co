@@ -35,6 +35,32 @@ export function buildRelatedFollowUps(rows: FollowUpListItem[], now: Date): Rela
   };
 }
 
+/**
+ * Everything a detail page needs to render its follow-ups section: the grouped rows plus the
+ * facts that decide whether Add may be offered. Composed by each parent's detail-page loader,
+ * so the parent's own detail model (shared with its edit page) is left untouched.
+ */
+export type ParentFollowUps = {
+  related: RelatedFollowUps;
+  archived: boolean;
+  /** `null` for a legacy record that was never linked to a client. */
+  clientId: string | null;
+  clientArchived: boolean;
+};
+
+export function buildParentFollowUps(
+  rows: FollowUpListItem[],
+  now: Date,
+  parent: { archived: boolean; clientId: string | null; clientArchived: boolean },
+): ParentFollowUps {
+  return {
+    related: buildRelatedFollowUps(rows, now),
+    archived: parent.archived,
+    clientId: parent.clientId,
+    clientArchived: parent.clientArchived,
+  };
+}
+
 export type RelatedSubject = "client" | "enquiry" | "project";
 
 export type RelatedAddAvailability = { canAdd: true } | { canAdd: false; reason: string };

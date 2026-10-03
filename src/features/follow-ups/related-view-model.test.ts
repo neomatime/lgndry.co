@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { followUpDetail } from "@/features/follow-ups/components/follow-up-test-data";
 import {
+  buildParentFollowUps,
   buildRelatedFollowUps,
   relatedAddAvailability,
 } from "@/features/follow-ups/related-view-model";
@@ -53,6 +54,18 @@ describe("buildRelatedFollowUps", () => {
       cancelled: [],
       total: 0,
     });
+  });
+});
+
+describe("buildParentFollowUps", () => {
+  it("groups the rows and carries the facts that decide whether Add is offered", () => {
+    const result = buildParentFollowUps([row({ id: "open", dueDate: "2026-10-10" })], NOW, {
+      archived: true,
+      clientId: null,
+      clientArchived: true,
+    });
+    expect(result.related.actionable.map((r) => r.id)).toEqual(["open"]);
+    expect(result).toMatchObject({ archived: true, clientId: null, clientArchived: true });
   });
 });
 

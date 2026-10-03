@@ -1,9 +1,28 @@
 import { fireEvent, render, screen } from "@testing-library/react";
 import { describe, expect, it, vi } from "vitest";
-import { ProjectDetailView } from "@/features/projects/components/project-detail";
-import { followUpDetail } from "@/features/follow-ups/components/follow-up-test-data";
-import { buildRelatedFollowUps } from "@/features/follow-ups/related-view-model";
+import { ProjectDetailView as BaseProjectDetailView } from "@/features/projects/components/project-detail";
 import { projectDetail } from "@/features/projects/components/project-test-data";
+import type { ProjectDetail } from "@/features/projects/types";
+import { parentFollowUps, sampleFollowUpRows } from "@/features/follow-ups/related-test-data";
+import type { ParentFollowUps } from "@/features/follow-ups/related-view-model";
+
+/** The follow-ups tab is covered below; every other test renders it empty. */
+function ProjectDetailView({
+  project,
+  followUps,
+}: {
+  project: ProjectDetail;
+  followUps?: ParentFollowUps;
+}) {
+  return (
+    <BaseProjectDetailView
+      project={project}
+      followUps={
+        followUps ?? parentFollowUps([], { archived: project.archived, clientId: project.clientId })
+      }
+    />
+  );
+}
 
 vi.mock("next/navigation", () => ({ useRouter: () => ({ refresh: vi.fn() }) }));
 
@@ -81,47 +100,48 @@ describe("ProjectDetailView", () => {
 });
 
 describe("ProjectDetailView follow-ups", () => {
-  const followUps = buildRelatedFollowUps(
-    [
-      followUpDetail({
-        id: "fu-open",
-        title: "Chase the autumn quote",
-        dueDate: "2026-10-05",
-        dueTime: "",
-      }),
-      followUpDetail({ id: "fu-cancelled", title: "Book the venue", status: "Cancelled" }),
-    ],
-    new Date("2026-09-30T08:00:00Z"),
-  );
+  const CLIENT_ID = "22222222-2222-4222-8222-222222222222";
+  const PROJECT_ID = "11111111-1111-4111-8111-111111111111";
+  const live = { archived: false, clientId: CLIENT_ID, clientArchived: false };
 
   it("adds a Follow-ups tab with a count that lists the project's follow-ups", () => {
-    render(<ProjectDetailView project={projectDetail({ followUps })} />);
+    render(
+      <ProjectDetailView
+        project={projectDetail()}
+        followUps={parentFollowUps(sampleFollowUpRows(), live)}
+      />,
+    );
     fireEvent.click(screen.getByRole("tab", { name: "Follow-ups (2)" }));
     expect(screen.getByRole("link", { name: "Chase the autumn quote" })).toHaveAttribute(
       "href",
       "/ops/follow-ups/fu-open",
     );
     expect(screen.getByRole("heading", { name: "Open (1)" })).toBeInTheDocument();
-    expect(screen.getByRole("heading", { name: "Cancelled (1)" })).toBeInTheDocument();
+    expect(screen.getByRole("heading", { name: "Completed (1)" })).toBeInTheDocument();
   });
 
   it("preselects the project's client and the project, never the source enquiry", () => {
-    render(<ProjectDetailView project={projectDetail({ followUps })} />);
-    fireEvent.click(screen.getByRole("tab", { name: "Follow-ups (2)" }));
+    render(<ProjectDetailView project={projectDetail()} followUps={parentFollowUps([], live)} />);
+    fireEvent.click(screen.getByRole("tab", { name: "Follow-ups (0)" }));
     expect(screen.getByRole("link", { name: "Add Follow-up" })).toHaveAttribute(
       "href",
-      "/ops/follow-ups/new?clientId=22222222-2222-4222-8222-222222222222&projectId=11111111-1111-4111-8111-111111111111",
+      `/ops/follow-ups/new?clientId=${CLIENT_ID}&projectId=${PROJECT_ID}`,
     );
   });
 
   it("shows a friendly empty state", () => {
-    render(<ProjectDetailView project={projectDetail()} />);
+    render(<ProjectDetailView project={projectDetail()} followUps={parentFollowUps([], live)} />);
     fireEvent.click(screen.getByRole("tab", { name: "Follow-ups (0)" }));
     expect(screen.getByText(/No follow-ups are linked to this project yet/)).toBeInTheDocument();
   });
 
   it("keeps an archived project's follow-up history but does not offer to add", () => {
-    render(<ProjectDetailView project={projectDetail({ archived: true, followUps })} />);
+    render(
+      <ProjectDetailView
+        project={projectDetail({ archived: true })}
+        followUps={parentFollowUps(sampleFollowUpRows(), { ...live, archived: true })}
+      />,
+    );
     fireEvent.click(screen.getByRole("tab", { name: "Follow-ups (2)" }));
     expect(screen.getByRole("link", { name: "Chase the autumn quote" })).toBeInTheDocument();
     expect(screen.queryByRole("link", { name: "Add Follow-up" })).not.toBeInTheDocument();
@@ -129,7 +149,12 @@ describe("ProjectDetailView follow-ups", () => {
   });
 
   it("does not offer to add when the project's client is archived", () => {
-    render(<ProjectDetailView project={projectDetail({ clientArchived: true, followUps })} />);
+    render(
+      <ProjectDetailView
+        project={projectDetail()}
+        followUps={parentFollowUps(sampleFollowUpRows(), { ...live, clientArchived: true })}
+      />,
+    );
     fireEvent.click(screen.getByRole("tab", { name: "Follow-ups (2)" }));
     expect(screen.queryByRole("link", { name: "Add Follow-up" })).not.toBeInTheDocument();
     expect(screen.getByText(/This client is archived/)).toBeInTheDocument();
