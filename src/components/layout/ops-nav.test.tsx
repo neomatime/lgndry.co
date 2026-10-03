@@ -30,6 +30,42 @@ describe("OpsNav", () => {
     expect(screen.getByRole("link", { name: "Clients" })).toHaveAttribute("href", "/ops/clients");
   });
 
+  it("renders Follow-ups as an available link in its approved position", () => {
+    render(<OpsNav />);
+    const items = Array.from(
+      screen
+        .getByRole("navigation", { name: "Command Center" })
+        .querySelectorAll("a, [aria-disabled='true']"),
+    );
+    const link = screen.getByRole("link", { name: "Follow-ups" });
+    expect(link).toHaveAttribute("href", "/ops/follow-ups");
+    expect(items.indexOf(link)).toBe(5);
+    expect(items[4]?.textContent).toContain("Inbox");
+    expect(items[6]?.textContent).toContain("Invoices");
+    expect(screen.queryByText("Follow-ups")?.closest("span[aria-disabled='true']")).toBeNull();
+  });
+
+  it.each(["/ops/follow-ups", "/ops/follow-ups/new", "/ops/follow-ups/follow-up-id"])(
+    "marks Follow-ups current on %s",
+    (pathname) => {
+      navigation.pathname = pathname;
+      render(<OpsNav />);
+      expect(screen.getByRole("link", { name: "Follow-ups" })).toHaveAttribute(
+        "aria-current",
+        "page",
+      );
+      for (const other of ["Command Center", "Enquiries", "Projects", "Clients"]) {
+        expect(screen.getByRole("link", { name: other })).not.toHaveAttribute("aria-current");
+      }
+    },
+  );
+
+  it("does not mark Follow-ups current elsewhere", () => {
+    navigation.pathname = "/ops/clients/client-id";
+    render(<OpsNav />);
+    expect(screen.getByRole("link", { name: "Follow-ups" })).not.toHaveAttribute("aria-current");
+  });
+
   it.each(["/ops/projects", "/ops/projects/new", "/ops/projects/project-id/edit"])(
     "marks Projects current on %s",
     (pathname) => {
@@ -53,7 +89,7 @@ describe("OpsNav", () => {
 
   it("keeps unfinished modules disabled", () => {
     render(<OpsNav />);
-    for (const label of ["Inbox", "Follow-ups", "Invoices", "Settings"]) {
+    for (const label of ["Inbox", "Invoices", "Settings"]) {
       expect(screen.queryByRole("link", { name: label })).not.toBeInTheDocument();
       expect(screen.getByText(label).closest("span[aria-disabled='true']")).toBeInTheDocument();
     }
