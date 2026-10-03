@@ -335,6 +335,38 @@ describe("right rail", () => {
   });
 });
 
+describe("announcements", () => {
+  it("always keeps a live region in the DOM, with and without the updated flag", () => {
+    const { unmount } = renderDetail();
+    const region = screen.getByRole("status");
+    expect(region).toBeInTheDocument();
+    expect(region).toBeEmptyDOMElement();
+    expect(region).not.toHaveClass("hidden");
+    unmount();
+    renderDetail(followUpDetail(), { updated: true });
+    expect(screen.getByRole("status")).toHaveTextContent("Follow-up updated.");
+  });
+});
+
+describe("holding lifecycle actions while the checklist refreshes", () => {
+  it("disables Mark Complete from a toggle until its refresh lands", async () => {
+    let landed: () => void = () => {};
+    mocks.toggle.mockResolvedValue({ status: "success", followUpId: FOLLOW_UP_ID });
+    mocks.refresh.mockReturnValue(new Promise<void>((resolve) => (landed = resolve)));
+    renderDetail();
+    fireEvent.click(screen.getByRole("tab", { name: "Checklist" }));
+    fireEvent.click(screen.getByRole("checkbox", { name: /Confirm client feedback/ }));
+    await waitFor(() =>
+      expect(screen.getByRole("button", { name: "Mark Complete" })).toBeDisabled(),
+    );
+    expect(screen.getByRole("button", { name: "Reschedule" })).toBeDisabled();
+    landed();
+    await waitFor(() =>
+      expect(screen.getByRole("button", { name: "Mark Complete" })).toBeEnabled(),
+    );
+  });
+});
+
 describe("edit-success notice", () => {
   it("announces a calm confirmation after an edit", () => {
     renderDetail(followUpDetail(), { updated: true });

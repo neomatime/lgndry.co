@@ -513,8 +513,12 @@ function CancelDialog({ followUp, returnFocusTo, onClose, onRefresh, onDone }: D
       returnFocusTo={returnFocusTo}
       description={
         <p>
-          &ldquo;{followUp.title}&rdquo; will be marked cancelled. A cancelled follow-up can be
-          reopened later.
+          &ldquo;{followUp.title}&rdquo; will be marked cancelled.{" "}
+          {!repeating
+            ? "A cancelled follow-up can be reopened later."
+            : scope === "occurrence"
+              ? "This occurrence will be skipped and the series continues with its next occurrence. Once that next occurrence exists, the skipped one can't be reopened."
+              : "The series will end, so nothing repeats after this. You can reopen this occurrence later, but that won't restart the series."}
         </p>
       }
     >
@@ -585,10 +589,21 @@ function ReopenDialog({ followUp, returnFocusTo, onClose, onRefresh, onDone }: D
       onClose={onClose}
       returnFocusTo={returnFocusTo}
       description={
-        <p>
-          &ldquo;{followUp.title}&rdquo; returns to Open. The saved outcome note or cancellation
-          reason is cleared, and the History tab keeps a record that it happened.
-        </p>
+        <>
+          <p>
+            &ldquo;{followUp.title}&rdquo; returns to Open. The saved outcome note or cancellation
+            reason is cleared, and the History tab keeps a record that it happened.
+          </p>
+          {followUp.series && !followUp.series.active ? (
+            <p className="text-ink mt-2 flex items-start gap-2 font-medium">
+              <TriangleAlert className="mt-0.5 size-4 shrink-0" aria-hidden="true" />
+              <span>
+                This follow-up belongs to a series that has ended. Reopening it won&apos;t restart
+                the series, so completing it won&apos;t create a next occurrence.
+              </span>
+            </p>
+          ) : null}
+        </>
       }
     >
       <form onSubmit={onSubmit} noValidate className="flex min-w-0 flex-col gap-4">
@@ -641,9 +656,13 @@ export function ReopenBlockedNote({
 export function FollowUpLifecycleControl({
   followUp,
   onDone,
+  busy = false,
 }: {
   followUp: FollowUpDetail;
   onDone: (notice: LifecycleNotice) => void;
+  /** Another part of the page (the checklist) is mid-save or mid-refresh, so the version this
+   * control would send may be stale. */
+  busy?: boolean;
 }) {
   const router = useRouter();
   const [open, setOpen] = useState<Kind | null>(null);
@@ -683,7 +702,7 @@ export function FollowUpLifecycleControl({
           <Button
             variant="secondary"
             onClick={(event) => show("reschedule", event)}
-            disabled={refreshing}
+            disabled={refreshing || busy}
           >
             <CalendarClock className="size-4" aria-hidden="true" />
             Reschedule
@@ -691,12 +710,12 @@ export function FollowUpLifecycleControl({
           <Button
             variant="secondary"
             onClick={(event) => show("cancel", event)}
-            disabled={refreshing}
+            disabled={refreshing || busy}
           >
             <Ban className="size-4" aria-hidden="true" />
             Cancel Follow-up
           </Button>
-          <Button onClick={(event) => show("complete", event)} disabled={refreshing}>
+          <Button onClick={(event) => show("complete", event)} disabled={refreshing || busy}>
             <CircleCheck className="size-4" aria-hidden="true" />
             Mark Complete
           </Button>
@@ -710,7 +729,7 @@ export function FollowUpLifecycleControl({
           View next occurrence
         </Link>
       ) : (
-        <Button onClick={(event) => show("reopen", event)} disabled={refreshing}>
+        <Button onClick={(event) => show("reopen", event)} disabled={refreshing || busy}>
           <RotateCcw className="size-4" aria-hidden="true" />
           Reopen
         </Button>

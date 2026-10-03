@@ -56,6 +56,35 @@ describe("FollowUpChecklist", () => {
     await waitFor(() => expect(box).toBeEnabled());
   });
 
+  it("keeps the checkboxes disabled until the refresh lands, then sends the new item version", async () => {
+    let landed: () => void = () => {};
+    mocks.refresh.mockReturnValue(new Promise<void>((resolve) => (landed = resolve)));
+    const busy = vi.fn();
+    const view = render(<FollowUpChecklist items={items} editable onBusyChange={busy} />);
+    const box = screen.getByRole("checkbox", { name: /Confirm client feedback/ });
+    fireEvent.click(box);
+    await waitFor(() => expect(mocks.refresh).toHaveBeenCalledOnce());
+    // The save has resolved but the old props (item version 1) are still on screen.
+    expect(box).toBeDisabled();
+    fireEvent.click(box);
+    expect(mocks.toggle).toHaveBeenCalledOnce();
+    expect(busy).toHaveBeenLastCalledWith(true);
+
+    landed();
+    const fresh = items.map((item) =>
+      item.id === "item-2"
+        ? { ...item, isCompleted: true, version: 2, completedAt: "2026-09-30T08:00:00Z" }
+        : item,
+    );
+    view.rerender(<FollowUpChecklist items={fresh} editable onBusyChange={busy} />);
+    await waitFor(() =>
+      expect(screen.getByRole("checkbox", { name: /Confirm client feedback/ })).toBeEnabled(),
+    );
+    expect(busy).toHaveBeenLastCalledWith(false);
+    fireEvent.click(screen.getByRole("checkbox", { name: /Confirm client feedback/ }));
+    expect(mocks.toggle).toHaveBeenLastCalledWith("item-2", false, 2);
+  });
+
   it("explains a conflict calmly, reverts the item and offers a refresh path", async () => {
     mocks.toggle.mockResolvedValue({ status: "conflict", message: "Checklist changed elsewhere." });
     render(<FollowUpChecklist items={items} editable />);

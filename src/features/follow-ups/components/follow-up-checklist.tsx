@@ -2,7 +2,7 @@
 
 import { Check } from "lucide-react";
 import { useRouter } from "next/navigation";
-import { useRef, useState, useTransition } from "react";
+import { useEffect, useRef, useState, useTransition } from "react";
 import { setFollowUpChecklistItem } from "@/features/follow-ups/actions";
 import { checklistProgress } from "@/features/follow-ups/list-view-model";
 import { formatJohannesburgTimestamp } from "@/features/follow-ups/timestamp-label";
@@ -54,16 +54,28 @@ export function ProgressSummary({
 export function FollowUpChecklist({
   items,
   editable,
+  onBusyChange,
 }: {
   items: FollowUpChecklistItem[];
   editable: boolean;
+  /** Reports whether a save or the refresh that follows it is still in flight, so other controls
+   * that send the follow-up's version can hold off until fresh data lands. */
+  onBusyChange?: (busy: boolean) => void;
 }) {
   const router = useRouter();
-  const [, startRefresh] = useTransition();
+  const [refreshing, startRefresh] = useTransition();
   const [pendingId, setPendingId] = useState<string | null>(null);
   const [choices, setChoices] = useState<Record<string, Pending>>({});
   const [feedback, setFeedback] = useState<Feedback>(null);
   const busy = useRef(false);
+  // A saved toggle bumps the item's version; until the refresh lands the props still carry the
+  // old one, so a second click would send a stale version and get a spurious conflict.
+  const locked = pendingId !== null || refreshing;
+
+  useEffect(() => {
+    onBusyChange?.(locked);
+    return () => onBusyChange?.(false);
+  }, [locked, onBusyChange]);
 
   const isDone = (item: FollowUpChecklistItem) => {
     const choice = choices[item.id];
@@ -81,7 +93,7 @@ export function FollowUpChecklist({
   }
 
   async function toggle(item: FollowUpChecklistItem) {
-    if (busy.current) return;
+    if (busy.current || refreshing) return;
     busy.current = true;
     const next = !isDone(item);
     setFeedback(null);
@@ -125,7 +137,7 @@ export function FollowUpChecklist({
                     type="checkbox"
                     className="mt-0.5 size-4 shrink-0"
                     checked={done}
-                    disabled={pendingId !== null}
+                    disabled={locked}
                     aria-busy={pendingId === item.id}
                     onChange={() => void toggle(item)}
                   />

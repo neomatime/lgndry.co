@@ -94,6 +94,14 @@ describe("available controls", () => {
   });
 });
 
+describe("busy hold", () => {
+  it("disables the lifecycle buttons while another part of the page is mid-save", () => {
+    render(<FollowUpLifecycleControl followUp={followUpDetail()} onDone={onDone} busy />);
+    for (const name of ["Mark Complete", "Reschedule", "Cancel Follow-up"])
+      expect(screen.getByRole("button", { name })).toBeDisabled();
+  });
+});
+
 describe("dialog focus management", () => {
   it("opens a labelled dialog with focus on the first field", () => {
     renderControl();
@@ -513,6 +521,41 @@ describe("Cancel", () => {
     expect(screen.getByLabelText("Reason for cancelling")).toHaveValue("Nope");
   });
 
+  it("only promises a later reopen for a standalone follow-up", () => {
+    renderControl();
+    fireEvent.click(screen.getByRole("button", { name: "Cancel Follow-up" }));
+    expect(screen.getByRole("dialog")).toHaveAccessibleDescription(
+      /A cancelled follow-up can be reopened later./,
+    );
+  });
+
+  it("explains that skipping continues the series and can't be reopened once the successor exists", () => {
+    renderControl(recurringDetail());
+    fireEvent.click(screen.getByRole("button", { name: "Cancel Follow-up" }));
+    const dialog = screen.getByRole("dialog");
+    expect(dialog).toHaveAccessibleDescription(
+      /skipped and the series continues with its next occurrence. Once that next occurrence exists, the skipped one can't be reopened./,
+    );
+    expect(dialog).not.toHaveAccessibleDescription(/can be reopened later/);
+  });
+
+  it("explains that cancelling this and future occurrences ends the series and reopening won't restart it", () => {
+    renderControl(recurringDetail());
+    fireEvent.click(screen.getByRole("button", { name: "Cancel Follow-up" }));
+    fireEvent.click(
+      screen.getByRole("radio", { name: "This and future occurrences (end the series)" }),
+    );
+    const dialog = screen.getByRole("dialog");
+    expect(dialog).toHaveAccessibleDescription(
+      /The series will end, so nothing repeats after this. You can reopen this occurrence later, but that won't restart the series./,
+    );
+    expect(dialog).not.toHaveAccessibleDescription(/skipped/);
+    fireEvent.click(
+      screen.getByRole("radio", { name: "This occurrence only (skip it and continue the series)" }),
+    );
+    expect(dialog).toHaveAccessibleDescription(/skipped/);
+  });
+
   it("uses a clearly different label for the dismiss button", () => {
     renderControl();
     fireEvent.click(screen.getByRole("button", { name: "Cancel Follow-up" }));
@@ -546,6 +589,26 @@ describe("Reopen", () => {
     expect(
       within(screen.getByRole("alert")).getByRole("link", { name: "View next occurrence" }),
     ).toHaveAttribute("href", `/ops/follow-ups/${SUCCESSOR_ID}`);
+  });
+
+  it("warns that reopening won't restart an ended series", () => {
+    renderControl(recurringDetail({ ...closed(), series: seriesOf({ active: false }) }));
+    fireEvent.click(screen.getByRole("button", { name: "Reopen" }));
+    expect(screen.getByRole("dialog")).toHaveAccessibleDescription(
+      /belongs to a series that has ended. Reopening it won't restart the series, so completing it won't create a next occurrence./,
+    );
+    // The edit form locks an ended series' rule, so there is no "use Edit" pointer.
+    expect(screen.getByRole("dialog")).not.toHaveTextContent(/Edit/);
+  });
+
+  it("shows no ended-series warning for an active series or a standalone follow-up", () => {
+    const { unmount } = renderControl(recurringDetail(closed()));
+    fireEvent.click(screen.getByRole("button", { name: "Reopen" }));
+    expect(screen.getByRole("dialog")).not.toHaveTextContent(/series that has ended/);
+    unmount();
+    renderControl(closed());
+    fireEvent.click(screen.getByRole("button", { name: "Reopen" }));
+    expect(screen.getByRole("dialog")).not.toHaveTextContent(/series that has ended/);
   });
 
   it("shows a server error without closing", async () => {

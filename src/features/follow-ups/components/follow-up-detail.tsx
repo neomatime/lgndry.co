@@ -3,7 +3,7 @@
 import { Calendar, Clock, FileText, Flag, Folder, Mail, Pencil, Phone, User } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
 import Link from "next/link";
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState, useSyncExternalStore } from "react";
 import { Tabs } from "@/components/ui/tabs";
 import {
   FollowUpChecklist,
@@ -85,6 +85,15 @@ export function FollowUpDetailView({
 }) {
   const nowDate = useMemo(() => new Date(now), [now]);
   const [notice, setNotice] = useState<LifecycleNotice | null>(null);
+  const [checklistBusy, setChecklistBusy] = useState(false);
+  // False while the server-rendered HTML hydrates, true afterwards. The "updated" notice waits for
+  // it so it is inserted into the (already present) live region after load, which is what makes
+  // assistive technology announce it; text that is merely present on first paint is not.
+  const hydrated = useSyncExternalStore(
+    () => () => {},
+    () => true,
+    () => false,
+  );
   const heading = useRef<HTMLHeadingElement>(null);
 
   // After a lifecycle action the control that opened the dialog may be gone (Mark Complete
@@ -141,7 +150,9 @@ export function FollowUpDetailView({
     </div>
   );
 
-  const checklist = <FollowUpChecklist items={followUp.checklist} editable={open} />;
+  const checklist = (
+    <FollowUpChecklist items={followUp.checklist} editable={open} onBusyChange={setChecklistBusy} />
+  );
 
   const history =
     followUp.activity.length === 0 ? (
@@ -194,13 +205,15 @@ export function FollowUpDetailView({
               Edit Follow-up
             </Link>
           ) : null}
-          <FollowUpLifecycleControl followUp={followUp} onDone={setNotice} />
+          <FollowUpLifecycleControl followUp={followUp} onDone={setNotice} busy={checklistBusy} />
         </div>
       </div>
 
       <ReopenBlockedNote followUp={followUp} />
 
-      <div role="status" className="empty:hidden">
+      {/* Always in the DOM (never display:none) so changes are announced. While empty it
+          takes no space: its negative margin cancels one of the two flex gaps around it. */}
+      <div role="status" className="empty:-mb-8">
         {notice ? (
           <div className="border-line-strong flex flex-wrap items-center gap-x-4 gap-y-1 border p-4 text-sm">
             <p className="min-w-0 break-words">{notice.message}</p>
@@ -213,7 +226,7 @@ export function FollowUpDetailView({
               </Link>
             ) : null}
           </div>
-        ) : updated ? (
+        ) : updated && hydrated ? (
           <div className="border-line-strong border p-4 text-sm">Follow-up updated.</div>
         ) : null}
       </div>
