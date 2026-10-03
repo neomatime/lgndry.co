@@ -1,5 +1,7 @@
 import { Tabs } from "@/components/ui/tabs";
 import type { EnquiryDetail } from "@/features/enquiries/detail-view-model";
+import { RelatedFollowUps } from "@/features/follow-ups/components/related-follow-ups";
+import { relatedAddAvailability } from "@/features/follow-ups/related-view-model";
 
 function formatBytes(bytes: number): string {
   return bytes >= 1_000_000
@@ -8,6 +10,11 @@ function formatBytes(bytes: number): string {
 }
 
 export function EnquiryDetailTabs({ enquiry }: { enquiry: EnquiryDetail }) {
+  const followUpAdd = relatedAddAvailability("enquiry", {
+    archived: enquiry.archived,
+    clientId: enquiry.clientId,
+    clientArchived: enquiry.clientArchived,
+  });
   return (
     <Tabs
       items={[
@@ -61,6 +68,19 @@ export function EnquiryDetailTabs({ enquiry }: { enquiry: EnquiryDetail }) {
                 ))}
               </ul>
             ),
+        },
+        {
+          id: "follow-ups",
+          label: `Follow-ups (${enquiry.followUps.total})`,
+          content: (
+            <RelatedFollowUps
+              related={enquiry.followUps}
+              subject="enquiry"
+              add={{ clientId: enquiry.clientId ?? "", enquiryId: enquiry.id }}
+              canAdd={followUpAdd.canAdd}
+              addBlockedReason={followUpAdd.canAdd ? undefined : followUpAdd.reason}
+            />
+          ),
         },
         {
           id: "activity",

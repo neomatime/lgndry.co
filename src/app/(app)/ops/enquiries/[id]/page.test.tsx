@@ -1,7 +1,9 @@
-import { render, screen } from "@testing-library/react";
+import { fireEvent, render, screen } from "@testing-library/react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import EnquiryDetailPage from "@/app/(app)/ops/enquiries/[id]/page";
 import type { EnquiryDetail } from "@/features/enquiries/detail-view-model";
+import { followUpDetail } from "@/features/follow-ups/components/follow-up-test-data";
+import { buildRelatedFollowUps } from "@/features/follow-ups/related-view-model";
 
 const { fetchMock, requireOpsUserMock } = vi.hoisted(() => ({
   fetchMock: vi.fn(),
@@ -40,6 +42,10 @@ function enquiry(overrides: Partial<EnquiryDetail> = {}): EnquiryDetail {
     attachments: [],
     activity: [],
     project: null,
+    clientId: "22222222-2222-4222-8222-222222222222",
+    archived: false,
+    clientArchived: false,
+    followUps: buildRelatedFollowUps([], new Date("2026-09-30T08:00:00Z")),
     ...overrides,
   };
 }
@@ -93,4 +99,32 @@ describe("EnquiryDetailPage project action", () => {
       expect(screen.queryByRole("link", { name: "Open Project" })).not.toBeInTheDocument();
     },
   );
+});
+
+describe("EnquiryDetailPage follow-ups", () => {
+  const followUps = buildRelatedFollowUps(
+    [followUpDetail({ id: "fu-1", title: "Chase the autumn quote", dueDate: "2026-10-05" })],
+    new Date("2026-09-30T08:00:00Z"),
+  );
+
+  it("shows the Follow-ups tab with the enquiry-linked follow-ups and an add link", async () => {
+    fetchMock.mockResolvedValue({ status: "ok", enquiry: enquiry({ followUps }) });
+    render(await EnquiryDetailPage(props));
+    fireEvent.click(screen.getByRole("tab", { name: "Follow-ups (1)" }));
+    expect(screen.getByRole("link", { name: "Chase the autumn quote" })).toHaveAttribute(
+      "href",
+      "/ops/follow-ups/fu-1",
+    );
+    expect(screen.getByRole("link", { name: "Add Follow-up" })).toHaveAttribute(
+      "href",
+      "/ops/follow-ups/new?clientId=22222222-2222-4222-8222-222222222222&enquiryId=11111111-1111-4111-8111-111111111111",
+    );
+  });
+
+  it("fails the whole page when the loader reports an error, not an empty tab", async () => {
+    fetchMock.mockResolvedValue({ status: "error" });
+    render(await EnquiryDetailPage(props));
+    expect(screen.getByText("This enquiry is temporarily unavailable")).toBeInTheDocument();
+    expect(screen.queryByRole("tab", { name: /Follow-ups/ })).not.toBeInTheDocument();
+  });
 });

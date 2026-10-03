@@ -2,6 +2,8 @@ import { fireEvent, render, screen } from "@testing-library/react";
 import { describe, expect, it } from "vitest";
 import { EnquiryDetailTabs } from "@/features/enquiries/components/enquiry-detail-tabs";
 import type { EnquiryDetail } from "@/features/enquiries/detail-view-model";
+import { followUpDetail } from "@/features/follow-ups/components/follow-up-test-data";
+import { buildRelatedFollowUps } from "@/features/follow-ups/related-view-model";
 
 function detail(over: Partial<EnquiryDetail> = {}): EnquiryDetail {
   return {
@@ -25,6 +27,10 @@ function detail(over: Partial<EnquiryDetail> = {}): EnquiryDetail {
       { id: "a1", message: "New project enquiry from Thandi Mokoena", relativeTime: "2 hours ago" },
     ],
     project: null,
+    clientId: "client-1",
+    archived: false,
+    clientArchived: false,
+    followUps: buildRelatedFollowUps([], new Date("2026-09-30T08:00:00Z")),
     ...over,
   };
 }
@@ -60,5 +66,78 @@ describe("EnquiryDetailTabs", () => {
     render(<EnquiryDetailTabs enquiry={detail({ attachments: [] })} />);
     fireEvent.click(screen.getByRole("tab", { name: /Attachments \(0\)/ }));
     expect(screen.getByText("No attachments.")).toBeInTheDocument();
+  });
+});
+
+describe("EnquiryDetailTabs follow-ups", () => {
+  const followUps = buildRelatedFollowUps(
+    [
+      followUpDetail({
+        id: "fu-open",
+        title: "Chase the autumn quote",
+        dueDate: "2026-10-05",
+        dueTime: "",
+      }),
+      followUpDetail({
+        id: "fu-done",
+        title: "Thank the client",
+        status: "Completed",
+        completedAt: "2026-09-29T08:00:00Z",
+      }),
+    ],
+    new Date("2026-09-30T08:00:00Z"),
+  );
+
+  it("shows a Follow-ups tab with a count, between the existing tabs", () => {
+    render(<EnquiryDetailTabs enquiry={detail({ followUps })} />);
+    expect(screen.getAllByRole("tab").map((tab) => tab.textContent)).toEqual([
+      "Overview",
+      "Attachments (1)",
+      "Follow-ups (2)",
+      "Activity (1)",
+    ]);
+  });
+
+  it("lists the enquiry-linked follow-ups and preselects the enquiry's client and the enquiry", () => {
+    render(<EnquiryDetailTabs enquiry={detail({ id: "e1", clientId: "client-9", followUps })} />);
+    fireEvent.click(screen.getByRole("tab", { name: "Follow-ups (2)" }));
+    expect(screen.getByRole("link", { name: "Chase the autumn quote" })).toHaveAttribute(
+      "href",
+      "/ops/follow-ups/fu-open",
+    );
+    expect(screen.getByRole("heading", { name: "Completed (1)" })).toBeInTheDocument();
+    expect(screen.getByRole("link", { name: "Add Follow-up" })).toHaveAttribute(
+      "href",
+      "/ops/follow-ups/new?clientId=client-9&enquiryId=e1",
+    );
+  });
+
+  it("shows a friendly empty state", () => {
+    render(<EnquiryDetailTabs enquiry={detail()} />);
+    fireEvent.click(screen.getByRole("tab", { name: "Follow-ups (0)" }));
+    expect(screen.getByText(/No follow-ups are linked to this enquiry yet/)).toBeInTheDocument();
+  });
+
+  it("does not offer Add for an enquiry with no client, and says why", () => {
+    render(<EnquiryDetailTabs enquiry={detail({ clientId: null, followUps })} />);
+    fireEvent.click(screen.getByRole("tab", { name: "Follow-ups (2)" }));
+    expect(screen.queryByRole("link", { name: "Add Follow-up" })).not.toBeInTheDocument();
+    expect(screen.getByText(/isn't linked to one/)).toBeInTheDocument();
+    expect(screen.getByRole("link", { name: "Chase the autumn quote" })).toBeInTheDocument();
+  });
+
+  it("keeps an archived enquiry's history but does not offer Add", () => {
+    render(<EnquiryDetailTabs enquiry={detail({ archived: true, followUps })} />);
+    fireEvent.click(screen.getByRole("tab", { name: "Follow-ups (2)" }));
+    expect(screen.queryByRole("link", { name: "Add Follow-up" })).not.toBeInTheDocument();
+    expect(screen.getByText(/This enquiry is archived/)).toBeInTheDocument();
+    expect(screen.getByRole("link", { name: "Thank the client" })).toBeInTheDocument();
+  });
+
+  it("does not offer Add when the enquiry's client is archived", () => {
+    render(<EnquiryDetailTabs enquiry={detail({ clientArchived: true, followUps })} />);
+    fireEvent.click(screen.getByRole("tab", { name: "Follow-ups (2)" }));
+    expect(screen.queryByRole("link", { name: "Add Follow-up" })).not.toBeInTheDocument();
+    expect(screen.getByText(/This client is archived/)).toBeInTheDocument();
   });
 });
