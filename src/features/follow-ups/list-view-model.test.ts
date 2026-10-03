@@ -5,9 +5,12 @@ import {
   getScheduleState,
   johannesburgDate,
   johannesburgWeek,
+  projectLabel,
+  shapeFollowUp,
   sortFollowUps,
   summarizeFollowUps,
   withScheduleStates,
+  type FollowUpRecord,
 } from "@/features/follow-ups/list-view-model";
 import type { FollowUpListItem } from "@/features/follow-ups/types";
 
@@ -43,6 +46,73 @@ const base = {
   updatedAt: "2026-09-29T08:00:00Z",
   checklist: [],
 } satisfies FollowUpListItem;
+
+describe("project labels", () => {
+  const record: FollowUpRecord = {
+    id: "fu-1",
+    reference_number: 12,
+    client_id: "c",
+    contact_id: null,
+    enquiry_id: null,
+    project_id: "p-1",
+    follow_up_type: "Client Check-in",
+    custom_type: null,
+    title: "Call client",
+    overview: null,
+    notes: null,
+    due_date: "2026-09-30",
+    due_time: null,
+    priority: "Medium",
+    contact_methods: ["Phone"],
+    status: "Open",
+    outcome: null,
+    cancellation_reason: null,
+    completed_at: null,
+    cancelled_at: null,
+    owner_user_id: "u",
+    owner_name: "Neo",
+    owner_email: "neo@example.com",
+    series_id: null,
+    occurrence_number: 1,
+    successor_id: null,
+    version: 1,
+    created_at: "2026-09-29T08:00:00Z",
+    updated_at: "2026-09-29T08:00:00Z",
+    client_record: { id: "c", name: "Acme" },
+    contact_record: null,
+    enquiry_record: null,
+    project_record: { id: "p-1", name: "Autumn Campaign" },
+    follow_up_checklist_items: [],
+  };
+
+  it("uses the project's name as the related label", () => {
+    expect(shapeFollowUp(record).related).toEqual({
+      id: "p-1",
+      label: "Autumn Campaign",
+      kind: "Project",
+    });
+  });
+
+  it.each([
+    ["NULL", null],
+    ["blank", "  "],
+  ])(
+    "falls back to 'Untitled project' for a %s project name (projects.name is nullable)",
+    (_label, name) => {
+      expect(shapeFollowUp({ ...record, project_record: { id: "p-1", name } }).related).toEqual({
+        id: "p-1",
+        label: "Untitled project",
+        kind: "Project",
+      });
+    },
+  );
+
+  it("projectLabel never renders a non-string as text", () => {
+    expect(projectLabel(undefined)).toBe("Untitled project");
+    expect(projectLabel(42)).toBe("Untitled project");
+    expect(projectLabel("Winter Shoot")).toBe("Winter Shoot");
+  });
+});
 
 describe("follow-up list view model", () => {
   it("uses Johannesburg date and time for due state", () => {

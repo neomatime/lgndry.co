@@ -83,7 +83,15 @@ export function nextOccurrenceDate(currentDate: string, rule: string) {
       if (until && candidate.getTime() > until.getTime()) return null;
       return dateString(candidate);
     }
-    const next = parsed.after(utcDate(currentDate), false);
+    // An "After N occurrences" rule carries COUNT, but rrule counts pattern
+    // dates from DTSTART, not occurrences actually created: once an
+    // occurrence has been rescheduled off the pattern (or completed late),
+    // rrule runs out of counted dates before the series has really created
+    // N occurrences and the series would end early. COUNT is therefore
+    // ignored here; the database enforces the limit itself
+    // (max_occurrences vs occurrences_created). UNTIL still applies.
+    const uncounted = new RRule({ ...parsed.origOptions, count: null });
+    const next = uncounted.after(utcDate(currentDate), false);
     return next ? dateString(next) : null;
   } catch {
     return null;

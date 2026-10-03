@@ -141,6 +141,25 @@ describe("fetchFollowUpFormOptions", () => {
     ]);
   });
 
+  it("labels a project with a NULL or blank name 'Untitled project', never 'null'", async () => {
+    clientsResult.data = [{ id: "client-1", name: "Blackridge" }];
+    projectsResult.data = [
+      { id: "project-1", client: "client-1", name: null },
+      { id: "project-2", client: "client-1", name: "   " },
+      { id: "project-3", client: "client-1", name: "Autumn Campaign" },
+    ];
+
+    const { fetchFollowUpFormOptions } =
+      await import("@/features/follow-ups/fetch-follow-up-form-data");
+    const result = await fetchFollowUpFormOptions();
+
+    expect(result?.[0]?.projects).toEqual([
+      { id: "project-1", label: "Untitled project" },
+      { id: "project-2", label: "Untitled project" },
+      { id: "project-3", label: "Autumn Campaign" },
+    ]);
+  });
+
   it.each([
     ["clients", clientsResult],
     ["contacts", contactsResult],

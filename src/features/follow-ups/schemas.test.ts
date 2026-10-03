@@ -1,5 +1,16 @@
 import { describe, expect, it } from "vitest";
-import { followUpInputSchema } from "@/features/follow-ups/schemas";
+import { followUpInputSchema, rescheduleFollowUpSchema } from "@/features/follow-ups/schemas";
+
+describe("rescheduleFollowUpSchema", () => {
+  it('accepts only scope "occurrence" (the backend "future" reschedule is not exposed)', () => {
+    const input = { dueDate: "2026-10-10", dueTime: "09:00" };
+    expect(rescheduleFollowUpSchema.safeParse({ ...input, scope: "occurrence" }).success).toBe(
+      true,
+    );
+    expect(rescheduleFollowUpSchema.safeParse({ ...input, scope: "future" }).success).toBe(false);
+    expect(rescheduleFollowUpSchema.safeParse(input).success).toBe(false);
+  });
+});
 
 const valid = {
   clientId: "11111111-1111-4111-8111-111111111111",

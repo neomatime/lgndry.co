@@ -48,7 +48,8 @@ export type FollowUpRecord = {
     role_title: string | null;
   } | null;
   enquiry_record: { id: string; project_type: string } | null;
-  project_record: { id: string; name: string } | null;
+  // projects.name is nullable in the live database.
+  project_record: { id: string; name: string | null } | null;
   follow_up_checklist_items: Array<{
     id: string;
     label: string;
@@ -133,6 +134,13 @@ export function getScheduleState(
   return "Upcoming";
 }
 
+export const UNTITLED_PROJECT_LABEL = "Untitled project";
+
+/** A project's display name, with a friendly fallback for a NULL/blank `projects.name`. */
+export function projectLabel(name: unknown) {
+  return typeof name === "string" && name.trim() ? name : UNTITLED_PROJECT_LABEL;
+}
+
 export function shapeFollowUp(record: FollowUpRecord, now = new Date()): FollowUpListItem {
   const dueTime = record.due_time?.slice(0, 5) ?? "";
   const related = record.enquiry_record
@@ -144,7 +152,7 @@ export function shapeFollowUp(record: FollowUpRecord, now = new Date()): FollowU
     : record.project_record
       ? {
           id: record.project_record.id,
-          label: record.project_record.name,
+          label: projectLabel(record.project_record.name),
           kind: "Project" as const,
         }
       : null;

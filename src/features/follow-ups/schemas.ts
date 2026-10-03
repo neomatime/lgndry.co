@@ -112,10 +112,13 @@ export const cancelFollowUpSchema = z.object({
   reason: required(1000),
   scope: z.enum(["occurrence", "series"]),
 });
+// Rescheduling is occurrence-only: the backend's "future" reschedule path only
+// moves the series' time (never its date pattern) and is deliberately not
+// exposed. The field stays so the action's RPC payload shape is unchanged.
 export const rescheduleFollowUpSchema = z.object({
   dueDate: date,
   dueTime: optionalTime,
-  scope: z.enum(["occurrence", "future"]),
+  scope: z.enum(["occurrence"]),
 });
 
 export type ParsedFollowUpInput = z.infer<typeof followUpInputSchema>;

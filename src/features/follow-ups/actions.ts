@@ -18,6 +18,7 @@ type SupabaseServerClient = Awaited<ReturnType<typeof createSupabaseServerClient
 type RelationIds = { clientId?: string; enquiryId?: string; projectId?: string };
 
 const UUID = z.uuid();
+const VERSION = z.number().int().positive();
 const FAILED = "We couldn't save this follow-up just now. Please try again.";
 const NOT_FOUND: FollowUpActionState = {
   status: "not-found",
@@ -43,6 +44,19 @@ function errors(error: z.ZodError) {
   for (const issue of error.issues)
     (result[issue.path.join(".") || "form"] ??= []).push(issue.message);
   return result;
+}
+
+/**
+ * The optimistic-lock version every versioned RPC compares against. The SQL
+ * treats a NULL/mismatched version as a conflict, but a version that isn't a
+ * positive integer can only come from a bug or a crafted call, so it is
+ * rejected here before any database access. Returns the failure state to
+ * send back, or `null` when the version is usable.
+ */
+function invalidVersion(operation: string, version: unknown): FollowUpActionState | null {
+  if (VERSION.safeParse(version).success) return null;
+  console.error(`follow-ups: ${operation} received an invalid version`);
+  return { status: "error", message: FAILED };
 }
 
 function invalid(error: z.ZodError): FollowUpActionState {
@@ -223,6 +237,8 @@ export async function updateFollowUp(
 ): Promise<FollowUpActionState> {
   await requireOpsUser();
   if (!UUID.safeParse(id).success) return NOT_FOUND;
+  const badVersion = invalidVersion("update", version);
+  if (badVersion) return badVersion;
   const parsed = followUpInputSchema.safeParse(input);
   if (!parsed.success) return invalid(parsed.error);
   const shaped = payload(parsed.data);
@@ -290,6 +306,8 @@ export async function setFollowUpChecklistItem(
 ): Promise<FollowUpActionState> {
   await requireOpsUser();
   if (!UUID.safeParse(itemId).success) return NOT_FOUND;
+  const badVersion = invalidVersion("checklist", version);
+  if (badVersion) return badVersion;
   const supabase = await createSupabaseServerClient();
   const relations = await fetchChecklistItemRelationIds(supabase, itemId);
   const { data, error } = await supabase.rpc("set_follow_up_checklist_item", {
@@ -307,6 +325,8 @@ export async function rescheduleFollowUp(
 ): Promise<FollowUpActionState> {
   await requireOpsUser();
   if (!UUID.safeParse(id).success) return NOT_FOUND;
+  const badVersion = invalidVersion("reschedule", version);
+  if (badVersion) return badVersion;
   const parsed = rescheduleFollowUpSchema.safeParse(input);
   if (!parsed.success) return invalid(parsed.error);
   const supabase = await createSupabaseServerClient();
@@ -329,6 +349,8 @@ export async function completeFollowUp(
 ): Promise<FollowUpActionState> {
   await requireOpsUser();
   if (!UUID.safeParse(id).success) return NOT_FOUND;
+  const badVersion = invalidVersion("complete", version);
+  if (badVersion) return badVersion;
   const parsed = completeFollowUpSchema.safeParse(input);
   if (!parsed.success) return invalid(parsed.error);
   const supabase = await createSupabaseServerClient();
@@ -351,6 +373,8 @@ export async function cancelFollowUp(
 ): Promise<FollowUpActionState> {
   await requireOpsUser();
   if (!UUID.safeParse(id).success) return NOT_FOUND;
+  const badVersion = invalidVersion("cancel", version);
+  if (badVersion) return badVersion;
   const parsed = cancelFollowUpSchema.safeParse(input);
   if (!parsed.success) return invalid(parsed.error);
   const supabase = await createSupabaseServerClient();
@@ -381,6 +405,8 @@ export async function cancelFollowUp(
 export async function reopenFollowUp(id: string, version: number): Promise<FollowUpActionState> {
   await requireOpsUser();
   if (!UUID.safeParse(id).success) return NOT_FOUND;
+  const badVersion = invalidVersion("reopen", version);
+  if (badVersion) return badVersion;
   const supabase = await createSupabaseServerClient();
   const relations = await fetchRelationIds(supabase, id);
   const { data, error } = await supabase.rpc("reopen_follow_up", {

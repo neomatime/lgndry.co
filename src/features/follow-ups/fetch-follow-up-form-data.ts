@@ -3,6 +3,7 @@ import "server-only";
 import { cache } from "react";
 import { followUpDetailToInput } from "@/features/follow-ups/detail-view-model";
 import { fetchFollowUpDetail } from "@/features/follow-ups/fetch-follow-up-detail";
+import { projectLabel } from "@/features/follow-ups/list-view-model";
 import type { FollowUpClientOption, FollowUpInput } from "@/features/follow-ups/types";
 import { createSupabaseServerClient } from "@/lib/db/server";
 
@@ -49,7 +50,7 @@ export async function fetchFollowUpFormOptions(): Promise<FollowUpClientOption[]
         })),
       projects: ((projects.data ?? []) as Row[])
         .filter((project) => project.client === client.id)
-        .map((project) => ({ id: String(project.id), label: String(project.name) })),
+        .map((project) => ({ id: String(project.id), label: projectLabel(project.name) })),
     }));
   } catch (error) {
     console.error("Could not load follow-up form options", error);

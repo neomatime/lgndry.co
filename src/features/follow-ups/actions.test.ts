@@ -190,6 +190,77 @@ describe("auth ordering", () => {
   });
 });
 
+describe("version validation", () => {
+  const cases: Array<[string, (version: number) => Promise<FollowUpActionState>]> = [
+    ["updateFollowUp", (version) => updateFollowUp(id, version, followUpInput)],
+    ["setFollowUpChecklistItem", (version) => setFollowUpChecklistItem(id, true, version)],
+    [
+      "rescheduleFollowUp",
+      (version) =>
+        rescheduleFollowUp(id, version, {
+          dueDate: "2026-10-02",
+          dueTime: "",
+          scope: "occurrence",
+        }),
+    ],
+    ["completeFollowUp", (version) => completeFollowUp(id, version, { outcome: "" })],
+    [
+      "cancelFollowUp (occurrence)",
+      (version) => cancelFollowUp(id, version, { reason: "Not needed", scope: "occurrence" }),
+    ],
+    [
+      "cancelFollowUp (series)",
+      (version) => cancelFollowUp(id, version, { reason: "Not needed", scope: "series" }),
+    ],
+    ["reopenFollowUp", (version) => reopenFollowUp(id, version)],
+  ];
+  // A server action's arguments come from the client, so the declared `number` type is not a
+  // guarantee: anything that is not a positive integer must never reach the RPC, where a NULL
+  // version used to skip the optimistic-lock check entirely.
+  const badVersions: Array<[string, unknown]> = [
+    ["NaN", Number.NaN],
+    ["0", 0],
+    ["a negative number", -1],
+    ["a non-integer", 1.5],
+    ["Infinity", Number.POSITIVE_INFINITY],
+    ["undefined", undefined],
+    ["null", null],
+    ["a numeric string", "1"],
+  ];
+  const matrix = cases.flatMap(([name, run]) =>
+    badVersions.map(([label, version]) => [name, label, run, version] as const),
+  );
+
+  it.each(matrix)(
+    "%s rejects %s as the version without touching the database",
+    async (_name, _label, run, version) => {
+      const spy = vi.spyOn(console, "error").mockImplementation(() => undefined);
+
+      await expect(run(version as number)).resolves.toEqual({ status: "error", message: FAILED });
+
+      expect(mocks.requireOpsUser).toHaveBeenCalled();
+      expect(mocks.createServer).not.toHaveBeenCalled();
+      expect(fromMock).not.toHaveBeenCalled();
+      expect(mocks.rpc).not.toHaveBeenCalled();
+      expect(spy).toHaveBeenCalledWith(expect.stringContaining("invalid version"));
+      spy.mockRestore();
+    },
+  );
+
+  it.each(cases)("%s checks auth before validating the version", async (_name, run) => {
+    mocks.requireOpsUser.mockRejectedValueOnce(new Error("redirect"));
+    await expect(run(Number.NaN)).rejects.toThrow("redirect");
+  });
+
+  it.each(cases)("%s passes a valid positive integer version through", async (_name, run) => {
+    await run(7);
+    expect(mocks.rpc).toHaveBeenCalledWith(
+      expect.any(String),
+      expect.objectContaining({ p_version: 7 }),
+    );
+  });
+});
+
 describe("createFollowUp", () => {
   it("returns invalid without calling the database when input fails validation", async () => {
     await expect(createFollowUp({})).resolves.toMatchObject({ status: "invalid" });
@@ -343,7 +414,7 @@ describe("setFollowUpChecklistItem", () => {
 });
 
 describe("rescheduleFollowUp", () => {
-  const rescheduleInput = { dueDate: "2026-10-10", dueTime: "09:00", scope: "future" as const };
+  const rescheduleInput = { dueDate: "2026-10-10", dueTime: "09:00", scope: "occurrence" as const };
 
   it("returns a not-found result without calling the database for a malformed id", async () => {
     await expect(rescheduleFollowUp("not-a-uuid", 1, rescheduleInput)).resolves.toEqual(NOT_FOUND);
@@ -352,7 +423,7 @@ describe("rescheduleFollowUp", () => {
 
   it("returns invalid without calling the database when input fails validation", async () => {
     await expect(
-      rescheduleFollowUp(id, 1, { dueDate: "not-a-date", dueTime: "", scope: "future" }),
+      rescheduleFollowUp(id, 1, { dueDate: "not-a-date", dueTime: "", scope: "occurrence" }),
     ).resolves.toMatchObject({ status: "invalid" });
     expect(mocks.rpc).not.toHaveBeenCalled();
   });
@@ -375,8 +446,16 @@ describe("rescheduleFollowUp", () => {
 
     expect(mocks.rpc).toHaveBeenCalledWith(
       "reschedule_follow_up",
-      expect.objectContaining({ p_due_time: "09:00", p_scope: "future" }),
+      expect.objectContaining({ p_due_time: "09:00", p_scope: "occurrence" }),
     );
+  });
+
+  it('rejects scope "future" without calling the database (reschedule is occurrence-only)', async () => {
+    await expect(
+      rescheduleFollowUp(id, 5, { dueDate: "2026-10-10", dueTime: "09:00", scope: "future" }),
+    ).resolves.toMatchObject({ status: "invalid" });
+    expect(mocks.createServer).not.toHaveBeenCalled();
+    expect(mocks.rpc).not.toHaveBeenCalled();
   });
 
   it("revalidates the linked client/enquiry/project pages", async () => {
