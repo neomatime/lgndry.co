@@ -1,6 +1,6 @@
 "use client";
 
-import { useId, useState } from "react";
+import { useId } from "react";
 import {
   RECURRENCE_FREQUENCIES,
   WEEKDAYS,
@@ -15,7 +15,7 @@ const FREQUENCY_UNIT: Record<RecurrenceFrequency, string> = {
   Monthly: "month(s)",
   Custom: "day(s)",
 };
-type EndMode = "never" | "date" | "count";
+export type EndMode = "never" | "date" | "count";
 
 export const BLANK_RECURRENCE: FollowUpRecurrenceInput = {
   enabled: false,
@@ -49,6 +49,13 @@ type Props = {
   /** Locks every control, e.g. for "this occurrence only" edits. */
   disabled?: boolean;
   disabledReason?: string;
+  /**
+   * The chosen end condition. Controlled by the parent because "On a date"
+   * with no date yet cannot be told apart from "Never" by looking at `value`
+   * alone, and the parent must validate it before saving.
+   */
+  endMode: EndMode;
+  onEndModeChange: (mode: EndMode) => void;
   /** Messages keyed by recurrence field (`weekdays`, `endsOn`, ...). */
   errors?: Record<string, string[]>;
 };
@@ -60,7 +67,8 @@ function dueDateParts(dueDate?: string) {
   return { weekday: new Date(Date.UTC(year, month - 1, day)).getUTCDay(), day };
 }
 
-function endMode(value: FollowUpRecurrenceInput): EndMode {
+/** The end condition implied by a saved rule (used to initialise `endMode`). */
+export function endModeOf(value: FollowUpRecurrenceInput): EndMode {
   if (value.endsOn) return "date";
   if (value.maxOccurrences !== null) return "count";
   return "never";
@@ -82,13 +90,14 @@ function Errors({ id, messages }: { id: string; messages?: string[] }) {
 export function RecurrenceEditor({
   value,
   onChange,
+  endMode: mode,
+  onEndModeChange,
   dueDate,
   disabled = false,
   disabledReason,
   errors = {},
 }: Props) {
   const uid = useId();
-  const [mode, setMode] = useState<EndMode>(() => endMode(value));
   const patch = (next: Partial<FollowUpRecurrenceInput>) => onChange({ ...value, ...next });
   const parts = dueDateParts(dueDate);
 
@@ -123,7 +132,7 @@ export function RecurrenceEditor({
   }
 
   function chooseEnd(next: EndMode) {
-    setMode(next);
+    onEndModeChange(next);
     patch({
       endsOn: next === "date" ? value.endsOn : "",
       maxOccurrences: next === "count" ? (value.maxOccurrences ?? 2) : null,

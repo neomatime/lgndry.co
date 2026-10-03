@@ -506,6 +506,74 @@ describe("FollowUpForm - validation and failures", () => {
   });
 });
 
+describe("FollowUpForm - recurrence end conditions", () => {
+  function startRepeating() {
+    fillCreate();
+    fireEvent.click(field(/Repeat this follow-up/));
+  }
+
+  it("blocks 'On a date' with no date instead of saving a never-ending series", async () => {
+    render(<FollowUpForm clients={clients} />);
+    startRepeating();
+    fireEvent.click(field("On a date"));
+    submitCreate();
+    expect(mocks.create).not.toHaveBeenCalled();
+    const endDate = field("End date");
+    expect(endDate).toHaveAttribute("aria-invalid", "true");
+    expect(endDate).toHaveAccessibleDescription("Choose an end date, or select Never.");
+    expect(screen.getByRole("alert")).toHaveFocus();
+    // Fixing it lets the save through with the chosen date.
+    fireEvent.change(endDate, { target: { value: "2026-12-31" } });
+    submitCreate();
+    await waitFor(() => expect(mocks.create).toHaveBeenCalledOnce());
+    expect(mocks.create.mock.calls[0]![0].recurrence).toMatchObject({
+      endsOn: "2026-12-31",
+      maxOccurrences: null,
+    });
+  });
+
+  it.each([
+    ["empty", ""],
+    ["zero", "0"],
+  ])("blocks 'After N occurrences' with an %s count", async (_name, count) => {
+    render(<FollowUpForm clients={clients} />);
+    startRepeating();
+    fireEvent.click(field("After a number of occurrences"));
+    fireEvent.change(field("Number of occurrences"), { target: { value: count } });
+    submitCreate();
+    expect(mocks.create).not.toHaveBeenCalled();
+    const input = field("Number of occurrences");
+    expect(input).toHaveAttribute("aria-invalid", "true");
+    expect(input).toHaveAccessibleDescription("Enter a whole number from 2 to 500.");
+    expect(screen.getByRole("alert")).toHaveFocus();
+    fireEvent.change(input, { target: { value: "5" } });
+    submitCreate();
+    await waitFor(() => expect(mocks.create).toHaveBeenCalledOnce());
+    expect(mocks.create.mock.calls[0]![0].recurrence).toMatchObject({
+      endsOn: "",
+      maxOccurrences: 5,
+    });
+  });
+
+  it("resets the end-condition radios with the rule when scope returns to this occurrence only", async () => {
+    render(<FollowUpForm clients={clients} existingFollowUp={recurring()} />);
+    fireEvent.click(field("This and future occurrences"));
+    fireEvent.click(field("After a number of occurrences"));
+    expect(field("Number of occurrences")).toHaveValue(2);
+    fireEvent.click(field("This occurrence only"));
+    fireEvent.click(field("This and future occurrences"));
+    // The displayed mode matches the (reset) value: no radio is checked with an empty value.
+    expect(field("Never")).toBeChecked();
+    expect(field("After a number of occurrences")).not.toBeChecked();
+    expect(screen.queryByLabelText("Number of occurrences")).not.toBeInTheDocument();
+    fireEvent.click(screen.getByRole("button", { name: "Save Changes" }));
+    await waitFor(() => expect(mocks.update).toHaveBeenCalledOnce());
+    const input = mocks.update.mock.calls[0]![2];
+    expect(input.editScope).toBe("future");
+    expect(input.recurrence).toEqual(weeklyRecurrence);
+  });
+});
+
 describe("FollowUpForm - edit", () => {
   it("loads existing values and updates with the id and version", async () => {
     render(<FollowUpForm clients={clients} existingFollowUp={existing()} />);

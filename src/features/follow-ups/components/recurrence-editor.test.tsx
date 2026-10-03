@@ -3,6 +3,7 @@ import { useState } from "react";
 import { describe, expect, it } from "vitest";
 import {
   BLANK_RECURRENCE,
+  endModeOf,
   normalizeRecurrence,
   RecurrenceEditor,
 } from "@/features/follow-ups/components/recurrence-editor";
@@ -13,11 +14,21 @@ import type { FollowUpRecurrenceInput } from "@/features/follow-ups/types";
 function Harness({
   initial = BLANK_RECURRENCE,
   ...props
-}: { initial?: FollowUpRecurrenceInput } & Partial<React.ComponentProps<typeof RecurrenceEditor>>) {
+}: { initial?: FollowUpRecurrenceInput } & Partial<
+  Omit<React.ComponentProps<typeof RecurrenceEditor>, "endMode" | "onEndModeChange">
+>) {
   const [value, setValue] = useState(initial);
+  const [endMode, setEndMode] = useState(() => endModeOf(initial));
   return (
     <>
-      <RecurrenceEditor value={value} onChange={setValue} dueDate="2026-10-14" {...props} />
+      <RecurrenceEditor
+        value={value}
+        onChange={setValue}
+        endMode={endMode}
+        onEndModeChange={setEndMode}
+        dueDate="2026-10-14"
+        {...props}
+      />
       <output data-testid="value">{JSON.stringify(value)}</output>
     </>
   );
@@ -145,6 +156,14 @@ describe("RecurrenceEditor", () => {
     fireEvent.change(screen.getByLabelText("Every (week(s))"), { target: { value: "" } });
     expect(current().intervalCount).toBe(0);
     expect(recurrenceSchema.safeParse(current()).success).toBe(false);
+  });
+});
+
+describe("endModeOf", () => {
+  it("derives the end condition implied by a saved rule", () => {
+    expect(endModeOf(BLANK_RECURRENCE)).toBe("never");
+    expect(endModeOf({ ...BLANK_RECURRENCE, endsOn: "2026-12-01" })).toBe("date");
+    expect(endModeOf({ ...BLANK_RECURRENCE, maxOccurrences: 5 })).toBe("count");
   });
 });
 

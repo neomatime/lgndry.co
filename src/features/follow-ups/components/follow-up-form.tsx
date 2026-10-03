@@ -8,8 +8,10 @@ import { createFollowUp, updateFollowUp } from "@/features/follow-ups/actions";
 import { ChecklistEditor } from "@/features/follow-ups/components/checklist-editor";
 import {
   BLANK_RECURRENCE,
+  endModeOf,
   normalizeRecurrence,
   RecurrenceEditor,
+  type EndMode,
 } from "@/features/follow-ups/components/recurrence-editor";
 import { followUpInputSchema } from "@/features/follow-ups/schemas";
 import {
@@ -144,6 +146,7 @@ export function FollowUpForm({
       }),
   );
   const [fieldErrors, setFieldErrors] = useState<Record<string, string[]>>({});
+  const [endMode, setEndMode] = useState<EndMode>(() => endModeOf(value.recurrence));
   const [feedback, setFeedback] = useState<Feedback | null>(null);
   const [pending, startTransition] = useTransition();
   const feedbackRef = useRef<HTMLDivElement>(null);
@@ -182,6 +185,8 @@ export function FollowUpForm({
   }
 
   function chooseScope(scope: FollowUpEditScope) {
+    // The end-condition radios reset together with the rule they describe.
+    if (scope === "occurrence" && initial) setEndMode(endModeOf(initial.recurrence));
     setValue((current) => ({
       ...current,
       editScope: scope,
@@ -211,8 +216,18 @@ export function FollowUpForm({
       recurrence: recurrenceLocked ? value.recurrence : normalizeRecurrence(value.recurrence),
     };
     const parsed = followUpInputSchema.safeParse(candidate);
-    if (!parsed.success) {
-      setFieldErrors(errorsFor(parsed.error));
+    const errors = parsed.success ? {} : errorsFor(parsed.error);
+    // The schema reads "no end date" / "no count" as "never ends", so a chosen
+    // end condition left empty would silently save the opposite of what was
+    // picked. Catch it here, beside the control the user must fill in.
+    if (!recurrenceLocked && candidate.recurrence.enabled) {
+      if (endMode === "date" && !candidate.recurrence.endsOn)
+        errors["recurrence.endsOn"] = ["Choose an end date, or select Never."];
+      if (endMode === "count" && candidate.recurrence.maxOccurrences === null)
+        errors["recurrence.maxOccurrences"] = [FRIENDLY["recurrence.maxOccurrences"]!];
+    }
+    if (!parsed.success || Object.keys(errors).length > 0) {
+      setFieldErrors(errors);
       setFeedback({
         kind: "invalid",
         message: "Check the highlighted follow-up details and try again.",
@@ -603,6 +618,8 @@ export function FollowUpForm({
           <RecurrenceEditor
             value={value.recurrence}
             onChange={(recurrence) => setField("recurrence", recurrence)}
+            endMode={endMode}
+            onEndModeChange={setEndMode}
             dueDate={value.dueDate}
             disabled={recurrenceLocked}
             disabledReason={
