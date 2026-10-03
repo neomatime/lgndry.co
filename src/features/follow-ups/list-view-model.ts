@@ -66,12 +66,14 @@ export type FollowUpActivityRecord = {
   created_at: string;
 };
 export type FollowUpView = "All" | "Overdue" | "Today" | "Upcoming" | "Completed" | "Cancelled";
-export type FollowUpSort = "due-soonest" | "due-latest" | "newest" | "priority";
+export type FollowUpSort = "due-soonest" | "due-latest" | "newest" | "oldest" | "priority";
 export type FollowUpFilters = {
   view: FollowUpView;
   search: string;
+  clientId?: string;
   type?: FollowUpType;
   priority?: FollowUpPriority;
+  contactMethod?: FollowUpContactMethod;
   ownerId?: string;
 };
 
@@ -91,6 +93,26 @@ function johannesburgParts(now: Date) {
     date: `${get("year")}-${get("month")}-${get("day")}`,
     time: `${get("hour")}:${get("minute")}`,
   };
+}
+
+/** Today's calendar date (`YYYY-MM-DD`) in Johannesburg, never the runtime's zone. */
+export function johannesburgDate(now: Date) {
+  return johannesburgParts(now).date;
+}
+
+/** Adds whole days to a `YYYY-MM-DD` calendar date. Pure date maths, no time zone involved. */
+export function addDays(date: string, days: number) {
+  const [year = 1970, month = 1, day = 1] = date.split("-").map(Number);
+  return new Date(Date.UTC(year, month - 1, day + days)).toISOString().slice(0, 10);
+}
+
+/** Monday to Sunday calendar week containing `now` in Johannesburg. */
+export function johannesburgWeek(now: Date) {
+  const today = johannesburgDate(now);
+  const [year = 1970, month = 1, day = 1] = today.split("-").map(Number);
+  const weekday = new Date(Date.UTC(year, month - 1, day)).getUTCDay();
+  const start = addDays(today, -((weekday + 6) % 7));
+  return { start, end: addDays(start, 6) };
 }
 
 export function getScheduleState(
@@ -177,12 +199,42 @@ export function shapeFollowUp(record: FollowUpRecord, now = new Date()): FollowU
   };
 }
 
-export function summarizeFollowUps(rows: FollowUpListItem[]) {
+/**
+ * Re-evaluates every row's scheduling state against one `now`, so metrics, tabs and
+ * labels all agree even when the rows were shaped a moment before they are shown.
+ */
+export function withScheduleStates(rows: FollowUpListItem[], now: Date): FollowUpListItem[] {
+  return rows.map((row) => ({
+    ...row,
+    scheduleState: getScheduleState(row.status, row.dueDate, row.dueTime, now),
+  }));
+}
+
+const OPEN_STATES: ReadonlySet<FollowUpScheduleState> = new Set(["Overdue", "Today", "Upcoming"]);
+
+export function summarizeFollowUps(rows: FollowUpListItem[], now = new Date()) {
+  const week = johannesburgWeek(now);
+  const completedInWeek = (completedAt: string | null) => {
+    if (!completedAt) return false;
+    const completed = new Date(completedAt);
+    if (Number.isNaN(completed.getTime())) return false;
+    const day = johannesburgDate(completed);
+    return day >= week.start && day <= week.end;
+  };
   return {
     overdue: rows.filter((row) => row.scheduleState === "Overdue").length,
     dueToday: rows.filter((row) => row.scheduleState === "Today").length,
     upcoming: rows.filter((row) => row.scheduleState === "Upcoming").length,
     completed: rows.filter((row) => row.scheduleState === "Completed").length,
+    // Open follow-ups whose due date falls in the current Monday-Sunday week. Overdue ones
+    // from earlier this week are included: this is a literal "due this week".
+    dueThisWeek: rows.filter(
+      (row) =>
+        OPEN_STATES.has(row.scheduleState) && row.dueDate >= week.start && row.dueDate <= week.end,
+    ).length,
+    completedThisWeek: rows.filter(
+      (row) => row.scheduleState === "Completed" && completedInWeek(row.completedAt),
+    ).length,
   };
 }
 
@@ -190,8 +242,10 @@ export function filterFollowUps(rows: FollowUpListItem[], filters: FollowUpFilte
   const query = filters.search.trim().toLowerCase();
   return rows.filter((row) => {
     if (filters.view !== "All" && row.scheduleState !== filters.view) return false;
+    if (filters.clientId && row.clientId !== filters.clientId) return false;
     if (filters.type && row.followUpType !== filters.type) return false;
     if (filters.priority && row.priority !== filters.priority) return false;
+    if (filters.contactMethod && !row.contactMethods.includes(filters.contactMethod)) return false;
     if (filters.ownerId && row.owner.id !== filters.ownerId) return false;
     if (!query) return true;
     return [
@@ -214,6 +268,7 @@ export function sortFollowUps(rows: FollowUpListItem[], sort: FollowUpSort) {
         priorityOrder[a.priority] - priorityOrder[b.priority] || a.dueDate.localeCompare(b.dueDate)
       );
     if (sort === "newest") return b.createdAt.localeCompare(a.createdAt);
+    if (sort === "oldest") return a.createdAt.localeCompare(b.createdAt);
     const delta = `${a.dueDate}T${a.dueTime || "23:59"}`.localeCompare(
       `${b.dueDate}T${b.dueTime || "23:59"}`,
     );
