@@ -1,3 +1,4 @@
+import { buildRelatedFollowUps } from "@/features/follow-ups/related-view-model";
 import type { ProjectDetail } from "@/features/projects/types";
 
 export function projectDetail(overrides: Partial<ProjectDetail> = {}): ProjectDetail {
@@ -33,6 +34,8 @@ export function projectDetail(overrides: Partial<ProjectDetail> = {}): ProjectDe
     budgetMin: 12000,
     budgetMax: 18000,
     currency: "ZAR",
+    clientArchived: false,
+    followUps: buildRelatedFollowUps([], new Date("2026-09-30T08:00:00Z")),
     milestones: [
       {
         id: "66666666-6666-4666-8666-666666666666",

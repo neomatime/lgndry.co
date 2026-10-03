@@ -1,4 +1,5 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
+import { followUpDetail } from "@/features/follow-ups/components/follow-up-test-data";
 
 type Result = { data: unknown; error: { message: string } | null };
 
@@ -45,6 +46,11 @@ fromMock.mockImplementation((table: string) => {
   if (table === "bookings") return detailResult(bookingResult);
   throw new Error(`unexpected table: ${table}`);
 });
+
+const { relatedMock } = vi.hoisted(() => ({ relatedMock: vi.fn() }));
+vi.mock("@/features/follow-ups/fetch-related-follow-ups", () => ({
+  fetchRelatedFollowUps: relatedMock,
+}));
 
 vi.mock("@/lib/db/server", () => ({
   createSupabaseServerClient: async () => ({ from: fromMock }),
@@ -106,6 +112,8 @@ beforeEach(() => {
   deliverablesResult.data = [];
   activityResult.data = [];
   vi.clearAllMocks();
+  relatedMock.mockReset();
+  relatedMock.mockResolvedValue([]);
 });
 
 describe("fetchProjectDetail", () => {
@@ -176,6 +184,46 @@ describe("fetchProjectDetail", () => {
       });
     }
     expect(fromMock).toHaveBeenCalledTimes(7);
+  });
+
+  it("loads the project's follow-ups and whether its client is archived", async () => {
+    projectResult.data = {
+      ...baseProject,
+      client_record: { ...baseProject.client_record, archived: true },
+    };
+    relatedMock.mockResolvedValue([
+      followUpDetail({ id: "f-open", status: "Open", dueDate: "2099-01-01" }),
+      followUpDetail({ id: "f-done", status: "Completed", completedAt: "2026-09-29T08:00:00Z" }),
+    ]);
+
+    const { fetchProjectDetail } = await import("@/features/projects/fetch-project-detail");
+    const result = await fetchProjectDetail("50000000-0000-4000-8000-000000000001");
+
+    expect(relatedMock).toHaveBeenCalledWith("project_id", "50000000-0000-4000-8000-000000000001");
+    expect(result.status).toBe("ok");
+    if (result.status === "ok") {
+      expect(result.project.clientArchived).toBe(true);
+      expect(result.project.followUps.total).toBe(2);
+      expect(result.project.followUps.actionable.map((row) => row.id)).toEqual(["f-open"]);
+      expect(result.project.followUps.completed.map((row) => row.id)).toEqual(["f-done"]);
+    }
+  });
+
+  it("returns error when the follow-ups are unavailable, rather than an empty list", async () => {
+    projectResult.data = baseProject;
+    relatedMock.mockResolvedValue(null);
+
+    const { fetchProjectDetail } = await import("@/features/projects/fetch-project-detail");
+    expect(await fetchProjectDetail("50000000-0000-4000-8000-000000000002")).toEqual({
+      status: "error",
+    });
+  });
+
+  it("does not load follow-ups for a malformed or missing project", async () => {
+    const { fetchProjectDetail } = await import("@/features/projects/fetch-project-detail");
+    await fetchProjectDetail("not-a-real-id");
+    await fetchProjectDetail("50000000-0000-4000-8000-000000000003");
+    expect(relatedMock).not.toHaveBeenCalled();
   });
 
   it("returns an archived project with empty optional relations", async () => {

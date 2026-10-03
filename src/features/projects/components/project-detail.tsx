@@ -10,6 +10,8 @@ import Link from "next/link";
 import { PageHeader } from "@/components/layout/page-header";
 import { StatCard } from "@/components/ops/stat-card";
 import { Tabs } from "@/components/ui/tabs";
+import { RelatedFollowUps } from "@/features/follow-ups/components/related-follow-ups";
+import { relatedAddAvailability } from "@/features/follow-ups/related-view-model";
 import { ProjectArchiveControl } from "@/features/projects/components/project-archive-control";
 import {
   DeliveryStatusBadge,
@@ -52,6 +54,21 @@ export function ProjectDetailView({ project }: { project: ProjectDetail }) {
         .map((value) => money.format(value))
         .join(" - ")
     : "Not recorded";
+
+  const followUpAdd = relatedAddAvailability("project", {
+    archived: project.archived,
+    clientId: project.clientId,
+    clientArchived: project.clientArchived,
+  });
+  const followUps = (
+    <RelatedFollowUps
+      related={project.followUps}
+      subject="project"
+      add={{ clientId: project.clientId, projectId: project.id }}
+      canAdd={followUpAdd.canAdd}
+      addBlockedReason={followUpAdd.canAdd ? undefined : followUpAdd.reason}
+    />
+  );
 
   const overview = (
     <div className="grid gap-6 lg:grid-cols-2">
@@ -213,6 +230,11 @@ export function ProjectDetailView({ project }: { project: ProjectDetail }) {
           items={[
             { id: "overview", label: "Overview", content: overview },
             { id: "plan", label: "Plan", content: <ProjectPlan project={project} /> },
+            {
+              id: "follow-ups",
+              label: `Follow-ups (${project.followUps.total})`,
+              content: followUps,
+            },
             { id: "activity", label: "Activity", content: activity },
           ]}
         />

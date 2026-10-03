@@ -1,6 +1,8 @@
 import { fireEvent, render, screen } from "@testing-library/react";
 import { describe, expect, it, vi } from "vitest";
 import { ProjectDetailView } from "@/features/projects/components/project-detail";
+import { followUpDetail } from "@/features/follow-ups/components/follow-up-test-data";
+import { buildRelatedFollowUps } from "@/features/follow-ups/related-view-model";
 import { projectDetail } from "@/features/projects/components/project-test-data";
 
 vi.mock("next/navigation", () => ({ useRouter: () => ({ refresh: vi.fn() }) }));
@@ -75,5 +77,61 @@ describe("ProjectDetailView", () => {
     expect(screen.getByText("No pending tasks.")).toBeInTheDocument();
     fireEvent.click(screen.getByRole("tab", { name: "Activity" }));
     expect(screen.getByText("No project activity recorded yet.")).toBeInTheDocument();
+  });
+});
+
+describe("ProjectDetailView follow-ups", () => {
+  const followUps = buildRelatedFollowUps(
+    [
+      followUpDetail({
+        id: "fu-open",
+        title: "Chase the autumn quote",
+        dueDate: "2026-10-05",
+        dueTime: "",
+      }),
+      followUpDetail({ id: "fu-cancelled", title: "Book the venue", status: "Cancelled" }),
+    ],
+    new Date("2026-09-30T08:00:00Z"),
+  );
+
+  it("adds a Follow-ups tab with a count that lists the project's follow-ups", () => {
+    render(<ProjectDetailView project={projectDetail({ followUps })} />);
+    fireEvent.click(screen.getByRole("tab", { name: "Follow-ups (2)" }));
+    expect(screen.getByRole("link", { name: "Chase the autumn quote" })).toHaveAttribute(
+      "href",
+      "/ops/follow-ups/fu-open",
+    );
+    expect(screen.getByRole("heading", { name: "Open (1)" })).toBeInTheDocument();
+    expect(screen.getByRole("heading", { name: "Cancelled (1)" })).toBeInTheDocument();
+  });
+
+  it("preselects the project's client and the project, never the source enquiry", () => {
+    render(<ProjectDetailView project={projectDetail({ followUps })} />);
+    fireEvent.click(screen.getByRole("tab", { name: "Follow-ups (2)" }));
+    expect(screen.getByRole("link", { name: "Add Follow-up" })).toHaveAttribute(
+      "href",
+      "/ops/follow-ups/new?clientId=22222222-2222-4222-8222-222222222222&projectId=11111111-1111-4111-8111-111111111111",
+    );
+  });
+
+  it("shows a friendly empty state", () => {
+    render(<ProjectDetailView project={projectDetail()} />);
+    fireEvent.click(screen.getByRole("tab", { name: "Follow-ups (0)" }));
+    expect(screen.getByText(/No follow-ups are linked to this project yet/)).toBeInTheDocument();
+  });
+
+  it("keeps an archived project's follow-up history but does not offer to add", () => {
+    render(<ProjectDetailView project={projectDetail({ archived: true, followUps })} />);
+    fireEvent.click(screen.getByRole("tab", { name: "Follow-ups (2)" }));
+    expect(screen.getByRole("link", { name: "Chase the autumn quote" })).toBeInTheDocument();
+    expect(screen.queryByRole("link", { name: "Add Follow-up" })).not.toBeInTheDocument();
+    expect(screen.getByText(/This project is archived, so new follow-ups/)).toBeInTheDocument();
+  });
+
+  it("does not offer to add when the project's client is archived", () => {
+    render(<ProjectDetailView project={projectDetail({ clientArchived: true, followUps })} />);
+    fireEvent.click(screen.getByRole("tab", { name: "Follow-ups (2)" }));
+    expect(screen.queryByRole("link", { name: "Add Follow-up" })).not.toBeInTheDocument();
+    expect(screen.getByText(/This client is archived/)).toBeInTheDocument();
   });
 });

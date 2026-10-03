@@ -1,3 +1,5 @@
+import { buildRelatedFollowUps } from "@/features/follow-ups/related-view-model";
+import type { FollowUpListItem } from "@/features/follow-ups/types";
 import type { ProjectDetail, ProjectInput, ProjectMilestone } from "@/features/projects/types";
 import {
   getDeliverableProgress,
@@ -18,6 +20,7 @@ export type ProjectDetailRecord = ProjectListRecord & {
   budget_min: number | string | null;
   budget_max: number | string | null;
   currency: string;
+  client_record: { id: string; name: string | null; archived?: boolean } | null;
 };
 
 export type ProjectMilestoneRecord = {
@@ -71,6 +74,7 @@ export function buildProjectDetail(
   booking: ProjectBookingRecord | null,
   activity: ProjectActivityRecord[],
   now = new Date(),
+  followUps: FollowUpListItem[] = [],
 ): ProjectDetail {
   const listItem = shapeProjectRows(
     [{ ...record, project_tasks: tasks, project_deliverables: deliverables }],
@@ -84,6 +88,8 @@ export function buildProjectDetail(
     budgetMin: optionalNumber(record.budget_min),
     budgetMax: optionalNumber(record.budget_max),
     currency: record.currency,
+    clientArchived: record.client_record?.archived === true,
+    followUps: buildRelatedFollowUps(followUps, now),
     milestones: milestones
       .map(shapeProjectMilestone)
       .sort((a, b) => a.sortOrder - b.sortOrder || a.id.localeCompare(b.id)),
