@@ -118,7 +118,7 @@ describe("FollowUpsPage", () => {
   it("renders four factual metric cards from the shaped rows", async () => {
     mocks.fetch.mockResolvedValue([
       row({ id: "1", dueDate: "2026-09-30", dueTime: "" }), // due today
-      row({ id: "2", dueDate: "2026-09-29" }), // overdue, earlier this week
+      row({ id: "2", dueDate: "2026-09-29" }), // overdue, earlier this week: Overdue only, not Due This Week
       row({ id: "3", dueDate: "2026-09-27" }), // overdue, last week
       row({ id: "4", dueDate: "2026-10-04" }), // upcoming, Sunday of this week
       row({ id: "5", dueDate: "2026-10-05" }), // upcoming, next week
@@ -137,7 +137,7 @@ describe("FollowUpsPage", () => {
     render(await FollowUpsPage());
     expect(stat("Due Today")).toBe("1");
     expect(stat("Overdue")).toBe("2");
-    expect(stat("Due This Week")).toBe("3");
+    expect(stat("Due This Week")).toBe("2");
     expect(stat("Completed This Week")).toBe("1");
     // Plain counts: no trend deltas.
     expect(screen.queryByText(/yesterday|high priority|across/i)).not.toBeInTheDocument();

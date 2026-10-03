@@ -69,7 +69,7 @@ describe("follow-up list view model", () => {
       dueToday: 1,
       upcoming: 0,
       completed: 0,
-      dueThisWeek: 2,
+      dueThisWeek: 1,
       completedThisWeek: 0,
     });
     expect(filterFollowUps(rows, { view: "Overdue", search: "proposal" })).toHaveLength(1);
@@ -138,7 +138,7 @@ describe("follow-up list view model", () => {
       dueToday: 1,
       upcoming: 2,
       completed: 3,
-      dueThisWeek: 3,
+      dueThisWeek: 2,
       completedThisWeek: 1,
     });
   });
@@ -183,5 +183,123 @@ describe("follow-up list view model", () => {
     expect(order("due-soonest")).toEqual(["b", "c", "a"]);
     expect(order("newest")).toEqual(["b", "c", "a"]);
     expect(order("oldest")).toEqual(["a", "c", "b"]);
+  });
+
+  it("counts an overdue item in Overdue but never in Due This Week", () => {
+    const now = new Date("2026-09-30T08:00:00Z"); // Wednesday 10:00 in Johannesburg
+    const rows: FollowUpListItem[] = [
+      // Earlier in the same week.
+      { ...base, id: "tue", dueDate: "2026-09-29", scheduleState: "Overdue" },
+      // Due today at 09:00, which has already passed.
+      { ...base, id: "today-passed", dueTime: "09:00", scheduleState: "Overdue" },
+      // Due today later on: still to do.
+      { ...base, id: "today-later", dueTime: "15:00", scheduleState: "Today" },
+      { ...base, id: "fri", dueDate: "2026-10-02", scheduleState: "Upcoming" },
+    ];
+    const live = withScheduleStates(rows, now);
+    expect(live.map((row) => row.scheduleState)).toEqual([
+      "Overdue",
+      "Overdue",
+      "Today",
+      "Upcoming",
+    ]);
+    const summary = summarizeFollowUps(live, now);
+    expect(summary.overdue).toBe(2);
+    expect(summary.dueThisWeek).toBe(2);
+    expect(summary.dueToday + summary.upcoming).toBe(summary.dueThisWeek);
+  });
+
+  describe("history ordering", () => {
+    const rows: FollowUpListItem[] = [
+      {
+        ...base,
+        id: "old-done",
+        dueDate: "2026-01-05",
+        priority: "High",
+        status: "Completed",
+        scheduleState: "Completed",
+        completedAt: "2026-01-06T08:00:00Z",
+      },
+      {
+        ...base,
+        id: "cancelled-high",
+        dueDate: "2026-02-01",
+        priority: "High",
+        status: "Cancelled",
+        scheduleState: "Cancelled",
+        cancelledAt: "2026-02-02T08:00:00Z",
+      },
+      {
+        ...base,
+        id: "upcoming-low",
+        dueDate: "2026-10-09",
+        priority: "Low",
+        scheduleState: "Upcoming",
+      },
+      { ...base, id: "overdue-med", dueDate: "2026-09-28", scheduleState: "Overdue" },
+      {
+        ...base,
+        id: "recent-done",
+        dueDate: "2026-03-01",
+        status: "Completed",
+        scheduleState: "Completed",
+        completedAt: "2026-09-20T08:00:00Z",
+      },
+      {
+        ...base,
+        id: "no-timestamp",
+        dueDate: "2026-04-01",
+        status: "Completed",
+        scheduleState: "Completed",
+        completedAt: null,
+        updatedAt: "2026-04-02T08:00:00Z",
+      },
+    ];
+    const order = (sort: Parameters<typeof sortFollowUps>[1]) =>
+      sortFollowUps(rows, sort).map((row) => row.id);
+
+    it("puts open rows first by due date, then history most recently closed first", () => {
+      expect(order("due-soonest")).toEqual([
+        "overdue-med",
+        "upcoming-low",
+        "recent-done",
+        "no-timestamp",
+        "cancelled-high",
+        "old-done",
+      ]);
+    });
+
+    it("never ranks a cancelled or completed High row above an open row by priority", () => {
+      expect(order("priority")).toEqual([
+        "overdue-med",
+        "upcoming-low",
+        "recent-done",
+        "no-timestamp",
+        "cancelled-high",
+        "old-done",
+      ]);
+    });
+
+    it("keeps newest and oldest as pure creation-time sorts", () => {
+      const created: FollowUpListItem[] = [
+        {
+          ...base,
+          id: "a",
+          createdAt: "2026-01-01T00:00:00Z",
+          scheduleState: "Completed",
+          status: "Completed",
+        },
+        { ...base, id: "b", createdAt: "2026-02-01T00:00:00Z", scheduleState: "Upcoming" },
+        {
+          ...base,
+          id: "c",
+          createdAt: "2026-03-01T00:00:00Z",
+          scheduleState: "Cancelled",
+          status: "Cancelled",
+        },
+      ];
+      expect(sortFollowUps(created, "newest").map((row) => row.id)).toEqual(["c", "b", "a"]);
+      expect(sortFollowUps(created, "oldest").map((row) => row.id)).toEqual(["a", "b", "c"]);
+    });
   });
 });

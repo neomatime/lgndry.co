@@ -210,10 +210,9 @@ export function withScheduleStates(rows: FollowUpListItem[], now: Date): FollowU
   }));
 }
 
-const OPEN_STATES: ReadonlySet<FollowUpScheduleState> = new Set(["Overdue", "Today", "Upcoming"]);
-
 export function summarizeFollowUps(rows: FollowUpListItem[], now = new Date()) {
   const week = johannesburgWeek(now);
+  const today = johannesburgDate(now);
   const completedInWeek = (completedAt: string | null) => {
     if (!completedAt) return false;
     const completed = new Date(completedAt);
@@ -226,11 +225,14 @@ export function summarizeFollowUps(rows: FollowUpListItem[], now = new Date()) {
     dueToday: rows.filter((row) => row.scheduleState === "Today").length,
     upcoming: rows.filter((row) => row.scheduleState === "Upcoming").length,
     completed: rows.filter((row) => row.scheduleState === "Completed").length,
-    // Open follow-ups whose due date falls in the current Monday-Sunday week. Overdue ones
-    // from earlier this week are included: this is a literal "due this week".
+    // Still-to-do work from today through Sunday: Due Today plus the rest of the week's
+    // Upcoming items. Overdue items (including one that was due earlier today) are never
+    // counted here; they have their own metric.
     dueThisWeek: rows.filter(
       (row) =>
-        OPEN_STATES.has(row.scheduleState) && row.dueDate >= week.start && row.dueDate <= week.end,
+        (row.scheduleState === "Today" || row.scheduleState === "Upcoming") &&
+        row.dueDate >= (today > week.start ? today : week.start) &&
+        row.dueDate <= week.end,
     ).length,
     completedThisWeek: rows.filter(
       (row) => row.scheduleState === "Completed" && completedInWeek(row.completedAt),
@@ -261,14 +263,27 @@ export function filterFollowUps(rows: FollowUpListItem[], filters: FollowUpFilte
 }
 
 const priorityOrder: Record<FollowUpPriority, number> = { High: 0, Medium: 1, Low: 2 };
+const isClosed = (row: FollowUpListItem) =>
+  row.scheduleState === "Completed" || row.scheduleState === "Cancelled";
+const closedAt = (row: FollowUpListItem) => row.completedAt ?? row.cancelledAt ?? row.updatedAt;
+
+/**
+ * Due-date and priority sorts keep what still needs doing (Overdue, Due Today, Upcoming)
+ * ahead of history, so a growing archive never buries actionable rows. Open rows follow the
+ * requested ordering; Completed / Cancelled rows come last, most recently closed first.
+ * Newest / oldest are pure creation-time sorts with no grouping.
+ */
 export function sortFollowUps(rows: FollowUpListItem[], sort: FollowUpSort) {
   return [...rows].sort((a, b) => {
+    if (sort === "newest") return b.createdAt.localeCompare(a.createdAt);
+    if (sort === "oldest") return a.createdAt.localeCompare(b.createdAt);
+    const aClosed = isClosed(a);
+    if (aClosed !== isClosed(b)) return aClosed ? 1 : -1;
+    if (aClosed) return closedAt(b).localeCompare(closedAt(a));
     if (sort === "priority")
       return (
         priorityOrder[a.priority] - priorityOrder[b.priority] || a.dueDate.localeCompare(b.dueDate)
       );
-    if (sort === "newest") return b.createdAt.localeCompare(a.createdAt);
-    if (sort === "oldest") return a.createdAt.localeCompare(b.createdAt);
     const delta = `${a.dueDate}T${a.dueTime || "23:59"}`.localeCompare(
       `${b.dueDate}T${b.dueTime || "23:59"}`,
     );

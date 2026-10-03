@@ -175,7 +175,7 @@ describe("FollowUpsTable tabs", () => {
   });
 
   it.each([
-    ["All (5)", ["FUP-0004", "FUP-0002", "FUP-0001", "FUP-0005", "FUP-0003"]],
+    ["All (5)", ["FUP-0002", "FUP-0001", "FUP-0003", "FUP-0005", "FUP-0004"]],
     ["Due Today (1)", ["FUP-0001"]],
     ["Overdue (1)", ["FUP-0002"]],
     ["Upcoming (1)", ["FUP-0003"]],
@@ -241,7 +241,7 @@ describe("FollowUpsTable filters", () => {
         .map((option) => option.textContent),
     ).toEqual(["All clients", "Blackridge Hotels", "Lumen Partners", "Seacliff Originals"]);
     fireEvent.change(client, { target: { value: "client-3" } });
-    expect(references()).toEqual(["FUP-0005", "FUP-0003"]);
+    expect(references()).toEqual(["FUP-0003", "FUP-0005"]);
   });
 
   it("filters by type", () => {
@@ -253,7 +253,7 @@ describe("FollowUpsTable filters", () => {
   it("filters by priority", () => {
     renderTable();
     fireEvent.change(screen.getByLabelText("Priority"), { target: { value: "Low" } });
-    expect(references()).toEqual(["FUP-0004", "FUP-0003"]);
+    expect(references()).toEqual(["FUP-0003", "FUP-0004"]);
   });
 
   it("filters by contact method", () => {
@@ -261,7 +261,7 @@ describe("FollowUpsTable filters", () => {
     fireEvent.change(screen.getByLabelText("Contact method"), { target: { value: "WhatsApp" } });
     expect(references()).toEqual(["FUP-0002"]);
     fireEvent.change(screen.getByLabelText("Contact method"), { target: { value: "Email" } });
-    expect(references()).toEqual(["FUP-0004", "FUP-0001", "FUP-0005", "FUP-0003"]);
+    expect(references()).toEqual(["FUP-0001", "FUP-0003", "FUP-0005", "FUP-0004"]);
   });
 
   it("scopes to the current user's follow-ups with Mine and shows everyone with All", () => {
@@ -276,7 +276,7 @@ describe("FollowUpsTable filters", () => {
     expect(references()).toContain("FUP-0002");
 
     fireEvent.change(scope, { target: { value: "mine" } });
-    expect(references()).toEqual(["FUP-0004", "FUP-0001", "FUP-0005", "FUP-0003"]);
+    expect(references()).toEqual(["FUP-0001", "FUP-0003", "FUP-0005", "FUP-0004"]);
 
     fireEvent.change(scope, { target: { value: "all" } });
     expect(references()).toContain("FUP-0002");
@@ -297,14 +297,14 @@ describe("FollowUpsTable filters", () => {
 });
 
 describe("FollowUpsTable sorting", () => {
-  it("defaults to due date, soonest first", () => {
+  it("defaults to due date with open follow-ups first, then history most recently closed first", () => {
     renderTable();
     expect(screen.getByLabelText("Sort")).toHaveValue("due-soonest");
-    expect(references()).toEqual(["FUP-0004", "FUP-0002", "FUP-0001", "FUP-0005", "FUP-0003"]);
+    expect(references()).toEqual(["FUP-0002", "FUP-0001", "FUP-0003", "FUP-0005", "FUP-0004"]);
   });
 
   it.each([
-    ["priority", ["FUP-0001", "FUP-0005", "FUP-0002", "FUP-0004", "FUP-0003"]],
+    ["priority", ["FUP-0001", "FUP-0002", "FUP-0003", "FUP-0005", "FUP-0004"]],
     ["newest", ["FUP-0005", "FUP-0003", "FUP-0002", "FUP-0001", "FUP-0004"]],
     ["oldest", ["FUP-0004", "FUP-0001", "FUP-0002", "FUP-0003", "FUP-0005"]],
   ])("sorts by %s", (value, expected) => {

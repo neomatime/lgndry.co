@@ -32,7 +32,7 @@ export function FollowUpPreview({ followUp }: { followUp: FollowUpListItem }) {
       <div className="min-w-0 md:col-span-2 xl:col-span-3">
         <div className="flex flex-wrap items-start justify-between gap-4">
           <div className="min-w-0">
-            <h3 className="text-lg font-medium">{followUp.title}</h3>
+            <h3 className="text-lg font-medium break-words">{followUp.title}</h3>
             <p className="text-ink-muted mt-1 text-sm">
               <Link href={`/ops/clients/${followUp.clientId}`} className="hover:underline">
                 {followUp.clientName}
@@ -113,25 +113,29 @@ export function FollowUpPreview({ followUp }: { followUp: FollowUpListItem }) {
 
       <div className="min-w-0">
         <h3 className="text-sm font-medium">Overview</h3>
-        <p className="text-ink-muted mt-2 text-sm whitespace-pre-line">
+        <p className="text-ink-muted mt-2 text-sm break-words whitespace-pre-line">
           {followUp.overview || "No overview has been added."}
         </p>
         {followUp.notes ? (
           <>
             <h3 className="mt-4 text-sm font-medium">Notes</h3>
-            <p className="text-ink-muted mt-2 text-sm whitespace-pre-line">{followUp.notes}</p>
+            <p className="text-ink-muted mt-2 text-sm break-words whitespace-pre-line">
+              {followUp.notes}
+            </p>
           </>
         ) : null}
         {followUp.status === "Completed" && followUp.outcome ? (
           <>
             <h3 className="mt-4 text-sm font-medium">Outcome</h3>
-            <p className="text-ink-muted mt-2 text-sm whitespace-pre-line">{followUp.outcome}</p>
+            <p className="text-ink-muted mt-2 text-sm break-words whitespace-pre-line">
+              {followUp.outcome}
+            </p>
           </>
         ) : null}
         {followUp.status === "Cancelled" && followUp.cancellationReason ? (
           <>
             <h3 className="mt-4 text-sm font-medium">Cancellation reason</h3>
-            <p className="text-ink-muted mt-2 text-sm whitespace-pre-line">
+            <p className="text-ink-muted mt-2 text-sm break-words whitespace-pre-line">
               {followUp.cancellationReason}
             </p>
           </>
