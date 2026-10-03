@@ -1,4 +1,5 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
+import { followUpDetail } from "@/features/follow-ups/components/follow-up-test-data";
 
 type Result = { data: unknown; error: { message: string } | null };
 
@@ -40,6 +41,11 @@ fromMock.mockImplementation((table: string) => {
   throw new Error(`unexpected table: ${table}`);
 });
 
+const { relatedMock } = vi.hoisted(() => ({ relatedMock: vi.fn() }));
+vi.mock("@/features/follow-ups/fetch-related-follow-ups", () => ({
+  fetchRelatedFollowUps: relatedMock,
+}));
+
 vi.mock("@/lib/db/server", () => ({
   createSupabaseServerClient: async () => ({ from: fromMock }),
 }));
@@ -56,6 +62,8 @@ beforeEach(() => {
   activityResult.data = [];
   activityResult.error = null;
   fromMock.mockClear();
+  relatedMock.mockReset();
+  relatedMock.mockResolvedValue([]);
 });
 
 const VALID_ID = "11111111-1111-1111-1111-111111111111";
@@ -128,6 +136,32 @@ describe("fetchClientDetail", () => {
     expect(fromMock).toHaveBeenCalledTimes(5);
   });
 
+  it("loads every follow-up linked to the client and groups them for display", async () => {
+    clientResult.data = baseClient;
+    relatedMock.mockResolvedValue([
+      followUpDetail({ id: "f-open", status: "Open", dueDate: "2099-01-01" }),
+      followUpDetail({ id: "f-done", status: "Completed", completedAt: "2026-09-29T08:00:00Z" }),
+      followUpDetail({
+        id: "f-cancelled",
+        status: "Cancelled",
+        cancelledAt: "2026-09-29T08:00:00Z",
+      }),
+    ]);
+
+    const { fetchClientDetail } = await import("@/features/clients/fetch-client-detail");
+    const result = await fetchClientDetail("99999999-9999-4999-8999-999999999999");
+
+    expect(relatedMock).toHaveBeenCalledWith("client_id", "99999999-9999-4999-8999-999999999999");
+    expect(result.status).toBe("ok");
+    if (result.status === "ok") {
+      const { followUps } = result.client;
+      expect(followUps.total).toBe(3);
+      expect(followUps.actionable.map((row) => row.id)).toEqual(["f-open"]);
+      expect(followUps.completed.map((row) => row.id)).toEqual(["f-done"]);
+      expect(followUps.cancelled.map((row) => row.id)).toEqual(["f-cancelled"]);
+    }
+  });
+
   it("returns an archived client with its contacts and no enquiries", async () => {
     clientResult.data = { ...baseClient, archived: true };
     contactsResult.data = [
@@ -164,6 +198,23 @@ describe("fetchClientDetail", () => {
       status: "not-found",
     });
     expect(fromMock).toHaveBeenCalledTimes(1);
+  });
+
+  it("returns error when the follow-ups are unavailable, rather than an empty list", async () => {
+    clientResult.data = baseClient;
+    relatedMock.mockResolvedValue(null);
+
+    const { fetchClientDetail } = await import("@/features/clients/fetch-client-detail");
+    expect(await fetchClientDetail("99999999-9999-4999-8999-999999999998")).toEqual({
+      status: "error",
+    });
+  });
+
+  it("does not load follow-ups for a malformed or missing client", async () => {
+    const { fetchClientDetail } = await import("@/features/clients/fetch-client-detail");
+    await fetchClientDetail("not-a-real-id");
+    await fetchClientDetail("99999999-9999-4999-8999-999999999997");
+    expect(relatedMock).not.toHaveBeenCalled();
   });
 
   it.each([

@@ -6,6 +6,8 @@ import { StatusBadge } from "@/components/ops/status-badge";
 import { ClientArchiveControl } from "@/features/clients/components/client-archive-control";
 import { AccountTierBadge, ClientStatusBadge } from "@/features/clients/components/client-badges";
 import type { ClientDetail } from "@/features/clients/detail-view-model";
+import { RelatedFollowUps } from "@/features/follow-ups/components/related-follow-ups";
+import { relatedAddAvailability } from "@/features/follow-ups/related-view-model";
 
 const dateFormatter = new Intl.DateTimeFormat("en-ZA", {
   dateStyle: "medium",
@@ -26,6 +28,11 @@ function Panel({ title, children }: { title: string; children: React.ReactNode }
 }
 
 export function ClientDetailView({ client }: { client: ClientDetail }) {
+  const followUpAdd = relatedAddAvailability("client", {
+    archived: client.archived,
+    clientId: client.id,
+    clientArchived: client.archived,
+  });
   return (
     <div className="flex flex-col gap-8">
       <div className="text-ink-muted flex items-center gap-1 text-sm">
@@ -170,6 +177,17 @@ export function ClientDetailView({ client }: { client: ClientDetail }) {
             ) : (
               <p className="text-ink-muted text-sm">No projects are linked to this client.</p>
             )}
+          </Panel>
+
+          <Panel title={`Follow-ups (${client.followUps.total})`}>
+            <RelatedFollowUps
+              related={client.followUps}
+              subject="client"
+              add={{ clientId: client.id }}
+              canAdd={followUpAdd.canAdd}
+              addBlockedReason={followUpAdd.canAdd ? undefined : followUpAdd.reason}
+              showRelated
+            />
           </Panel>
 
           <Panel title="Relationship Notes">
