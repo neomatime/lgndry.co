@@ -900,3 +900,184 @@ confirmed edit and status behavior, exactly matched activity writes, project-own
 non-admin denial, explicit function grants, and complete rollback of the synthetic enquiry. The
 security advisor reports no new anonymous Enquiry write function; its authenticated
 `SECURITY DEFINER` notices are expected because both RPCs independently enforce the admin check.
+
+## Phase 5, sub-project 7 - Follow-ups module
+
+The Follow-ups area is the first OPS module that owns recurring work. It gives admins one queue of
+scheduled internal actions anchored to a client and optionally to one enquiry or project, with
+checklists, recurrence, a full lifecycle (complete, reschedule, cancel, reopen) and a scoped
+activity history. Nothing is sent: contact methods are planning metadata only, and no email or
+WhatsApp message is produced.
+
+### What's new
+
+- `/ops/follow-ups` has four metrics (Due Today, Overdue, Due This Week, Completed This Week), tabs
+  for All, Due Today, Overdue, Upcoming, Completed and Cancelled, contact-aware search, five inline
+  filter selects (client, type, priority, contact method, owner scope), four sort modes, and a
+  checkbox-selected inline preview. Navigation stays on real links. Scheduling status is computed
+  in `Africa/Johannesburg` and never stored. Open items sort ahead of history on the due-date and
+  priority sorts, so old Completed and Cancelled rows do not bury live work.
+- `/ops/follow-ups/new` and `/ops/follow-ups/[id]/edit` share one controlled form: client and
+  contact, an optional enquiry or project limited to that client, type (with a custom label for
+  Other), title, overview and notes, due date and time, priority, contact methods, a reorderable
+  checklist editor, and a recurrence editor. Contextual entry points (`clientId` plus one of
+  `enquiryId` or `projectId`) are re-validated on the server before anything is pre-selected, and
+  archived records pre-fill nothing. Edit is offered only for Open follow-ups.
+- `/ops/follow-ups/[id]` has Overview, Checklist and History tabs, a recurrence summary, and
+  dialogs for Mark Complete (optional outcome, outstanding checklist count), Reschedule, Cancel
+  (reason, plus skip-or-end-series for repeating work) and Reopen. Edit success redirects with a
+  `?updated=1` flag that renders a calm notice.
+- Follow-ups is enabled in the OPS sidebar without changing the approved order. The Client, Project
+  and Enquiry detail pages gain linked-follow-up sections or tabs with Add Follow-up links, offered
+  only for live (non-archived) records. They load through detail-page-only cached loaders, so the
+  three edit pages never query follow-ups and a follow-ups outage cannot break an edit flow. On the
+  detail pages a failed follow-ups read is the parent page's own failure state, not a silent empty
+  list.
+
+### Data and security
+
+Migration `20260930141545_follow_ups_module.sql` is additive: three new tables (`follow_ups`,
+`follow_up_series`, `follow_up_checklist_items`), a reference-number sequence, three owner-only
+helpers, and seven admin-gated RPCs for create, update, complete, cancel, reopen, reschedule and
+checklist-item toggle. No existing table is altered.
+
+All three tables have RLS with a single admin-only SELECT policy and no policy for anon. `anon` has
+no privileges at all, `authenticated` has SELECT only, and the sequence is revoked from `anon` and
+`authenticated`. Every write goes through one of the seven `SECURITY DEFINER` RPCs. Each pins an
+empty `search_path`, checks `is_admin((select auth.uid()))` first, and has EXECUTE revoked from
+`public`, `anon` and `service_role` and granted to `authenticated` only. The helpers are executable
+by nobody but the owner. RPCs validate that the contact, enquiry and project belong to the chosen
+client, and write activity rows scoped with `collection = 'follow_ups'` and the follow-up UUID as
+`record_id`, in the same transaction as the change.
+
+Updates use optimistic `version` locking: a stale or NULL version returns `conflict`, never a silent
+overwrite. The checklist order constraint is deferrable so reordering does not trip the unique
+`sort_order` check, and every RPC takes locks in the same order (follow-up, series, items).
+
+Applied to live project `tscaluhtfrvwlwjybfsg` on 2026-10-04 as live version `20261003233454`
+(`follow_ups_module`). The repo filename carries the earlier stamp `20260930141545` because the
+apply stamps the run time, the same drift as the earlier modules. Post-apply read-only inspection
+confirmed three RLS-enabled tables, the expected grants, md5-identical function bodies, the
+deferrable constraint, the new foreign-key indexes, and empty new tables with unchanged counts
+elsewhere. Advisors reported exactly seven `authenticated_security_definer_function_executable`
+WARNs (one per RPC, expected for the same reason as earlier modules) and 14 INFO unused-index notes
+on the new, still-empty indexes. Nothing concerned anon, RLS or `search_path`.
+
+### Recurrence model
+
+- Only one current (Open) occurrence of a series exists at a time. Future occurrences are never
+  materialized.
+- Completing an occurrence, or cancelling it with the skip scope, creates exactly one successor in
+  the same transaction, so an occurrence cannot finish without its successor. A retry of either
+  action is idempotent and does not create a second successor.
+- The app computes the candidate next date (RRULE via `rrule@2.8.1`, with Johannesburg-floating
+  dates) and passes it to the RPC. Any COUNT in the rule is ignored when computing the next date.
+  The database is the single authority on `ends_on` and `max_occurrences`, using the series'
+  `occurrences_created` counter, so an "after N occurrences" series does not end early when an
+  occurrence was rescheduled. A failed read of the next date is reported as an error rather than
+  treated as "no next date", so a transient failure cannot silently end a series.
+- Cancel has two scopes. `occurrence` skips the occurrence and continues the series. `series` ends
+  the series with no successor. Edit also has two scopes: this occurrence only, or this and future
+  occurrences, which updates the series defaults and the current record. Completed and Cancelled
+  occurrences are never rewritten.
+- Successors copy the client, related record, type, title, overview, notes, priority, contact
+  methods and checklist labels, but not checklist completion or outcome.
+- Monthly rules clamp to the last day of short months (a day-31 rule lands on the 30th or the 28th
+  or 29th). Custom frequency means "every N days".
+
+### Verification
+
+The review process caught and fixed several defects before the migration was applied or any code
+was pushed:
+
+- Checklist reorder failed on the immediate unique `sort_order` constraint (now deferrable).
+- A failed read of the next date silently killed a recurring series.
+- `update_follow_up` could return `invalid` after already writing other changes, leaving a
+  half-saved edit.
+- Archived linked records blocked edits to existing follow-ups, contrary to the rule that archiving
+  only blocks new ones.
+- A NULL `p_version` bypassed the optimistic lock in every versioned RPC (now `is distinct from` in
+  SQL plus integer validation in the actions).
+- "After N occurrences" series ended early when an occurrence had been rescheduled.
+- Reopen, removed checklist items and future-scope edits left no usable history. Reopen now records
+  what it cleared, each removed checklist item gets its own row, and reschedule messages include
+  times.
+
+The SQL was verified twice in always-rolled-back transactions against the live schema. The final
+run covered the edited migration with 240 named assertions, all passing, with all ten function
+bodies md5-identical to the migration file. It covered admin versus non-admin and zero-row RLS
+denial, CRUD, relation validation, the archived-edit exemption, checklist reorder, NULL and stale
+version calls on all six versioned RPCs, every future-scope edit branch, standalone and recurring
+lifecycle paths, idempotent retries, and reopen history. It also proved empirically that long
+activity messages work: writes of 259, 226 and 319 characters succeeded because the RPCs are
+`SECURITY DEFINER`, and the 200-character message limit exists only in the anon insert policy. Both
+runs left nothing behind. Post-apply checks were read-only and passed. The repository gate was green
+at the last commit with 1221 tests.
+
+**Not yet verified.** The authenticated browser smoke test has not been run. It needs an admin
+session and explicit approval before any temporary live rows are written. Until it runs, the
+PostgREST foreign-key-hint selects (for example `clients!follow_ups_client_id_fkey`) and the three
+related-follow-ups views on the Client, Project and Enquiry detail pages have only run against
+mocks. The `<dialog>` `showModal()` path has only been exercised manually in Chromium, and screen
+reader announcements are unverified.
+
+### Deliberately different from the reference images and spec
+
+- No Export, trend lines, select-all or bulk actions.
+- No assignee UI. Every follow-up is owned by its creator and ownership is retained through every
+  action.
+- No Communication tab or snapshot and no invoice link, because Inbox and Invoices do not exist.
+- A Cancelled tab was added to the reference's tabs.
+- Five inline filter selects replace the reference's single Filter button.
+- Stat cards do not click through to a filtered view, and rows have no overflow menu.
+- The inline preview is leaner than the reference.
+- Linked Records shows one of Enquiry or Project, since the spec allows one related record.
+- Recent Activity lives in the History tab.
+- Mark Complete, Reschedule and Cancel are separate buttons rather than one split control.
+- Custom frequency means "every N days".
+
+### Known limitations
+
+- No UI path restarts an ended series (cancelled-series, `ends_on` or `max_occurrences` reached, or a
+  reopened terminal occurrence). The SQL already reactivates a series on a this-and-future edit with
+  recurrence on, so a later TypeScript-only fix is enough. It must handle `max_occurrences` already
+  being reached. The Reopen dialog warns about this honestly.
+- Reschedule is occurrence-only. The backend `future` reschedule path moves only the time of later
+  occurrences, never the date pattern, so it is unexposed and the action schema is narrowed to
+  `occurrence`.
+- Monthly recurrence counts from the current due date. A manually rescheduled monthly occurrence can
+  therefore skip a month. Daily and weekly rules snap back to their pattern. The fix is to step
+  months from the series start.
+- Completing an overdue daily or weekly item creates its successor from the old due date, so a late
+  series stacks up already-overdue items.
+- Successor occurrences copy the client and related record even if one has since been archived.
+- Complete and cancel are idempotent on retry, but reopen, reschedule and checklist toggle return
+  `conflict` when retried.
+- Supabase's 1000-row read cap would silently truncate the list, metrics, related lists and form
+  options once there are more than 1000 follow-ups. Pagination is deferred.
+- Reopen clears the `outcome` and `cancellation_reason` columns. The history survives only in the
+  activity log.
+- A checklist toggle bumps the follow-up version, so an open edit form gets a conflict. This is
+  documented behavior.
+- The `?updated=1` "Follow-up updated" notice is not reliably announced after client-side
+  navigation, and it reappears on a reload.
+- "Completed by" is not shown on checklist items.
+- The shared Tabs primitive has no arrow-key navigation.
+- The recurrence summary prints a raw ISO end date.
+- The pre-existing anon `public_insert_activity` policy allows forged `collection = 'follow_ups'`
+  activity rows. Doing so needs a follow-up UUID, which is never exposed publicly.
+- `update_follow_up` lacks create's contact-method and recurrence-payload re-checks. A crafted admin
+  payload would raise a raw constraint error instead of `invalid`. The UI cannot produce such a
+  payload.
+- Removed-checklist-item and "updated" activity rows share one transaction timestamp, so their
+  timeline order is unspecified without a tiebreaker.
+
+### Still open
+
+- Run the authenticated browser smoke test after explicit approval for temporary live rows: load the
+  list, a detail page, all three related views and the edit form, exercise create, edit, complete,
+  skip, cancel-series and reopen, then delete all temporary data.
+- TypeScript-only follow-ups: month stepping from the series start, restarting an ended series, and a
+  reliable announcement for the update notice.
+- Communications and Inbox, the Invoices relation, team assignment, export, bulk actions, dashboard
+  aggregation and pagination, each when its backing module or need arrives.
