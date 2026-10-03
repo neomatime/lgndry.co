@@ -298,7 +298,7 @@ describe("follow-ups migration", () => {
       const notFoundGuardIndex = body.indexOf(
         "if not found then\n    return jsonb_build_object('status', 'not-found');\n  end if;",
       );
-      const versionCheckIndex = body.indexOf("if v_item.version <> p_version then");
+      const versionCheckIndex = body.indexOf("if v_item.version is distinct from p_version then");
       // Between the unlocked lookup (used to get the lock order right) and
       // this locked re-read, another transaction could have deleted the
       // item while this call waited on the follow-up lock. Without a
@@ -324,6 +324,196 @@ describe("follow-ups migration", () => {
       expect(body.match(/= v_follow_up_id/g)?.length ?? 0).toBeGreaterThanOrEqual(1);
       expect(body).toContain("'follow_ups', v_follow_up_id, 'checklist_updated'");
       expect(body).toContain("'status', 'ok', 'follow_up_id', v_follow_up_id");
+    });
+  });
+
+  describe("optimistic locking treats a NULL or mismatched version as a conflict", () => {
+    // `a <> b` is NULL (not TRUE) when p_version is NULL, so an `if ... <> p_version` check is
+    // silently skipped; `is distinct from` is TRUE for NULL vs a value, so NULL is a conflict.
+    it.each([
+      ["update_follow_up", "v_existing"],
+      ["set_follow_up_checklist_item", "v_item"],
+      ["reschedule_follow_up", "v_existing"],
+      ["complete_follow_up", "v_current"],
+      ["cancel_follow_up", "v_current"],
+      ["reopen_follow_up", "v_current"],
+    ])("%s compares %s.version with `is distinct from`", (name, row) => {
+      const body = extractFunctionBody(name);
+      const check = `if ${row}.version is distinct from p_version then`;
+      expect(body).toContain(check);
+      // The comparison must still lead to the conflict result, not anything else.
+      const afterCheck = body.slice(body.indexOf(check), body.indexOf(check) + 200);
+      expect(afterCheck).toMatch(/return jsonb_build_object\('status', 'conflict'/);
+    });
+
+    it("leaves no `<>` comparison against any version parameter anywhere in the migration", () => {
+      expect(migration).not.toMatch(/<>\s*p_\w*version/);
+      expect(migration).not.toMatch(/version\s*<>/);
+    });
+  });
+
+  describe("reschedule history records old and new date and time", () => {
+    it("includes both the old and new due time, rendering a missing time as 'all day'", () => {
+      const body = extractFunctionBody("reschedule_follow_up");
+      expect(body).toContain("left(v_existing.due_date::text, 13)");
+      expect(body).toContain(
+        "coalesce(' at ' || left(v_existing.due_time::text, 5), ' (all day)')",
+      );
+      expect(body).toContain("left(p_due_date::text, 13)");
+      expect(body).toContain("coalesce(' at ' || left(p_due_time::text, 5), ' (all day)')");
+      // The old dates-only message (a time-only change logged "from X to X") is gone.
+      expect(body).not.toContain("v_existing.due_date || ' to ' || p_due_date");
+    });
+
+    it("stays within 200 characters in the worst case", () => {
+      // Dates are capped at 13 ('5874897-12-31' / '4713-01-01 BC'), times render as
+      // ' at HH:MI' (9) or ' (all day)' (10).
+      const time = Math.max(" at 00:00".length, " (all day)".length);
+      const worstCase =
+        "Follow-up rescheduled from ".length + 13 + time + " to ".length + 13 + time;
+      expect(worstCase).toBe(77);
+      expect(worstCase).toBeLessThanOrEqual(200);
+    });
+  });
+
+  describe("update_follow_up keeps a fuller edit history", () => {
+    const LIMIT = 200;
+    const TITLE_CAP = 150;
+
+    it("logs one capped activity row per removed checklist item, noting completion", () => {
+      const body = extractFunctionBody("update_follow_up");
+      expect(body).toMatch(
+        /with removed as \(\s*delete from public\.follow_up_checklist_items[\s\S]*?returning label, is_completed\s*\)\s*insert into public\.ops_activity_log/,
+      );
+      expect(body).toContain(
+        "'Checklist item removed: ' || left(coalesce(removed.label, ''), 150)",
+      );
+      expect(body).toContain(
+        "case when removed.is_completed then ' (was completed)' else ' (not completed)' end",
+      );
+      expect(body).toContain("'follow_ups', p_follow_up_id, 'checklist_updated'");
+      const suffix = Math.max(" (was completed)".length, " (not completed)".length);
+      expect("Checklist item removed: ".length + 150 + suffix).toBeLessThanOrEqual(LIMIT);
+    });
+
+    const futureMessages = [
+      "Follow-up set to repeat: ",
+      "Series set to stop repeating: ",
+      "Series restarted with updated defaults: ",
+      "Series recurrence changed: ",
+      "Series defaults updated: ",
+    ];
+
+    it.each(futureMessages)("has a distinct, capped future-scope message: %s", (prefix) => {
+      const body = extractFunctionBody("update_follow_up");
+      expect(body).toContain(`v_message := '${prefix}' || left(v_title, ${TITLE_CAP});`);
+      expect(prefix.length + TITLE_CAP).toBeLessThanOrEqual(LIMIT);
+    });
+
+    it("keeps a capped generic message for occurrence-scope edits and logs v_message", () => {
+      const body = extractFunctionBody("update_follow_up");
+      expect(body).toContain(
+        `v_message text := 'Follow-up updated: ' || left(v_title, ${TITLE_CAP});`,
+      );
+      expect(body).toContain("values (v_message, 'follow_ups', p_follow_up_id, 'updated');");
+      // The old uncapped message (a 240-character title made it 259 characters) is gone.
+      expect(body).not.toContain("'Follow-up updated: ' || v_title,");
+      expect("Follow-up updated: ".length + TITLE_CAP).toBeLessThanOrEqual(LIMIT);
+    });
+
+    it("sets each future-scope message inside the series branch that does that thing", () => {
+      const body = extractFunctionBody("update_follow_up");
+      const order = [
+        "returning id into v_existing.series_id;",
+        "v_message := 'Follow-up set to repeat: '",
+        "update public.follow_up_series set active = false",
+        "v_message := 'Series set to stop repeating: '",
+        "active = true, version = version + 1",
+        "v_message := 'Series restarted with updated defaults: '",
+        "v_message := 'Series recurrence changed: '",
+        "v_message := 'Series defaults updated: '",
+        "values (v_message, 'follow_ups', p_follow_up_id, 'updated');",
+      ].map((text) => body.indexOf(text));
+      for (const index of order) expect(index).toBeGreaterThan(-1);
+      expect([...order].sort((a, b) => a - b)).toEqual(order);
+    });
+  });
+
+  describe("update_follow_up re-checks the payload before its first write", () => {
+    const body = () => extractFunctionBody("update_follow_up");
+    const firstWrite = () => body().indexOf("update public.follow_ups set");
+
+    it.each([
+      ["title length, as create_follow_up", "or char_length(v_title) > 240"],
+      [
+        "a valid priority",
+        "or coalesce(p_follow_up ->> 'priority', '') not in ('Low', 'Medium', 'High')",
+      ],
+      ["a due date", "or coalesce(btrim(p_follow_up ->> 'due_date'), '') = '' then"],
+    ])("validates %s before the first write", (_label, check) => {
+      const checkIndex = body().indexOf(check);
+      expect(checkIndex).toBeGreaterThan(-1);
+      expect(firstWrite()).toBeGreaterThan(-1);
+      expect(checkIndex).toBeLessThan(firstWrite());
+      // Same invalid shape and message as create_follow_up, inside the same if-block.
+      const afterCheck = body().slice(checkIndex, body().indexOf("end if;", checkIndex));
+      expect(afterCheck).toContain(
+        "return jsonb_build_object('status', 'invalid', 'message', 'invalid follow-up payload');",
+      );
+    });
+
+    it("create_follow_up still has the same title/priority checks being mirrored", () => {
+      const create = extractFunctionBody("create_follow_up");
+      expect(create).toContain("or v_title = '' or char_length(v_title) > 240");
+      expect(create).toContain("or v_priority not in ('Low', 'Medium', 'High')");
+    });
+
+    it("returns invalid (not a raw 23514) when a future edit lowers max_occurrences below occurrences_created", () => {
+      const fn = body();
+      const lockIndex = fn.indexOf(
+        "select * into v_series from public.follow_up_series\n    where id = v_existing.series_id for update;",
+      );
+      const limitCheckIndex = fn.indexOf(
+        "and nullif(p_recurrence ->> 'max_occurrences', '')::integer\n      < coalesce(v_series.occurrences_created, 1) then",
+      );
+      expect(lockIndex).toBeGreaterThan(-1);
+      expect(limitCheckIndex).toBeGreaterThan(-1);
+      expect(lockIndex).toBeLessThan(limitCheckIndex);
+      expect(limitCheckIndex).toBeLessThan(firstWrite());
+      expect(fn.slice(limitCheckIndex, limitCheckIndex + 250)).toContain("'status', 'invalid'");
+      expect(fn).toContain("if p_scope = 'future' and v_recurring\n    and nullif(");
+    });
+
+    it("locks the series only after the follow-up row (same order as the lifecycle RPCs)", () => {
+      const fn = body();
+      const followUpLock = fn.indexOf(
+        "from public.follow_ups\n  where id = p_follow_up_id for update",
+      );
+      const seriesLock = fn.indexOf("where id = v_existing.series_id for update;");
+      expect(followUpLock).toBeGreaterThan(-1);
+      expect(followUpLock).toBeLessThan(seriesLock);
+    });
+  });
+
+  describe("indexes", () => {
+    it("drops the duplicate checklist order index but keeps the unique constraint that covers it", () => {
+      expect(migration).not.toContain("follow_up_checklist_order_idx");
+      expect(migration).toContain(
+        "unique (follow_up_id, sort_order) deferrable initially deferred",
+      );
+    });
+
+    it.each([
+      ["follow_up_series_contact_idx", "public.follow_up_series (contact_id)"],
+      ["follow_up_series_enquiry_idx", "public.follow_up_series (enquiry_id)"],
+      ["follow_up_series_project_idx", "public.follow_up_series (project_id)"],
+      ["follow_up_series_owner_idx", "public.follow_up_series (owner_user_id)"],
+      ["follow_ups_successor_idx", "public.follow_ups (successor_id)"],
+      ["follow_up_checklist_completed_by_idx", "public.follow_up_checklist_items (completed_by)"],
+    ])("indexes the foreign key behind %s", (name, target) => {
+      expect(migration).toMatch(
+        new RegExp(`create index ${name}\\s+on ${target.replace(/[()]/g, "\\$&")};`),
+      );
     });
   });
 });

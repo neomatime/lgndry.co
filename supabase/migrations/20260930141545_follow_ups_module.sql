@@ -158,9 +158,17 @@ create index follow_ups_owner_idx on public.follow_ups (owner_user_id);
 create index follow_ups_schedule_idx on public.follow_ups (status, due_date, due_time);
 create index follow_ups_series_idx on public.follow_ups (series_id, occurrence_number)
   where series_id is not null;
-create index follow_up_checklist_order_idx
-  on public.follow_up_checklist_items (follow_up_id, sort_order);
+create index follow_ups_successor_idx on public.follow_ups (successor_id);
+-- No separate (follow_up_id, sort_order) index on follow_up_checklist_items:
+-- the table's unique (follow_up_id, sort_order) constraint already creates a
+-- btree index on exactly those columns, which also covers the follow_up_id FK.
+create index follow_up_checklist_completed_by_idx
+  on public.follow_up_checklist_items (completed_by);
 create index follow_up_series_client_idx on public.follow_up_series (client_id);
+create index follow_up_series_contact_idx on public.follow_up_series (contact_id);
+create index follow_up_series_enquiry_idx on public.follow_up_series (enquiry_id);
+create index follow_up_series_project_idx on public.follow_up_series (project_id);
+create index follow_up_series_owner_idx on public.follow_up_series (owner_user_id);
 
 alter table public.follow_up_series enable row level security;
 alter table public.follow_ups enable row level security;
@@ -425,6 +433,11 @@ declare
     select jsonb_array_elements_text(coalesce(p_follow_up -> 'contact_methods', '[]'::jsonb))
   );
   v_recurring boolean := coalesce((p_recurrence ->> 'enabled')::boolean, false);
+  v_series public.follow_up_series%rowtype;
+  v_series_after public.follow_up_series%rowtype;
+  -- ops_activity_log messages stay within 200 characters: the longest prefix
+  -- below ('Series restarted with updated defaults: ', 40) + 150 title = 190.
+  v_message text := 'Follow-up updated: ' || left(v_title, 150);
 begin
   if not public.is_admin((select auth.uid())) then
     raise exception using errcode = '42501', message = 'admin access required';
@@ -432,7 +445,7 @@ begin
   select * into v_existing from public.follow_ups
   where id = p_follow_up_id for update;
   if not found then return jsonb_build_object('status', 'not-found'); end if;
-  if v_existing.version <> p_version then
+  if v_existing.version is distinct from p_version then
     return jsonb_build_object('status', 'conflict', 'message', 'Follow-up changed elsewhere.');
   end if;
   if v_existing.status <> 'Open' then
@@ -457,7 +470,14 @@ begin
     )
     or (v_type = 'Other' and v_custom_type is null)
     or (v_type <> 'Other' and v_custom_type is not null)
-    or v_title = '' or cardinality(v_methods) = 0 then
+    or v_title = '' or cardinality(v_methods) = 0
+    -- Same title/priority rules as create_follow_up, checked here so a bad
+    -- payload is an 'invalid' result rather than a raw CHECK / NOT NULL
+    -- error from the writes below. Priority is checked as sent (not trimmed)
+    -- because the writes below store it as sent.
+    or char_length(v_title) > 240
+    or coalesce(p_follow_up ->> 'priority', '') not in ('Low', 'Medium', 'High')
+    or coalesce(btrim(p_follow_up ->> 'due_date'), '') = '' then
     return jsonb_build_object('status', 'invalid', 'message', 'invalid follow-up payload');
   end if;
 
@@ -475,6 +495,30 @@ begin
     return jsonb_build_object('status', 'invalid', 'message', 'invalid checklist item');
   end if;
 
+  -- Future scope only (occurrence-scope edits never touch the series): the
+  -- series row is locked after the follow-up row, the same order
+  -- complete_follow_up / cancel_follow_up / reschedule_follow_up use. Read
+  -- before any write so the occurrence-limit check below sees the count the
+  -- series update will be checked against, and so the activity message can
+  -- tell what the edit did to the series.
+  if p_scope = 'future' and v_existing.series_id is not null then
+    select * into v_series from public.follow_up_series
+    where id = v_existing.series_id for update;
+  end if;
+  -- A future-scope edit that lowers max_occurrences below the occurrences
+  -- the series has already created would otherwise fail on the
+  -- follow_up_series_occurrences_check constraint (raw 23514); a new series
+  -- starts at occurrences_created = 1.
+  if p_scope = 'future' and v_recurring
+    and nullif(p_recurrence ->> 'max_occurrences', '')::integer
+      < coalesce(v_series.occurrences_created, 1) then
+    return jsonb_build_object(
+      'status', 'invalid',
+      'message', 'This series has already created ' || coalesce(v_series.occurrences_created, 1)
+        || ' occurrences, so it can''t end after fewer than that.'
+    );
+  end if;
+
   update public.follow_ups set
     client_id = v_client_id, contact_id = v_contact_id, enquiry_id = v_enquiry_id,
     project_id = v_project_id, follow_up_type = v_type, custom_type = v_custom_type,
@@ -486,12 +530,24 @@ begin
     version = version + 1
   where id = p_follow_up_id;
 
-  delete from public.follow_up_checklist_items
-  where follow_up_id = p_follow_up_id
-    and id not in (
-      select (value ->> 'id')::uuid from jsonb_array_elements(p_checklist)
-      where nullif(value ->> 'id', '') is not null
-    );
+  -- Items left out of the payload are hard-deleted; one activity row per
+  -- removed item keeps its label and completion state in the history.
+  -- Capped: 24 prefix + 150 label + 16 suffix = 190 characters at most.
+  with removed as (
+    delete from public.follow_up_checklist_items
+    where follow_up_id = p_follow_up_id
+      and id not in (
+        select (value ->> 'id')::uuid from jsonb_array_elements(p_checklist)
+        where nullif(value ->> 'id', '') is not null
+      )
+    returning label, is_completed
+  )
+  insert into public.ops_activity_log (message, collection, record_id, action)
+  select
+    'Checklist item removed: ' || left(coalesce(removed.label, ''), 150)
+      || case when removed.is_completed then ' (was completed)' else ' (not completed)' end,
+    'follow_ups', p_follow_up_id, 'checklist_updated'
+  from removed;
   for v_item in select value from jsonb_array_elements(p_checklist)
   loop
     if coalesce(btrim(v_item ->> 'label'), '') = '' then continue; end if;
@@ -535,9 +591,13 @@ begin
         v_existing.owner_user_id, v_existing.owner_name, v_existing.owner_email
       ) returning id into v_existing.series_id;
       update public.follow_ups set series_id = v_existing.series_id where id = p_follow_up_id;
+      v_message := 'Follow-up set to repeat: ' || left(v_title, 150);
     elsif v_existing.series_id is not null and not v_recurring then
       update public.follow_up_series set active = false, version = version + 1
       where id = v_existing.series_id;
+      if v_series.active then
+        v_message := 'Series set to stop repeating: ' || left(v_title, 150);
+      end if;
     elsif v_existing.series_id is not null and v_recurring then
       update public.follow_up_series set
         client_id = v_client_id, contact_id = v_contact_id, enquiry_id = v_enquiry_id,
@@ -558,11 +618,23 @@ begin
         max_occurrences = nullif(p_recurrence ->> 'max_occurrences', '')::integer,
         active = true, version = version + 1
       where id = v_existing.series_id;
+      select * into v_series_after from public.follow_up_series where id = v_existing.series_id;
+      if not v_series.active then
+        v_message := 'Series restarted with updated defaults: ' || left(v_title, 150);
+      elsif (v_series.frequency, v_series.interval_count, v_series.weekdays,
+          v_series.month_anchor, v_series.ends_on, v_series.max_occurrences)
+        is distinct from (v_series_after.frequency, v_series_after.interval_count,
+          v_series_after.weekdays, v_series_after.month_anchor, v_series_after.ends_on,
+          v_series_after.max_occurrences) then
+        v_message := 'Series recurrence changed: ' || left(v_title, 150);
+      else
+        v_message := 'Series defaults updated: ' || left(v_title, 150);
+      end if;
     end if;
   end if;
 
   insert into public.ops_activity_log (message, collection, record_id, action)
-  values ('Follow-up updated: ' || v_title, 'follow_ups', p_follow_up_id, 'updated');
+  values (v_message, 'follow_ups', p_follow_up_id, 'updated');
   return jsonb_build_object('status', 'ok', 'follow_up_id', p_follow_up_id);
 end;
 $$;
@@ -606,7 +678,7 @@ begin
   if not found then
     return jsonb_build_object('status', 'not-found');
   end if;
-  if v_item.version <> p_version then
+  if v_item.version is distinct from p_version then
     return jsonb_build_object('status', 'conflict', 'message', 'Checklist changed elsewhere.');
   end if;
   update public.follow_up_checklist_items set
@@ -646,7 +718,7 @@ begin
   end if;
   select * into v_existing from public.follow_ups where id = p_follow_up_id for update;
   if not found then return jsonb_build_object('status', 'not-found'); end if;
-  if v_existing.version <> p_version then
+  if v_existing.version is distinct from p_version then
     return jsonb_build_object('status', 'conflict', 'message', 'Follow-up changed elsewhere.');
   end if;
   if v_existing.status <> 'Open' or p_scope not in ('occurrence', 'future') then
@@ -668,8 +740,14 @@ begin
     where id = v_existing.series_id;
   end if;
   insert into public.ops_activity_log (message, collection, record_id, action)
+  -- Records old and new date AND time, so a time-only change is visible. A
+  -- missing time renders as 'all day'. Every part is bounded (no user text):
+  -- 27 prefix + 13 date + 10 time + 4 separator + 13 date + 10 time = 77 at most.
   values (
-    'Follow-up rescheduled from ' || v_existing.due_date || ' to ' || p_due_date,
+    'Follow-up rescheduled from ' || coalesce(left(v_existing.due_date::text, 13), 'no date')
+      || coalesce(' at ' || left(v_existing.due_time::text, 5), ' (all day)')
+      || ' to ' || coalesce(left(p_due_date::text, 13), 'no date')
+      || coalesce(' at ' || left(p_due_time::text, 5), ' (all day)'),
     'follow_ups', p_follow_up_id, 'rescheduled'
   );
   return jsonb_build_object('status', 'ok', 'follow_up_id', p_follow_up_id);
@@ -746,7 +824,7 @@ begin
       'status', 'ok', 'follow_up_id', p_follow_up_id, 'successor_id', v_current.successor_id
     );
   end if;
-  if v_current.version <> p_version then
+  if v_current.version is distinct from p_version then
     return jsonb_build_object('status', 'conflict', 'message', 'Follow-up changed elsewhere.');
   end if;
   if v_current.status <> 'Open' then
@@ -811,7 +889,7 @@ begin
       'status', 'ok', 'follow_up_id', p_follow_up_id, 'successor_id', v_current.successor_id
     );
   end if;
-  if v_current.version <> p_version then
+  if v_current.version is distinct from p_version then
     return jsonb_build_object('status', 'conflict', 'message', 'Follow-up changed elsewhere.');
   end if;
   if v_current.status <> 'Open' then
@@ -863,7 +941,7 @@ begin
   end if;
   select * into v_current from public.follow_ups where id = p_follow_up_id for update;
   if not found then return jsonb_build_object('status', 'not-found'); end if;
-  if v_current.version <> p_version then
+  if v_current.version is distinct from p_version then
     return jsonb_build_object('status', 'conflict', 'message', 'Follow-up changed elsewhere.');
   end if;
   if v_current.status not in ('Completed', 'Cancelled') then
