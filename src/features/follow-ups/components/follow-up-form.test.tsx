@@ -599,7 +599,8 @@ describe("FollowUpForm - edit", () => {
       editScope: "future",
     });
     expect(mocks.create).not.toHaveBeenCalled();
-    expect(mocks.push).toHaveBeenCalledWith(`/ops/follow-ups/${FOLLOW_UP}`);
+    // Edit lands on the detail page with the calm "updated" notice flag.
+    expect(mocks.push).toHaveBeenCalledWith(`/ops/follow-ups/${FOLLOW_UP}?updated=1`);
   });
 
   it("asks which occurrences to change and locks the rule for this occurrence only", async () => {

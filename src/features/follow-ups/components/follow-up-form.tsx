@@ -242,7 +242,12 @@ export function FollowUpForm({
           ? await updateFollowUp(existingFollowUp.id, existingFollowUp.version, parsed.data)
           : await createFollowUp(parsed.data);
         if (result.status === "success") {
-          router.push(`/ops/follow-ups/${result.followUpId}`);
+          // Edit returns to the detail page with a calm "updated" notice; create does not.
+          router.push(
+            existingFollowUp
+              ? `/ops/follow-ups/${result.followUpId}?updated=1`
+              : `/ops/follow-ups/${result.followUpId}`,
+          );
           router.refresh();
           return;
         }
