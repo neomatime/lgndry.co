@@ -1014,12 +1014,16 @@ activity messages work: writes of 259, 226 and 319 characters succeeded because 
 runs left nothing behind. Post-apply checks were read-only and passed. The repository gate was green
 at the last commit with 1221 tests.
 
-**Not yet verified.** The authenticated browser smoke test has not been run. It needs an admin
-session and explicit approval before any temporary live rows are written. Until it runs, the
-PostgREST foreign-key-hint selects (for example `clients!follow_ups_client_id_fkey`) and the three
-related-follow-ups views on the Client, Project and Enquiry detail pages have only run against
-mocks. The `<dialog>` `showModal()` path has only been exercised manually in Chromium, and screen
-reader announcements are unverified.
+The owner completed an authenticated production browser smoke test on 2026-10-20. It created a
+marked client with two contacts, submitted a public Start a Project enquiry that matched the
+existing client, opened its attachment, edited and advanced the enquiry, converted it to a project,
+and moved the project stage. It then exercised a standalone enquiry follow-up with a checklist and
+edit, plus a weekly project recurrence through complete, occurrence-only skip, end-series and
+reopen. The main Follow-ups list and the Enquiry and Project related views loaded correctly, and the
+production `<dialog>` lifecycle controls worked in Chromium. The Client related-follow-ups view was
+not separately revisited after the test follow-ups existed, and screen-reader announcements remain
+unverified. Every `ZZ-SMOKE` database row, upload session, activity row and Storage object was then
+deleted by exact identifier; a final marker count returned zero across all affected tables.
 
 ### Deliberately different from the reference images and spec
 
@@ -1074,9 +1078,9 @@ reader announcements are unverified.
 
 ### Still open
 
-- Run the authenticated browser smoke test after explicit approval for temporary live rows: load the
-  list, a detail page, all three related views and the edit form, exercise create, edit, complete,
-  skip, cancel-series and reopen, then delete all temporary data.
+- Directly recheck the Client detail page's related-follow-ups view with a real record; the production
+  smoke test covered the main list and the Enquiry and Project related views but did not separately
+  revisit the Client view after its follow-ups existed.
 - TypeScript-only follow-ups: month stepping from the series start, restarting an ended series, and a
   reliable announcement for the update notice.
 - Communications and Inbox, the Invoices relation, team assignment, export, bulk actions, dashboard
