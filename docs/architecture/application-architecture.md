@@ -1066,7 +1066,6 @@ deleted by exact identifier; a final marker count returned zero across all affec
 - The `?updated=1` "Follow-up updated" notice is not reliably announced after client-side
   navigation, and it reappears on a reload.
 - "Completed by" is not shown on checklist items.
-- The shared Tabs primitive has no arrow-key navigation.
 - The recurrence summary prints a raw ISO end date.
 - The pre-existing anon `public_insert_activity` policy allows forged `collection = 'follow_ups'`
   activity rows. Doing so needs a follow-up UUID, which is never exposed publicly.
@@ -1085,3 +1084,38 @@ deleted by exact identifier; a final marker count returned zero across all affec
   reliable announcement for the update notice.
 - Communications and Inbox, the Invoices relation, team assignment, export, bulk actions, dashboard
   aggregation and pagination, each when its backing module or need arrives.
+
+## Phase 5, sub-project 8 - Settings module
+
+The OPS Settings module now owns the single LGNDRY.Co workspace profile and the commercial defaults
+that the future Quotes and Invoices module will copy into each new record. `/ops/settings` is enabled
+in the sidebar and presents General and Quotes & Invoices tabs. General covers the business identity,
+public contact details, address and the fixed Johannesburg/ZAR locale. Quotes & Invoices covers the
+manually maintained default terms, retainer percentage, quote validity, deposit due period, bank
+details and outbound email identity. Blank legal, banking and terms fields are intentional; the
+future commercial workflow must block sending until its required snapshot fields are complete.
+
+Migration `20261020100000_ops_settings.sql` adds an exact-one-row `ops_settings` table seeded with
+safe public defaults. RLS exposes that row only to administrators. Direct writes are unavailable to
+authenticated clients; the sole write path is the versioned `update_ops_settings(jsonb, integer)`
+`SECURITY DEFINER` RPC. It pins an empty `search_path`, checks admin status before reading or writing,
+validates every field again in PostgreSQL, rejects stale and NULL versions, and records only the
+redacted `Workspace settings updated` activity message. Bank and contact values never enter the
+activity log.
+
+Before the live apply, the complete SQL was executed against project `tscaluhtfrvwlwjybfsg` inside
+an always-rolled-back transaction. The verification proved singleton seeding, RLS zero-row denial,
+table and function grants, non-admin rejection, admin update, optimistic locking, required numeric
+validation and redacted activity logging. It ended with the intentional `ALL CHECKS PASSED` rollback.
+The migration was then applied on 2026-10-20. A post-apply read returned exactly one seeded row with
+the stable singleton UUID, `LGNDRY.Co`, `info@lgndry-co.co.za`, `Africa/Johannesburg` and `ZAR`.
+
+The shared Tabs primitive was improved as part of the module: Left/Right arrows wrap between tabs,
+Home and End move to the first and last tab, tab/panel IDs are linked with ARIA attributes, and its
+horizontal scrollbar is visually hidden. The repository gate passed with 125 test files and 1267
+tests, followed by a successful Next.js production build containing `/ops/settings`.
+
+An owner-authenticated production browser smoke test remains outstanding after deployment. It should
+open both Settings tabs, save a harmless field change, verify the success notice and audit event, and
+restore the original value. Settings intentionally has no Team, Notifications, Billing, Security,
+logo-upload or secret-management controls; those remain separate future work.

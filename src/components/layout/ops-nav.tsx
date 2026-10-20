@@ -32,7 +32,7 @@ const NAV_ITEMS: NavItem[] = [
   { label: "Inbox", href: "/ops/inbox", icon: Inbox, available: false },
   { label: "Follow-ups", href: "/ops/follow-ups", icon: CalendarCheck, available: true },
   { label: "Invoices", href: "/ops/invoices", icon: FileText, available: false },
-  { label: "Settings", href: "/ops/settings", icon: Settings, available: false },
+  { label: "Settings", href: "/ops/settings", icon: Settings, available: true },
 ];
 
 const itemClasses =

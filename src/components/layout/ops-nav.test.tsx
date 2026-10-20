@@ -45,6 +45,15 @@ describe("OpsNav", () => {
     expect(screen.queryByText("Follow-ups")?.closest("span[aria-disabled='true']")).toBeNull();
   });
 
+  it("renders Settings as an available link and marks its routes current", () => {
+    navigation.pathname = "/ops/settings";
+    render(<OpsNav />);
+    expect(screen.getByRole("link", { name: "Settings" })).toHaveAttribute("href", "/ops/settings");
+    expect(screen.getByRole("link", { name: "Settings" })).toHaveAttribute("aria-current", "page");
+    expect(screen.getByText("Inbox").closest("span[aria-disabled='true']")).toBeInTheDocument();
+    expect(screen.getByText("Invoices").closest("span[aria-disabled='true']")).toBeInTheDocument();
+  });
+
   it.each(["/ops/follow-ups", "/ops/follow-ups/new", "/ops/follow-ups/follow-up-id"])(
     "marks Follow-ups current on %s",
     (pathname) => {
@@ -89,9 +98,10 @@ describe("OpsNav", () => {
 
   it("keeps unfinished modules disabled", () => {
     render(<OpsNav />);
-    for (const label of ["Inbox", "Invoices", "Settings"]) {
+    for (const label of ["Inbox", "Invoices"]) {
       expect(screen.queryByRole("link", { name: label })).not.toBeInTheDocument();
       expect(screen.getByText(label).closest("span[aria-disabled='true']")).toBeInTheDocument();
     }
+    expect(screen.getByRole("link", { name: "Settings" })).toBeInTheDocument();
   });
 });
