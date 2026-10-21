@@ -51,7 +51,7 @@ describe("OpsNav", () => {
     expect(screen.getByRole("link", { name: "Settings" })).toHaveAttribute("href", "/ops/settings");
     expect(screen.getByRole("link", { name: "Settings" })).toHaveAttribute("aria-current", "page");
     expect(screen.getByText("Inbox").closest("span[aria-disabled='true']")).toBeInTheDocument();
-    expect(screen.getByText("Invoices").closest("span[aria-disabled='true']")).toBeInTheDocument();
+    expect(screen.getByRole("link", { name: "Invoices" })).toHaveAttribute("href", "/ops/invoices");
   });
 
   it.each(["/ops/follow-ups", "/ops/follow-ups/new", "/ops/follow-ups/follow-up-id"])(
@@ -98,7 +98,7 @@ describe("OpsNav", () => {
 
   it("keeps unfinished modules disabled", () => {
     render(<OpsNav />);
-    for (const label of ["Inbox", "Invoices"]) {
+    for (const label of ["Inbox"]) {
       expect(screen.queryByRole("link", { name: label })).not.toBeInTheDocument();
       expect(screen.getByText(label).closest("span[aria-disabled='true']")).toBeInTheDocument();
     }

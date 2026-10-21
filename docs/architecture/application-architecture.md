@@ -1119,3 +1119,57 @@ An owner-authenticated production browser smoke test remains outstanding after d
 open both Settings tabs, save a harmless field change, verify the success notice and audit event, and
 restore the original value. Settings intentionally has no Team, Notifications, Billing, Security,
 logo-upload or secret-management controls; those remain separate future work.
+
+## Phase 5, sub-project 9 - Quotes and Invoices module
+
+The commercial workflow now separates permanent Quotes from Invoices while keeping the OPS area
+deliberately narrower than accounting software. `/ops/invoices` follows the approved dense list
+composition with four metrics, status tabs, search, sort, a selected-record preview, CSV export and
+entry points for direct invoices and quotes. Quote and invoice detail routes use the supplied
+summary-card, document-body and right-rail composition. Draft quotes and manually created draft
+invoices have dedicated edit routes.
+
+Quotes are versioned business documents. A sent or expired quote can create a new editable revision;
+the old record becomes Superseded and remains readable. Sending a draft freezes the current company,
+banking and validity settings, creates a 256-bit approval token, stores only its SHA-256 hash and
+emails the contact a private `/quote/[token]` link. Resending rotates the token without changing the
+issued snapshot. The public page exposes only the matching sent/approved quote and provides the one
+irreversible client action, **Approve Quote**.
+
+Approval is idempotent and creates exactly one sent deposit invoice using the quote's frozen retainer
+rate and payment details. Manual partial payments are append-only and do not confirm a booking. When
+the deposit invoice is fully paid, the database creates or reuses a Planning project, updates its
+payment state, links the quote and invoice to it, and marks the source enquiry Booked when one exists.
+Direct-client quotes without an enquiry follow the same project-creation path. Clients cannot reverse
+approval, issued documents cannot be edited, paid invoices cannot be voided, and commercial records
+are never hard-deleted.
+
+Migration `20261020143000_commercial_documents.sql` adds quote, quote-line, invoice, invoice-line and
+payment tables plus narrow RPC write paths. Admin tables expose SELECT only under RLS. Every admin
+write RPC is `SECURITY DEFINER`, pins an empty `search_path`, checks `is_admin`, uses optimistic
+version locking where it mutates an existing record, and is executable only by `authenticated`.
+Anonymous access is limited to token-hash public quote read and approval RPCs; anon receives no table
+privileges. Draft inputs permit one initial related context (enquiry or project), while conversion may
+retain the source enquiry and add the resulting project.
+
+The TypeScript layer keeps schemas, totals/status derivation, server-only fetchers and UI components
+separate. Server pages call `requireOpsUser()` before data access, invalid UUIDs become 404s, failures
+render distinct unavailable states, and Johannesburg dates are formatted explicitly. ZAR is the only
+currency and no VAT is calculated because LGNDRY.Co is not VAT registered.
+
+### Deliberate boundaries and release state
+
+- Payments are recorded manually. No gateway, automatic bank reconciliation, recurring billing or
+  VAT ledger is included.
+- Quote and invoice email uses the existing authenticated `send-admin-email` Edge Function. In-app
+  and scheduled email reminders remain deferred.
+- Invoice-linked Follow-ups require a separate additive change to the mature Follow-ups schema and
+  are not bundled into this migration. The invoice activity rail records sends, payments and voids.
+- Public documents are responsive web records. Dedicated PDF generation and attached PDFs are
+  deferred; invoice CSV export is available from the OPS list.
+- The module has passed formatting, TypeScript, lint, 1,291 tests and a production Next.js build.
+  The SQL passed the mandated always-rolled-back live-schema verification before it was applied to
+  the production Supabase project on 21 October 2026 and recorded as migration version
+  `20261020143000` (`commercial_documents`). Post-apply checks confirmed all five tables, RLS,
+  locked anonymous table access and the narrow public approval RPC. Push/deploy and authenticated
+  visual smoke testing remain pending at the time of this record.
