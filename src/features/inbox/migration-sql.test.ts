@@ -6,9 +6,13 @@ const migration = readFileSync(
   join(process.cwd(), "supabase/migrations/20261021120000_inbox_module.sql"),
   "utf8",
 ).replaceAll("\r\n", "\n");
+const fixMigration = readFileSync(
+  join(process.cwd(), "supabase/migrations/20261022143000_fix_inbox_project_client_link.sql"),
+  "utf8",
+).replaceAll("\r\n", "\n");
 
-function rpc(name: string) {
-  const match = migration.match(
+function rpc(name: string, source = migration) {
+  const match = source.match(
     new RegExp(`create or replace function public\\.${name}\\([\\s\\S]*?\\$\\$;`),
   );
   if (!match) throw new Error(`${name} function is missing`);
@@ -63,11 +67,27 @@ describe("Inbox migration", () => {
   });
 
   it("keeps linked operational records on the selected client", () => {
+    const stateBody = rpc("set_email_thread_state");
     const body = rpc("link_email_thread");
+    expect(stateBody).not.toContain("p_links");
+    expect(body).toContain("v_client_id uuid := nullif(p_links ->> 'client_id', '')::uuid;");
     expect(body).toContain("Choose the client before linking related records.");
-    expect(body).toContain("client_id = v_client_id");
+    expect(body).toContain("public.projects where id = v_project_id and client = v_client_id");
     expect(body).toContain("The invoice does not belong to that client.");
     expect(body).toContain("The follow-up does not belong to that client.");
+  });
+
+  it("repairs both live RPC definitions without widening execution grants", () => {
+    expect(rpc("set_email_thread_state", fixMigration)).not.toContain("p_links");
+    expect(rpc("link_email_thread", fixMigration)).toContain(
+      "public.projects where id = v_project_id and client = v_client_id",
+    );
+    expect(fixMigration).toContain(
+      "revoke all on function public.link_email_thread(uuid, jsonb, integer)",
+    );
+    expect(fixMigration).toContain(
+      "grant execute on function public.link_email_thread(uuid, jsonb, integer) to authenticated",
+    );
   });
 
   it("grants mailbox RPCs only to authenticated users", () => {

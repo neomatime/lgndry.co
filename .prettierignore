@@ -6,6 +6,7 @@ docs
 assests
 api
 supabase/functions
+supabase/.temp
 *.html
 *.js
 *.png

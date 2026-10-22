@@ -1216,3 +1216,12 @@ updated `receive-admin-email`, `send-admin-email` and `sync-titan-inbox` Edge Fu
 deployed with their existing JWT settings, and application commit `238a8d6` was promoted to Vercel
 production. The public production route correctly redirects unauthenticated visitors to login. An
 authenticated production smoke test remains outstanding before Inbox is treated as fully verified.
+
+The first authenticated production load exposed a schema-name mismatch: the Inbox option query and
+project-link validation used `projects.client_id`, while the established Projects module stores that
+foreign key in `projects.client`. Review also found that the link payload declarations had been
+placed in `set_email_thread_state` instead of `link_email_thread`. Additive migration
+`20261022143000_fix_inbox_project_client_link.sql` repairs both RPC definitions without widening
+their grants, while the fetcher now selects and maps `projects.client`. The migration passed an
+always-rolled-back live verification before application and was recorded on 22 October 2026. A
+repeat authenticated smoke test is still required after the application patch is deployed.

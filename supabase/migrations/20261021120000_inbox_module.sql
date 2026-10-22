@@ -206,13 +206,6 @@ set search_path = ''
 as $$
 declare
   v_thread public.email_threads%rowtype;
-  v_client_id uuid := nullif(p_links ->> 'client_id', '')::uuid;
-  v_contact_id uuid := nullif(p_links ->> 'contact_id', '')::uuid;
-  v_enquiry_id uuid := nullif(p_links ->> 'enquiry_id', '')::uuid;
-  v_project_id uuid := nullif(p_links ->> 'project_id', '')::uuid;
-  v_quote_id uuid := nullif(p_links ->> 'quote_id', '')::uuid;
-  v_invoice_id uuid := nullif(p_links ->> 'invoice_id', '')::uuid;
-  v_follow_up_id uuid := nullif(p_links ->> 'follow_up_id', '')::uuid;
 begin
   if not public.is_admin((select auth.uid())) then
     raise exception using errcode = '42501', message = 'admin access required';
@@ -258,6 +251,13 @@ set search_path = ''
 as $$
 declare
   v_thread public.email_threads%rowtype;
+  v_client_id uuid := nullif(p_links ->> 'client_id', '')::uuid;
+  v_contact_id uuid := nullif(p_links ->> 'contact_id', '')::uuid;
+  v_enquiry_id uuid := nullif(p_links ->> 'enquiry_id', '')::uuid;
+  v_project_id uuid := nullif(p_links ->> 'project_id', '')::uuid;
+  v_quote_id uuid := nullif(p_links ->> 'quote_id', '')::uuid;
+  v_invoice_id uuid := nullif(p_links ->> 'invoice_id', '')::uuid;
+  v_follow_up_id uuid := nullif(p_links ->> 'follow_up_id', '')::uuid;
 begin
   if not public.is_admin((select auth.uid())) then
     raise exception using errcode = '42501', message = 'admin access required';
@@ -292,7 +292,7 @@ begin
     return jsonb_build_object('status', 'invalid', 'message', 'The enquiry does not belong to that client.');
   end if;
   if v_project_id is not null and not exists (
-    select 1 from public.projects where id = v_project_id and client_id = v_client_id
+    select 1 from public.projects where id = v_project_id and client = v_client_id
   ) then
     return jsonb_build_object('status', 'invalid', 'message', 'The project does not belong to that client.');
   end if;

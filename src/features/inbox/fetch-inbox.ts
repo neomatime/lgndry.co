@@ -231,7 +231,7 @@ export async function fetchInbox(): Promise<InboxData | null> {
         .from("enquiries")
         .select("id, client_id, project_type, full_name")
         .order("created_at", { ascending: false }),
-      supabase.from("projects").select("id, client_id, name").eq("archived", false).order("name"),
+      supabase.from("projects").select("id, client, name").eq("archived", false).order("name"),
       supabase
         .from("commercial_quotes")
         .select("id, client_id, reference_number")
@@ -270,7 +270,7 @@ export async function fetchInbox(): Promise<InboxData | null> {
         (row) => `${row.project_type} · ${row.full_name}`,
         "client_id",
       ),
-      projects: options(projectsResult.data, (row) => String(row.name), "client_id"),
+      projects: options(projectsResult.data, (row) => String(row.name), "client"),
       quotes: options(
         quotesResult.data,
         (row) => reference("QT", row.reference_number),
