@@ -65,6 +65,10 @@ describe("SettingsPage", () => {
     expect(
       screen.getByText("Manage workspace details and commercial defaults."),
     ).toBeInTheDocument();
+    expect(screen.getByRole("link", { name: "Manage Team" })).toHaveAttribute(
+      "href",
+      "/ops/settings/team",
+    );
     expect(screen.getByTestId("settings-form")).toHaveTextContent("LGNDRY.Co:1");
   });
 

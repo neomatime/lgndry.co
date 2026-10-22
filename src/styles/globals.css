@@ -28,6 +28,18 @@
   --ops-ease: cubic-bezier(0.2, 0.8, 0.2, 1);
 }
 
+html.dark {
+  --color-ink: #f3f2ee;
+  --color-ink-muted: #aaa8a1;
+  --color-surface: #151514;
+  --color-surface-soft: #1d1d1b;
+  --color-line: #2b2b28;
+  --color-line-strong: #45443f;
+  --ops-shadow-resting: 0 1px 2px rgb(0 0 0 / 18%), 0 8px 24px rgb(0 0 0 / 14%);
+  --ops-shadow-raised: 0 2px 5px rgb(0 0 0 / 24%), 0 14px 32px rgb(0 0 0 / 22%);
+  color-scheme: dark;
+}
+
 @layer base {
   html {
     color-scheme: light;
@@ -70,6 +82,18 @@
 }
 
 @layer utilities {
+  .dark .bg-white {
+    background-color: var(--color-surface);
+  }
+
+  .dark .text-white {
+    color: #111110;
+  }
+
+  .dark .hover\:bg-black:hover {
+    background-color: #ffffff;
+  }
+
   .scrollbar-hidden {
     -ms-overflow-style: none;
     scrollbar-width: none;

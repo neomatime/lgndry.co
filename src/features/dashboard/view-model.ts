@@ -31,6 +31,12 @@ function dashboardDate(now: Date) {
   }).format(now);
 }
 
+function shortSummary(value: string, limit = 120) {
+  const normalized = value.replace(/\s+/g, " ").trim();
+  if (normalized.length <= limit) return normalized;
+  return `${normalized.slice(0, limit - 1).trimEnd()}…`;
+}
+
 export function dashboardGreeting(name: string, now: Date) {
   const hourPart = new Intl.DateTimeFormat("en-ZA", {
     timeZone: "Africa/Johannesburg",
@@ -204,7 +210,7 @@ function buildActiveRecord(data: DashboardSourceData, today: string): DashboardA
     paymentStatus: project.paymentStatus,
     projectStatus: project.status,
     nextFollowUp: nextFollowUp ? dueLabel(nextFollowUp.dueDate, today) : "None scheduled",
-    notes: project.overview || "No project notes have been added yet.",
+    notes: shortSummary(project.overview || "No project notes have been added yet."),
   };
 }
 

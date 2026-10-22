@@ -1273,3 +1273,21 @@ modules, and all visual changes preserve monochrome icons and the existing neutr
 No migration or dependency is required. Notification data, saved filter views, report models,
 historical trend comparisons, document search, team workload and automation configuration remain
 future vertical slices; the shell deliberately does not display non-functional controls for them.
+
+## Phase 6, slice 2 - Account controls, profiles and themes
+
+The premium shell now keeps its account controls at the far edge of the top bar. The avatar opens an
+accessible menu for Profile, Settings and POST-only sign-out, while a separate light/dark control
+persists the selected appearance in local storage and applies it before first paint. Dark mode changes
+the existing semantic OPS tokens rather than introducing a second color system.
+
+`/ops/profile` lets the authenticated operator update their Supabase Auth display name and password.
+`/ops/settings/team` exposes the pre-existing `manage-team` Edge Function through authenticated server
+actions, so administrators can list, add and remove Command Center accounts without exposing the
+service-role key to the browser. New accounts continue to use the legacy temporary-password flow and
+must change that password from Profile after their first sign-in. This slice does not introduce roles
+beyond the current all-admin membership model in `admin_users`.
+
+The dashboard Active Record now normalizes and truncates project overview text to 120 characters and
+visually clamps it to three lines, preventing long project descriptions from distorting the overview.
+No database migration was required.

@@ -318,7 +318,14 @@ function ActiveRecord({ record }: { record: DashboardActiveRecord | null }) {
               <Definition label="Payment Status" value={record.paymentStatus} />
               <Definition label="Project Status" value={record.projectStatus} />
               <Definition label="Next Follow-up" value={record.nextFollowUp} />
-              <Definition label="Notes" value={record.notes} />
+              <Definition
+                label="Notes"
+                value={
+                  <span className="line-clamp-3" title={record.notes}>
+                    {record.notes}
+                  </span>
+                }
+              />
             </dl>
           </div>
         </div>

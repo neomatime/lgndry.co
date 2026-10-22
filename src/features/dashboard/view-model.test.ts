@@ -214,4 +214,34 @@ describe("buildDashboardViewModel", () => {
     expect(dashboard.pipeline).toHaveLength(11);
     expect(formatDashboardMoney(24_500)).toContain("24\u00a0500");
   });
+
+  it("keeps the active-record note concise", () => {
+    const dashboard = buildDashboardViewModel(
+      source({
+        projects: [
+          {
+            id: "project-1",
+            clientId: "client-1",
+            clientName: "Kabelo Maepa",
+            name: "Creative Session",
+            status: "Planning",
+            archived: false,
+            deliveryStatus: "Not Ready",
+            paymentStatus: "Not Invoiced",
+            bookingId: null,
+            updatedAt: "2026-10-22T06:00:00Z",
+            services: ["Portraiture"],
+            projectType: "Photography",
+            tasks: [],
+            deliverables: [],
+            overview: "A very long project description ".repeat(12),
+            enquiryId: null,
+          } as unknown as DashboardSourceData["projects"][number],
+        ],
+      }),
+      NOW,
+    );
+    expect(dashboard.activeRecord?.notes.length).toBeLessThanOrEqual(120);
+    expect(dashboard.activeRecord?.notes).toMatch(/…$/);
+  });
 });
