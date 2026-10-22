@@ -97,10 +97,12 @@ Deno.serve(async (request) => {
     const body = await request.json();
     const to = recipients(body.to);
     const cc = recipients(body.cc);
+    const bcc = recipients(body.bcc);
     const subject = String(body.subject || "").trim();
     const text = String(body.text || body.body || "").trim();
     const html = String(body.html || "").trim() || textToHtml(text);
     const emailId = String(body.emailId || "").trim();
+    const threadId = String(body.threadId || "").trim();
 
     if (!to.length || !subject || !text) {
       return json(request, { error: "Recipient, subject and message are required." }, 400);
@@ -116,8 +118,52 @@ Deno.serve(async (request) => {
     const replyTo = Deno.env.get("ADMIN_EMAIL_REPLY_TO") || Deno.env.get("RESEND_INBOUND_ADDRESS");
     if (replyTo) resendPayload.reply_to = replyTo;
     if (cc.length) resendPayload.cc = cc;
+    if (bcc.length) resendPayload.bcc = bcc;
 
-    const attachmentInputs = Array.isArray(body.attachments) ? body.attachments : [];
+    if (threadId) {
+      const { data: previous } = await serviceClient
+        .from("emails")
+        .select("message_id_header, references_header")
+        .eq("thread_id", threadId)
+        .not("message_id_header", "is", null)
+        .neq("id", emailId || "00000000-0000-0000-0000-000000000000")
+        .order("received_at", { ascending: false, nullsFirst: false })
+        .order("created_at", { ascending: false })
+        .limit(1)
+        .maybeSingle();
+      if (previous?.message_id_header) {
+        const references = Array.from(new Set([
+          ...(previous.references_header || []),
+          previous.message_id_header,
+        ]));
+        resendPayload.headers = {
+          "In-Reply-To": previous.message_id_header,
+          References: references.join(" "),
+        };
+      }
+    }
+
+    const attachmentInputs = Array.isArray(body.attachments) ? [...body.attachments] : [];
+    if (emailId) {
+      const { data: storedAttachments, error: storedAttachmentError } = await serviceClient
+        .from("email_attachments")
+        .select("file_name, storage_path")
+        .eq("email_id", emailId)
+        .not("storage_path", "is", null);
+      if (storedAttachmentError) {
+        return json(request, { error: "Unable to load message attachments" }, 400);
+      }
+      for (const item of storedAttachments || []) {
+        if (!item.storage_path) continue;
+        const { data: signed, error: signedError } = await serviceClient.storage
+          .from("email-attachments")
+          .createSignedUrl(item.storage_path, 600);
+        if (signedError || !signed?.signedUrl) {
+          return json(request, { error: "Unable to prepare a message attachment" }, 400);
+        }
+        attachmentInputs.push({ name: item.file_name, url: signed.signedUrl });
+      }
+    }
     if (attachmentInputs.length) {
       try {
         const attachments = await Promise.all(
@@ -146,7 +192,26 @@ Deno.serve(async (request) => {
     }
 
     if (emailId) {
-      await serviceClient.from("emails").update({ status: "Sent" }).eq("id", emailId);
+      await serviceClient.from("emails").update({
+        status: "Sent",
+        provider: "Resend",
+        provider_email_id: resendResult?.id || null,
+        sent_at: new Date().toISOString(),
+        is_read: true,
+      }).eq("id", emailId);
+    }
+    if (threadId) {
+      const { count } = await serviceClient
+        .from("emails")
+        .select("id", { count: "exact", head: true })
+        .eq("thread_id", threadId);
+      await serviceClient.from("email_threads").update({
+        latest_message_at: new Date().toISOString(),
+        message_count: count || 1,
+        is_read: true,
+        archived_at: null,
+        trashed_at: null,
+      }).eq("id", threadId);
     }
 
     return json(request, { sent: true, id: resendResult?.id || null });

@@ -29,7 +29,7 @@ const NAV_ITEMS: NavItem[] = [
   { label: "Enquiries", href: "/ops/enquiries", icon: Mail, available: true },
   { label: "Projects", href: "/ops/projects", icon: Folder, available: true },
   { label: "Clients", href: "/ops/clients", icon: Users, available: true },
-  { label: "Inbox", href: "/ops/inbox", icon: Inbox, available: false },
+  { label: "Inbox", href: "/ops/inbox", icon: Inbox, available: true },
   { label: "Follow-ups", href: "/ops/follow-ups", icon: CalendarCheck, available: true },
   { label: "Invoices", href: "/ops/invoices", icon: FileText, available: true },
   { label: "Settings", href: "/ops/settings", icon: Settings, available: true },

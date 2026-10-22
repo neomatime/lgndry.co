@@ -3,7 +3,7 @@
 Source spec: `docs/prd/PRD.md` (the v2 migration/rebuild prompt)
 (An earlier v1 was superseded. Note this file is the prompt itself, not an independent PRD.)
 Process source: `docs/bpmn/lgndry-ops-command-center-process-flow.png`.
-UI source: `docs/design-references/` (no Inbox reference was supplied).
+UI source: `docs/design-references/`, including the four-pane Inbox reference.
 
 ## Owner decisions (2026-09-25)
 
@@ -1030,7 +1030,8 @@ deleted by exact identifier; a final marker count returned zero across all affec
 - No Export, trend lines, select-all or bulk actions.
 - No assignee UI. Every follow-up is owned by its creator and ownership is retained through every
   action.
-- No Communication tab or snapshot and no invoice link, because Inbox and Invoices do not exist.
+- No Communication tab or snapshot yet; those module integrations follow the standalone Inbox.
+  Invoice-linked follow-ups still need their own additive Follow-ups change.
 - A Cancelled tab was added to the reference's tabs.
 - Five inline filter selects replace the reference's single Filter button.
 - Stat cards do not click through to a filtered view, and rows have no overflow menu.
@@ -1082,8 +1083,8 @@ deleted by exact identifier; a final marker count returned zero across all affec
   revisit the Client view after its follow-ups existed.
 - TypeScript-only follow-ups: month stepping from the series start, restarting an ended series, and a
   reliable announcement for the update notice.
-- Communications and Inbox, the Invoices relation, team assignment, export, bulk actions, dashboard
-  aggregation and pagination, each when its backing module or need arrives.
+- Communication snapshots, the invoice relation, team assignment, export, bulk actions, dashboard
+  aggregation and pagination, each as a separate integration or scale task.
 
 ## Phase 5, sub-project 8 - Settings module
 
@@ -1173,3 +1174,44 @@ currency and no VAT is calculated because LGNDRY.Co is not VAT registered.
   `20261020143000` (`commercial_documents`). Post-apply checks confirmed all five tables, RLS,
   locked anonymous table access and the narrow public approval RPC. Push/deploy and authenticated
   visual smoke testing remain pending at the time of this record.
+
+## Phase 5, sub-project 10 - Inbox module
+
+The OPS Inbox is now a real operational mailbox rather than a disabled navigation item. It follows
+the supplied four-pane reference: mailbox folders, a searchable thread list, the selected
+conversation and a contextual rail for the matching client/contact plus linked Enquiry, Project,
+Quote, Invoice and Follow-up. At narrower widths it becomes a deliberate folder/list/conversation
+flow instead of compressing the desktop panes or exposing a nested horizontal scrollbar.
+
+The first release supports Inbox, All Mail, Unread, Starred, Sent, Drafts, Archive and Trash;
+read/unread, star, archive, restore and trash state; compose, reply, draft edit/discard and send;
+CC/BCC; direct-to-Storage attachments; explicit operational record linking; manual sync and
+URL-backed folder/thread selection. Message HTML is isolated in a sandboxed iframe. Search and
+folder counts remain client-side at the accepted current operating scale.
+
+Migration `20261021120000_inbox_module.sql` preserves the legacy `emails` table while adding mailbox
+accounts, threads and attachment metadata. Existing messages receive their own backfilled thread.
+The private `email-attachments` bucket carries a 25 MiB object limit. Admin clients receive SELECT
+only; thread state, record links, drafts and attachment registration go through narrowly granted,
+admin-gated `SECURITY DEFINER` RPCs with an empty `search_path` and optimistic version checks. Link
+writes verify that every selected contact and operational record belongs to the selected client.
+
+Titan/GoDaddy IMAP remains the inbound source of truth and Resend remains the authenticated outbound
+provider. The Edge Functions now retain Message-ID, In-Reply-To and References headers, group replies
+into threads, match active contacts by email, persist incoming IMAP attachments and maintain thread
+summaries. OAuth files found in the repository root are unrelated to this implementation and remain
+explicitly excluded from source control.
+
+Multiple mailboxes, custom labels, rich-text authoring, scheduled/undo send, snooze, templates,
+provider search operators, bulk actions and pagination are deliberate later work. Communication
+snapshots on Enquiries, Clients, Projects, Follow-ups and commercial documents are also separate
+integration tasks rather than hidden coupling inside the Inbox release. Resend webhook attachment
+metadata is retained, but provider-hosted inbound attachments need a later download-and-store pass;
+the primary Titan sync path already stores downloadable private objects.
+
+The implementation is complete locally. The full repository gate passed with 132 test files and
+1,313 tests, followed by a successful production build containing `/ops/inbox`. The owner confirmed
+that migration `20261021120000_inbox_module.sql` was applied to the live Supabase project on
+22 October 2026. The updated Edge Functions and application release still need to be deployed, and
+no authenticated production smoke test has been run. Inbox should not be treated as fully verified
+until that smoke test is complete.

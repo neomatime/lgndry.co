@@ -36,6 +36,15 @@ function displayName(value: string, fallback: string) {
   return name || fallback.split("@")[0] || "Client";
 }
 
+function normalizeSubject(value: string) {
+  return value.replace(/^\s*((re|fw|fwd)\s*:\s*)+/i, "").trim().toLowerCase();
+}
+
+function headerIds(value: unknown): string[] {
+  if (Array.isArray(value)) return value.map(String).filter(Boolean);
+  return String(value || "").split(/\s+/).filter(Boolean);
+}
+
 async function authorizeCaller(request: Request, supabaseUrl: string, anonKey: string, serviceKey: string, syncSecret: string) {
   const providedSecret = request.headers.get("x-sync-secret");
   if (syncSecret && providedSecret === syncSecret) return true;
@@ -93,6 +102,15 @@ Deno.serve(async (request) => {
 
   let client: ImapFlow | null = null;
   try {
+    const { data: account, error: accountError } = await serviceClient
+      .from("email_accounts")
+      .select("id")
+      .eq("is_default", true)
+      .single();
+    if (accountError || !account) {
+      throw new Error("Default email account is not configured");
+    }
+
     const { data: state, error: stateError } = await serviceClient
       .from("email_sync_state")
       .select("id, last_uid")
@@ -140,6 +158,8 @@ Deno.serve(async (request) => {
         const fromHeader = parsed.from?.text || "";
         const toEmail = parsed.to && "value" in parsed.to ? parsed.to.value?.[0]?.address || "" : "";
         const messageId = parsed.messageId || `titan-${imapUser}-${message.uid}`;
+        const inReplyTo = String(parsed.inReplyTo || "").trim();
+        const references = headerIds(parsed.references);
         const receivedAt = (parsed.date || new Date()).toISOString();
 
         const { data: existing } = await serviceClient
@@ -149,16 +169,55 @@ Deno.serve(async (request) => {
           .maybeSingle();
 
         if (!existing) {
-          const { data: matchedClient } = fromEmail
-            ? await serviceClient.from("clients").select("id").ilike("email", fromEmail).limit(1).maybeSingle()
+          const { data: matchedContact } = fromEmail
+            ? await serviceClient
+              .from("client_contacts")
+              .select("id, client_id")
+              .ilike("email", fromEmail)
+              .eq("archived", false)
+              .limit(1)
+              .maybeSingle()
             : { data: null };
+          const parentIds = Array.from(new Set([...references, inReplyTo].filter(Boolean)));
+          const { data: parent } = parentIds.length
+            ? await serviceClient
+              .from("emails")
+              .select("thread_id")
+              .in("message_id_header", parentIds)
+              .limit(1)
+              .maybeSingle()
+            : { data: null };
+          let threadId = parent?.thread_id || null;
+          if (!threadId) {
+            const { data: createdThread, error: threadError } = await serviceClient
+              .from("email_threads")
+              .insert({
+                account_id: account.id,
+                subject: parsed.subject || "(No subject)",
+                normalized_subject: normalizeSubject(parsed.subject || ""),
+                participant_emails: [fromEmail, toEmail || imapUser].filter(Boolean),
+                participant_names: [displayName(fromHeader, fromEmail)],
+                snippet: String(parsed.text || "").replace(/\s+/g, " ").slice(0, 240),
+                latest_message_at: receivedAt,
+                message_count: 0,
+                is_read: false,
+                client_id: matchedContact?.client_id || null,
+                contact_id: matchedContact?.id || null,
+              })
+              .select("id")
+              .single();
+            if (threadError) throw threadError;
+            threadId = createdThread.id;
+          }
 
-          const { error: insertError } = await serviceClient.from("emails").insert({
+          const { data: inserted, error: insertError } = await serviceClient.from("emails").insert({
+            account_id: account.id,
+            thread_id: threadId,
             subject: parsed.subject || "(No subject)",
             direction: "Incoming",
             status: "Inbox",
             priority: "Normal",
-            client: matchedClient?.id || null,
+            client: matchedContact?.client_id || null,
             fromName: displayName(fromHeader, fromEmail),
             fromEmail: fromEmail || null,
             toName: "LGNDRY.Co",
@@ -173,8 +232,46 @@ Deno.serve(async (request) => {
             provider: "Titan IMAP",
             provider_email_id: messageId,
             provider_message_id: messageId,
-          });
+            message_id_header: messageId,
+            in_reply_to_header: inReplyTo || null,
+            references_header: references,
+            body_html: typeof parsed.html === "string" ? parsed.html : null,
+            is_read: false,
+          }).select("id").single();
           if (insertError && insertError.code !== "23505") throw insertError;
+
+          if (inserted && parsed.attachments?.length) {
+            for (const item of parsed.attachments) {
+              const fileName = item.filename || "attachment";
+              const path = `${threadId}/${inserted.id}/${crypto.randomUUID()}-${fileName.replace(/[^a-zA-Z0-9._-]/g, "_")}`;
+              const { error: uploadError } = await serviceClient.storage
+                .from("email-attachments")
+                .upload(path, item.content, { contentType: item.contentType || "application/octet-stream" });
+              if (uploadError) throw uploadError;
+              const { error: attachmentError } = await serviceClient.from("email_attachments").insert({
+                email_id: inserted.id,
+                file_name: fileName,
+                content_type: item.contentType || "application/octet-stream",
+                size_bytes: item.size || item.content?.length || 0,
+                storage_path: path,
+              });
+              if (attachmentError) throw attachmentError;
+            }
+          }
+
+          const { count } = await serviceClient
+            .from("emails")
+            .select("id", { count: "exact", head: true })
+            .eq("thread_id", threadId);
+          await serviceClient.from("email_threads").update({
+            subject: parsed.subject || "(No subject)",
+            snippet: String(parsed.text || "").replace(/\s+/g, " ").slice(0, 240),
+            latest_message_at: receivedAt,
+            message_count: count || 1,
+            is_read: false,
+            archived_at: null,
+            trashed_at: null,
+          }).eq("id", threadId);
           synced += 1;
         }
 
@@ -204,6 +301,10 @@ Deno.serve(async (request) => {
         .update({ last_synced_at: new Date().toISOString() })
         .eq("mailbox", imapUser);
     }
+
+    await serviceClient.from("email_accounts")
+      .update({ last_synced_at: new Date().toISOString() })
+      .eq("id", account.id);
 
     return json(request, { synced, lastUid: highestUid });
   } catch (error) {
