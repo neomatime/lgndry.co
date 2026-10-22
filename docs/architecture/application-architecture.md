@@ -1225,3 +1225,28 @@ placed in `set_email_thread_state` instead of `link_email_thread`. Additive migr
 their grants, while the fetcher now selects and maps `projects.client`. The migration passed an
 always-rolled-back live verification before application and was recorded on 22 October 2026. A
 repeat authenticated smoke test is still required after the application patch is deployed.
+
+## Phase 5, sub-project 11 - Command Center dashboard
+
+`/ops` is now the read-only operational overview shown in the supplied Command Center reference. It
+aggregates the shipped Enquiries, Clients, Projects, Inbox, Follow-ups and commercial modules into
+four linked metrics, a cross-module Attention Queue, an Engagement Pipeline, the most recently
+updated active Project, upcoming Follow-ups and recent activity. No dashboard-only records or
+duplicated summary tables were introduced.
+
+The server page authenticates before data access and passes one request instant through the aggregate
+fetch and pure view-model, keeping all due states and Johannesburg dates consistent. Existing module
+fetchers remain the source of shaped records; the dashboard adds only direct reads for six recent
+`ops_activity_log` entries and the exact `email_threads` count. Any required source failure produces
+the explicit temporary-unavailability state rather than a partially misleading dashboard.
+
+The Attention Queue is deterministic and operational: overdue work precedes today's actions, then
+new Enquiries, sent Quotes and later unpaid Invoices. The pipeline counts are factual snapshots, not
+conversion analytics, and the interface contains no invented trends or non-functional period
+filter. The wide reference table becomes stacked rows below the desktop breakpoint so the overview
+does not reintroduce nested horizontal scrollbars.
+
+This sub-project requires no migration and adds no write surface. Communication snapshots inside
+individual Enquiry, Client, Project, Follow-up and commercial detail pages remain separate future
+integration work. Team reassignment, exports, bulk actions and server-side dashboard filtering also
+remain deferred.
