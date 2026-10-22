@@ -83,6 +83,14 @@ function data(threads = [thread()]): InboxData {
   return { threads, options: emptyOptions, lastSyncedAt: null };
 }
 
+const shell = (threads = data()) => (
+  <InboxShell
+    data={threads}
+    now="2026-10-21T10:00:00Z"
+    signature={"Kind regards,\nNeo Matime\nLGNDRY.Co"}
+  />
+);
+
 describe("InboxShell", () => {
   beforeEach(() => {
     refresh.mockReset();
@@ -90,7 +98,7 @@ describe("InboxShell", () => {
   });
 
   it("renders the reference layout's folders, thread, conversation and context", () => {
-    render(<InboxShell data={data()} now="2026-10-21T10:00:00Z" />);
+    render(shell());
     expect(screen.getByRole("navigation", { name: "Mailbox folders" })).toBeInTheDocument();
     expect(screen.getByRole("button", { name: /James Mitchell/ })).toBeInTheDocument();
     expect(screen.getByRole("heading", { name: "Autumn campaign proposal" })).toBeInTheDocument();
@@ -99,15 +107,28 @@ describe("InboxShell", () => {
   });
 
   it("opens a functional composer", () => {
-    render(<InboxShell data={data()} now="2026-10-21T10:00:00Z" />);
+    render(shell());
     fireEvent.click(screen.getByRole("button", { name: /Compose/ }));
     expect(screen.getByRole("region", { name: "Compose email" })).toBeInTheDocument();
     expect(screen.getByPlaceholderText("client@example.com")).toBeInTheDocument();
     expect(screen.getByRole("button", { name: "Save draft" })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Bold" })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Insert link" })).toBeInTheDocument();
+    expect((screen.getByLabelText("Message") as HTMLTextAreaElement).value).toContain(
+      "Kind regards,\nNeo Matime",
+    );
+  });
+
+  it("gives each mailbox pane its own scroll region", () => {
+    render(shell());
+    expect(screen.getByTestId("inbox-folder-scroll")).toHaveClass("overflow-y-auto");
+    expect(screen.getByTestId("inbox-thread-scroll")).toHaveClass("overflow-y-auto");
+    expect(screen.getByTestId("inbox-conversation-scroll")).toHaveClass("overflow-y-auto");
+    expect(screen.getByTestId("inbox-context-scroll")).toHaveClass("overflow-y-auto");
   });
 
   it("keeps thread selection in the URL", () => {
-    render(<InboxShell data={data()} now="2026-10-21T10:00:00Z" />);
+    render(shell());
     fireEvent.click(screen.getByRole("button", { name: /James Mitchell/ }));
     expect(replace).toHaveBeenCalledWith("/ops/inbox?thread=00000000-0000-4000-8000-000000000001", {
       scroll: false,
@@ -115,7 +136,7 @@ describe("InboxShell", () => {
   });
 
   it("shows an explicit empty mailbox state", () => {
-    render(<InboxShell data={data([])} now="2026-10-21T10:00:00Z" />);
+    render(shell(data([])));
     expect(screen.getByText("No messages in this mailbox.")).toBeInTheDocument();
     expect(screen.getByText("Select a conversation or compose a new message.")).toBeInTheDocument();
   });

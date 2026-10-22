@@ -2,13 +2,19 @@
 
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
-import { useMemo, useState, useTransition } from "react";
+import { useMemo, useRef, useState, useTransition } from "react";
 import {
   Archive,
   ArrowLeft,
+  Bold,
   ChevronRight,
+  Eye,
   FileText,
   Inbox,
+  Italic,
+  Link as LinkIcon,
+  List,
+  ListOrdered,
   Mail,
   MailOpen,
   Menu,
@@ -21,6 +27,7 @@ import {
   Send,
   Star,
   Trash2,
+  Underline,
   UserRound,
   X,
 } from "lucide-react";
@@ -34,12 +41,18 @@ import {
   updateEmailThreadState,
 } from "@/features/inbox/actions";
 import type {
+  EmailAttachment,
   EmailMessage,
   InboxActionState,
   InboxData,
   InboxFolder,
   InboxThread,
 } from "@/features/inbox/types";
+import {
+  appendSignature,
+  emailHtmlToMarkup,
+  emailMarkupToHtml,
+} from "@/features/inbox/email-formatting";
 import { filterThreads, formatInboxTimestamp, inboxCounts } from "@/features/inbox/view-model";
 import { startSignedUpload } from "@/features/start-a-project/signed-upload";
 
@@ -70,6 +83,7 @@ type ComposeState = {
   bcc: string;
   subject: string;
   body: string;
+  attachments: Array<Pick<EmailAttachment, "fileName" | "sizeBytes"> & { id?: string }>;
 };
 
 type ThreadAction =
@@ -82,7 +96,10 @@ const EMPTY_COMPOSE: ComposeState = {
   bcc: "",
   subject: "",
   body: "",
+  attachments: [],
 };
+
+type ComposerFormat = "bold" | "italic" | "underline" | "bullet" | "numbered" | "link";
 
 function initials(value: string) {
   return (
@@ -124,6 +141,7 @@ function ComposePane({
   discard,
   onSaved,
   pending,
+  signature,
 }: {
   draft: ComposeState;
   setDraft: (value: ComposeState) => void;
@@ -131,11 +149,16 @@ function ComposePane({
   discard: () => void;
   onSaved: (state: InboxActionState) => void;
   pending: boolean;
+  signature: string;
 }) {
   const [advanced, setAdvanced] = useState(Boolean(draft.cc || draft.bcc));
   const [uploading, setUploading] = useState(false);
-  const [uploaded, setUploaded] = useState<Array<{ name: string; size: number }>>([]);
+  const [uploadProgress, setUploadProgress] = useState<{ name: string; percentage: number } | null>(
+    null,
+  );
   const [uploadError, setUploadError] = useState("");
+  const [preview, setPreview] = useState(false);
+  const editorRef = useRef<HTMLTextAreaElement>(null);
 
   async function submit(intent: "draft" | "send") {
     const state = await saveEmailDraft({ ...draft, intent });
@@ -161,10 +184,11 @@ function ComposePane({
           version: prepared.version,
         };
         setDraft(current);
+        setUploadProgress({ name: file.name, percentage: 0 });
         await startSignedUpload({
           file,
           uploadUrl: prepared.signedUrl,
-          onProgress: () => undefined,
+          onProgress: (percentage) => setUploadProgress({ name: file.name, percentage }),
         }).done;
         const finalized = await finalizeEmailAttachmentUpload({
           emailId: prepared.emailId,
@@ -177,8 +201,11 @@ function ComposePane({
         if (finalized.status !== "success") throw new Error(finalized.message);
         if (!finalized.version) throw new Error("The attachment version could not be verified.");
         current = { ...current, version: finalized.version };
+        current = {
+          ...current,
+          attachments: [...current.attachments, { fileName: file.name, sizeBytes: file.size }],
+        };
         setDraft(current);
-        setUploaded((items) => [...items, { name: file.name, size: file.size }]);
       }
     } catch (error) {
       setUploadError(
@@ -186,7 +213,45 @@ function ComposePane({
       );
     } finally {
       setUploading(false);
+      setUploadProgress(null);
     }
+  }
+
+  function applyFormat(format: ComposerFormat) {
+    const editor = editorRef.current;
+    if (!editor) return;
+    const start = editor.selectionStart;
+    const end = editor.selectionEnd;
+    const selected = draft.body.slice(start, end);
+    let replacement = selected;
+
+    if (format === "bold") replacement = `**${selected || "bold text"}**`;
+    if (format === "italic") replacement = `_${selected || "italic text"}_`;
+    if (format === "underline") replacement = `[u]${selected || "underlined text"}[/u]`;
+    if (format === "bullet") {
+      replacement = (selected || "list item")
+        .split("\n")
+        .map((line) => `- ${line.replace(/^\s*(?:-|\d+\.)\s+/, "")}`)
+        .join("\n");
+    }
+    if (format === "numbered") {
+      replacement = (selected || "list item")
+        .split("\n")
+        .map((line, index) => `${index + 1}. ${line.replace(/^\s*(?:-|\d+\.)\s+/, "")}`)
+        .join("\n");
+    }
+    if (format === "link") {
+      const url = window.prompt("Paste the web address");
+      if (!url || !/^(https?:\/\/|mailto:)/i.test(url)) return;
+      replacement = `[${selected || "link text"}](${url})`;
+    }
+
+    const body = `${draft.body.slice(0, start)}${replacement}${draft.body.slice(end)}`;
+    setDraft({ ...draft, body });
+    window.requestAnimationFrame(() => {
+      editor.focus();
+      editor.setSelectionRange(start, start + replacement.length);
+    });
   }
 
   return (
@@ -245,15 +310,64 @@ function ComposePane({
             required
           />
         </label>
-        <textarea
-          aria-label="Message"
-          spellCheck
-          value={draft.body}
-          onChange={(event) => setDraft({ ...draft, body: event.target.value })}
-          placeholder="Write your message..."
-          className="mt-4 min-h-72 w-full resize-none bg-transparent text-sm leading-7 outline-none"
-          required
-        />
+        <div className="border-line mt-4 border">
+          <div className="border-line bg-surface-soft flex flex-wrap items-center gap-1 border-b p-2">
+            {(
+              [
+                ["bold", "Bold", Bold],
+                ["italic", "Italic", Italic],
+                ["underline", "Underline", Underline],
+                ["bullet", "Bulleted list", List],
+                ["numbered", "Numbered list", ListOrdered],
+                ["link", "Insert link", LinkIcon],
+              ] as const
+            ).map(([format, label, Icon]) => (
+              <button
+                key={format}
+                type="button"
+                onClick={() => applyFormat(format)}
+                className="hover:bg-surface flex size-8 items-center justify-center"
+                title={label}
+                aria-label={label}
+              >
+                <Icon className="size-4" aria-hidden="true" />
+              </button>
+            ))}
+            <span className="bg-line mx-1 h-5 w-px" aria-hidden="true" />
+            <button
+              type="button"
+              onClick={() => setDraft({ ...draft, body: appendSignature(draft.body, signature) })}
+              className="hover:bg-surface h-8 px-2 text-xs font-medium"
+            >
+              Signature
+            </button>
+            <button
+              type="button"
+              onClick={() => setPreview((value) => !value)}
+              className="hover:bg-surface ml-auto flex h-8 items-center gap-2 px-2 text-xs font-medium"
+            >
+              <Eye className="size-4" aria-hidden="true" /> {preview ? "Edit" : "Preview"}
+            </button>
+          </div>
+          {preview ? (
+            <div
+              className="min-h-72 p-4 text-sm leading-7 [&_a]:underline [&_ol]:list-decimal [&_ol]:pl-5 [&_p]:mb-3 [&_ul]:list-disc [&_ul]:pl-5"
+              aria-label="Message preview"
+              dangerouslySetInnerHTML={{ __html: emailMarkupToHtml(draft.body) }}
+            />
+          ) : (
+            <textarea
+              ref={editorRef}
+              aria-label="Message"
+              spellCheck
+              value={draft.body}
+              onChange={(event) => setDraft({ ...draft, body: event.target.value })}
+              placeholder="Write your message..."
+              className="min-h-72 w-full resize-none bg-transparent p-4 text-sm leading-7 outline-none"
+              required
+            />
+          )}
+        </div>
         <div className="border-line mt-4 border-t pt-3">
           <label className="border-line inline-flex h-9 cursor-pointer items-center gap-2 border px-3 text-xs font-medium">
             <Paperclip className="size-4" aria-hidden="true" />
@@ -267,13 +381,30 @@ function ComposePane({
               onChange={(event) => uploadFiles(event.target.files)}
             />
           </label>
-          {uploaded.length ? (
+          {uploadProgress ? (
+            <div className="mt-3" role="status">
+              <div className="text-ink-muted flex justify-between gap-3 text-xs">
+                <span className="truncate">Uploading {uploadProgress.name}</span>
+                <span>{Math.round(uploadProgress.percentage)}%</span>
+              </div>
+              <div className="bg-surface-soft mt-2 h-1 overflow-hidden">
+                <div
+                  className="bg-ink h-full transition-[width]"
+                  style={{ width: `${uploadProgress.percentage}%` }}
+                />
+              </div>
+            </div>
+          ) : null}
+          {draft.attachments.length ? (
             <div className="mt-3 space-y-1">
-              {uploaded.map((item) => (
-                <p key={`${item.name}-${item.size}`} className="text-ink-muted flex gap-2 text-xs">
+              {draft.attachments.map((item) => (
+                <p
+                  key={item.id ?? `${item.fileName}-${item.sizeBytes}`}
+                  className="text-ink-muted flex gap-2 text-xs"
+                >
                   <Paperclip className="size-3.5" aria-hidden="true" />
-                  <span className="truncate">{item.name}</span>
-                  <span>{bytes(item.size)}</span>
+                  <span className="truncate">{item.fileName}</span>
+                  <span>{bytes(item.sizeBytes)}</span>
                 </p>
               ))}
             </div>
@@ -321,7 +452,15 @@ function ComposePane({
   );
 }
 
-export function InboxShell({ data, now }: { data: InboxData; now: string }) {
+export function InboxShell({
+  data,
+  now,
+  signature,
+}: {
+  data: InboxData;
+  now: string;
+  signature: string;
+}) {
   const router = useRouter();
   const searchParams = useSearchParams();
   const folder = inboxFolder(searchParams.get("folder"));
@@ -387,7 +526,8 @@ export function InboxShell({ data, now }: { data: InboxData; now: string }) {
       cc: "",
       bcc: "",
       subject: /^re:/i.test(thread.subject) ? thread.subject : `Re: ${thread.subject}`,
-      body: "",
+      body: appendSignature("", signature),
+      attachments: [],
     });
   }
 
@@ -401,7 +541,12 @@ export function InboxShell({ data, now }: { data: InboxData; now: string }) {
       cc: message.cc,
       bcc: message.bcc,
       subject: message.subject,
-      body: message.body,
+      body: message.bodyHtml ? emailHtmlToMarkup(message.bodyHtml) : message.body,
+      attachments: message.attachments.map((item) => ({
+        id: item.id,
+        fileName: item.fileName,
+        sizeBytes: item.sizeBytes,
+      })),
     });
   }
 
@@ -426,8 +571,8 @@ export function InboxShell({ data, now }: { data: InboxData; now: string }) {
   }
 
   return (
-    <div className="flex min-h-0 flex-1 flex-col gap-4">
-      <div className="flex flex-wrap items-end justify-between gap-4">
+    <div className="flex h-[calc(100dvh-7.5rem)] min-h-0 flex-col gap-4 overflow-hidden">
+      <div className="flex shrink-0 flex-wrap items-end justify-between gap-4">
         <div>
           <h1 className="text-3xl font-medium">Inbox</h1>
           <p className="text-ink-muted mt-1 text-sm">
@@ -447,7 +592,7 @@ export function InboxShell({ data, now }: { data: InboxData; now: string }) {
           <button
             type="button"
             onClick={() => {
-              setCompose(EMPTY_COMPOSE);
+              setCompose({ ...EMPTY_COMPOSE, body: appendSignature("", signature) });
               setMobilePane("message");
             }}
             className="bg-ink flex h-10 items-center gap-2 px-5 text-sm font-medium text-white"
@@ -470,7 +615,7 @@ export function InboxShell({ data, now }: { data: InboxData; now: string }) {
         </div>
       ) : null}
 
-      <div className="border-line grid h-[calc(100dvh-13rem)] min-h-[650px] flex-1 overflow-hidden border bg-white lg:grid-cols-[180px_310px_minmax(420px,1fr)] 2xl:grid-cols-[180px_310px_minmax(420px,1fr)_290px]">
+      <div className="border-line grid min-h-0 flex-1 overflow-hidden border bg-white lg:grid-cols-[180px_310px_minmax(420px,1fr)] 2xl:grid-cols-[180px_310px_minmax(420px,1fr)_290px]">
         <aside
           className={`${mobilePane === "folders" ? "flex" : "hidden"} border-line min-h-0 flex-col border-r lg:flex`}
         >
@@ -485,7 +630,11 @@ export function InboxShell({ data, now }: { data: InboxData; now: string }) {
               <ChevronRight className="size-4" aria-hidden="true" />
             </button>
           </div>
-          <nav className="space-y-1 p-2" aria-label="Mailbox folders">
+          <nav
+            className="min-h-0 flex-1 space-y-1 overflow-y-auto overscroll-contain p-2"
+            aria-label="Mailbox folders"
+            data-testid="inbox-folder-scroll"
+          >
             {FOLDERS.map((item) => {
               const Icon = item.icon;
               return (
@@ -505,7 +654,7 @@ export function InboxShell({ data, now }: { data: InboxData; now: string }) {
               );
             })}
           </nav>
-          <div className="border-line text-ink-muted mt-auto border-t p-4 text-xs leading-5">
+          <div className="border-line text-ink-muted shrink-0 border-t p-4 text-xs leading-5">
             <p>Connected mailbox</p>
             <p className="text-ink mt-1 break-all">neomokgwadi@lgndry-co.co.za</p>
             <p className="mt-2">
@@ -541,7 +690,10 @@ export function InboxShell({ data, now }: { data: InboxData; now: string }) {
               />
             </label>
           </div>
-          <div className="min-h-0 flex-1 overflow-y-auto">
+          <div
+            className="min-h-0 flex-1 overflow-y-auto overscroll-contain"
+            data-testid="inbox-thread-scroll"
+          >
             {visibleThreads.length ? (
               visibleThreads.map((thread) => (
                 <button
@@ -616,6 +768,7 @@ export function InboxShell({ data, now }: { data: InboxData; now: string }) {
               }}
               pending={pending}
               onSaved={(state) => startTransition(async () => refreshWith(state))}
+              signature={signature}
             />
           ) : selected ? (
             <>
@@ -666,7 +819,10 @@ export function InboxShell({ data, now }: { data: InboxData; now: string }) {
                   <MoreHorizontal className="size-4" aria-hidden="true" />
                 </button>
               </div>
-              <div className="min-h-0 flex-1 overflow-y-auto p-5">
+              <div
+                className="min-h-0 flex-1 overflow-y-auto overscroll-contain p-5"
+                data-testid="inbox-conversation-scroll"
+              >
                 <div className="flex items-start justify-between gap-4">
                   <div>
                     <h2 className="text-xl font-semibold break-words">{selected.subject}</h2>
@@ -775,7 +931,10 @@ export function InboxShell({ data, now }: { data: InboxData; now: string }) {
           )}
         </main>
 
-        <aside className="border-line hidden min-h-0 overflow-y-auto border-l p-3 2xl:block">
+        <aside
+          className="border-line hidden min-h-0 overflow-y-auto overscroll-contain border-l p-3 2xl:block"
+          data-testid="inbox-context-scroll"
+        >
           {selected ? (
             <div className="space-y-3">
               <section className="border-line border p-4">

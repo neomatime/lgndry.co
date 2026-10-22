@@ -1291,3 +1291,23 @@ beyond the current all-admin membership model in `admin_users`.
 The dashboard Active Record now normalizes and truncates project overview text to 120 characters and
 visually clamps it to three lines, preventing long project descriptions from distorting the overview.
 No database migration was required.
+
+## Phase 6, slice 3 - Inbox workspace and authoring refinement
+
+The Inbox now behaves as a bounded mail workspace instead of a long page. Its mailbox folders,
+thread list, conversation and contextual record rail each own an independent vertical scroll region;
+headers, mailbox connection status and reply controls remain fixed within their pane. The narrow
+folder/list/conversation navigation is unchanged, and no nested horizontal scrollbar is introduced.
+
+Compose and reply now provide familiar formatting controls for bold, italic, underline, bulleted and
+numbered lists and safe web links, together with an edit/preview mode. Formatting is stored in the
+existing `body_html` field and sent through the existing Resend path. The server derives HTML from a
+small escaped formatting vocabulary and sends a separately normalized plain-text alternative, so
+the feature does not accept arbitrary author HTML. Drafts retain their editable formatting source.
+
+The existing direct-to-Storage attachment pipeline remains the source of truth and now exposes
+per-file upload progress plus attachments already present on reopened drafts. New messages and
+replies receive an editable signature built from the authenticated operator and current workspace
+contact settings; the composer can reinsert it without creating duplicates. No migration, new
+dependency or provider change was required. Scheduled send, undo send, templates, attachment removal
+from an existing draft and provider-side contact autocomplete remain later work.

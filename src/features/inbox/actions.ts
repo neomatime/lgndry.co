@@ -9,6 +9,7 @@ import {
   threadStateSchema,
 } from "@/features/inbox/schemas";
 import type { InboxActionState, InboxUploadState } from "@/features/inbox/types";
+import { emailMarkupToHtml, emailMarkupToPlainText } from "@/features/inbox/email-formatting";
 import { requireOpsUser } from "@/lib/auth/guards";
 import { createSupabaseServerClient } from "@/lib/db/server";
 
@@ -97,6 +98,8 @@ export async function saveEmailDraft(input: unknown): Promise<InboxActionState> 
       message: parsed.error.issues[0]?.message ?? "Check the message and try again.",
     };
   }
+  const plainText = emailMarkupToPlainText(parsed.data.body);
+  const html = emailMarkupToHtml(parsed.data.body);
   const supabase = await createSupabaseServerClient();
   const { data, error } = await supabase.rpc("save_email_draft", {
     p_email_id: parsed.data.emailId ?? null,
@@ -108,7 +111,8 @@ export async function saveEmailDraft(input: unknown): Promise<InboxActionState> 
       cc: parsed.data.cc ?? "",
       bcc: parsed.data.bcc ?? "",
       subject: parsed.data.subject,
-      body: parsed.data.body,
+      body: plainText,
+      body_html: html,
       owner: user.name,
     },
   });
@@ -123,7 +127,8 @@ export async function saveEmailDraft(input: unknown): Promise<InboxActionState> 
       cc: parsed.data.cc,
       bcc: parsed.data.bcc,
       subject: parsed.data.subject,
-      text: parsed.data.body,
+      text: plainText,
+      html,
     },
   });
   if (response.error || response.data?.error) {
