@@ -1209,9 +1209,10 @@ integration tasks rather than hidden coupling inside the Inbox release. Resend w
 metadata is retained, but provider-hosted inbound attachments need a later download-and-store pass;
 the primary Titan sync path already stores downloadable private objects.
 
-The implementation is complete locally. The full repository gate passed with 132 test files and
-1,313 tests, followed by a successful production build containing `/ops/inbox`. The owner confirmed
-that migration `20261021120000_inbox_module.sql` was applied to the live Supabase project on
-22 October 2026. The updated Edge Functions and application release still need to be deployed, and
-no authenticated production smoke test has been run. Inbox should not be treated as fully verified
-until that smoke test is complete.
+The full repository gate passed with 132 test files and 1,313 tests, followed by a successful
+production build containing `/ops/inbox`. The owner confirmed that migration
+`20261021120000_inbox_module.sql` was applied to the live Supabase project on 22 October 2026. The
+updated `receive-admin-email`, `send-admin-email` and `sync-titan-inbox` Edge Functions were then
+deployed with their existing JWT settings, and application commit `238a8d6` was promoted to Vercel
+production. The public production route correctly redirects unauthenticated visitors to login. An
+authenticated production smoke test remains outstanding before Inbox is treated as fully verified.
