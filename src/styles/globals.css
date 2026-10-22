@@ -18,6 +18,16 @@
   --color-line-strong: #cfcdc7;
 }
 
+:root {
+  --ops-radius-sm: 6px;
+  --ops-radius: 8px;
+  --ops-shadow-resting: 0 1px 2px rgb(17 17 16 / 4%), 0 8px 24px rgb(17 17 16 / 3%);
+  --ops-shadow-raised: 0 2px 5px rgb(17 17 16 / 6%), 0 14px 32px rgb(17 17 16 / 5%);
+  --ops-motion-fast: 160ms;
+  --ops-motion-standard: 240ms;
+  --ops-ease: cubic-bezier(0.2, 0.8, 0.2, 1);
+}
+
 @layer base {
   html {
     color-scheme: light;
@@ -36,6 +46,29 @@
   }
 }
 
+@keyframes ops-page-enter {
+  from {
+    opacity: 0;
+    transform: translateY(4px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes ops-skeleton-pulse {
+  0%,
+  100% {
+    opacity: 0.55;
+  }
+
+  50% {
+    opacity: 0.9;
+  }
+}
+
 @layer utilities {
   .scrollbar-hidden {
     -ms-overflow-style: none;
@@ -44,5 +77,26 @@
 
   .scrollbar-hidden::-webkit-scrollbar {
     display: none;
+  }
+
+  .ops-page-enter {
+    animation: ops-page-enter var(--ops-motion-standard) var(--ops-ease) both;
+  }
+
+  .ops-skeleton {
+    animation: ops-skeleton-pulse 1.6s ease-in-out infinite;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    scroll-behavior: auto !important;
+  }
+
+  .ops-page-enter,
+  .ops-skeleton {
+    animation: none !important;
   }
 }

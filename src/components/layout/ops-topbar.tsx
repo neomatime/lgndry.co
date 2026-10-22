@@ -1,5 +1,6 @@
 import type { OpsUser } from "@/lib/auth/server";
 import { Button } from "@/components/ui/button";
+import { OpsSearch } from "@/features/ops-search/components/ops-search";
 
 function initials(name: string) {
   const parts = name.split(/\s+/).filter(Boolean);
@@ -10,7 +11,8 @@ function initials(name: string) {
 
 export function OpsTopbar({ user }: { user: OpsUser }) {
   return (
-    <header className="border-line flex h-14 items-center justify-end gap-4 border-b bg-white px-4 lg:px-8">
+    <header className="border-line sticky top-0 z-30 flex h-16 items-center gap-4 border-b bg-white/95 px-4 lg:px-7 xl:px-8">
+      <OpsSearch />
       <div className="flex items-center gap-3">
         <span
           aria-hidden="true"
@@ -24,7 +26,11 @@ export function OpsTopbar({ user }: { user: OpsUser }) {
         </div>
       </div>
       <form action="/auth/logout" method="post">
-        <Button type="submit" variant="secondary" className="h-8 px-3 text-xs">
+        <Button
+          type="submit"
+          variant="secondary"
+          className="hidden h-8 px-3 text-xs sm:inline-flex"
+        >
           Sign out
         </Button>
       </form>

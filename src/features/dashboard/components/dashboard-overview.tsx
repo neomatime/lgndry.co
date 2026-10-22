@@ -1,4 +1,7 @@
+"use client";
+
 import Link from "next/link";
+import { useMemo, useState } from "react";
 import {
   Activity,
   CalendarDays,
@@ -9,8 +12,10 @@ import {
   Mail,
   MessageSquare,
   MoreVertical,
+  Search,
 } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
+import { OpsPanel, OpsPanelHeader } from "@/components/ops/ops-panel";
 import type {
   AttentionKind,
   DashboardActiveRecord,
@@ -32,13 +37,9 @@ function initials(value: string) {
     .toUpperCase();
 }
 
-function Panel({ children, className = "" }: { children: React.ReactNode; className?: string }) {
-  return <section className={`border-line border bg-white ${className}`}>{children}</section>;
-}
-
 function PanelHeader({ title, count, href }: { title: string; count?: number; href?: string }) {
   return (
-    <div className="flex min-h-11 items-center justify-between gap-3 px-4 py-2.5">
+    <OpsPanelHeader>
       <h2 className="flex items-center gap-2 text-base font-semibold">
         {title}
         {count !== undefined ? (
@@ -55,7 +56,7 @@ function PanelHeader({ title, count, href }: { title: string; count?: number; hr
           View all <ChevronRight className="size-3" aria-hidden="true" />
         </Link>
       ) : null}
-    </div>
+    </OpsPanelHeader>
   );
 }
 
@@ -75,7 +76,8 @@ function MetricCard({
   return (
     <Link
       href={href}
-      className="border-line hover:border-line-strong group flex min-h-24 items-center gap-4 border bg-white p-4 transition-colors"
+      title={`Open ${label}`}
+      className="border-line hover:border-line-strong group flex min-h-24 items-center gap-4 rounded-[var(--ops-radius)] border bg-white p-4 shadow-[var(--ops-shadow-resting)] transition-[border-color,box-shadow,transform] duration-[var(--ops-motion-fast)] hover:-translate-y-0.5 hover:shadow-[var(--ops-shadow-raised)]"
     >
       <span className="bg-surface-soft flex size-11 shrink-0 items-center justify-center rounded-full">
         <Icon className="size-5" aria-hidden="true" />
@@ -147,11 +149,89 @@ function AttentionRow({ item }: { item: DashboardAttentionItem }) {
   );
 }
 
-function AttentionQueue({ items, total }: { items: DashboardAttentionItem[]; total: number }) {
+function AttentionQueue({ items }: { items: DashboardAttentionItem[] }) {
+  const [query, setQuery] = useState("");
+  const [client, setClient] = useState("All clients");
+  const [type, setType] = useState("All types");
+  const [stage, setStage] = useState("All stages");
+  const clients = useMemo(
+    () => Array.from(new Set(items.map((item) => item.clientName))).sort(),
+    [items],
+  );
+  const types = useMemo(() => Array.from(new Set(items.map((item) => item.kind))).sort(), [items]);
+  const stages = useMemo(
+    () => Array.from(new Set(items.map((item) => item.currentStage))).sort(),
+    [items],
+  );
+  const filtered = useMemo(() => {
+    const normalized = query.trim().toLocaleLowerCase();
+    return items.filter(
+      (item) =>
+        (client === "All clients" || item.clientName === client) &&
+        (type === "All types" || item.kind === type) &&
+        (stage === "All stages" || item.currentStage === stage) &&
+        (!normalized ||
+          [item.clientName, item.service, item.nextAction, item.status].some((value) =>
+            value.toLocaleLowerCase().includes(normalized),
+          )),
+    );
+  }, [client, items, query, stage, type]);
+
   return (
-    <Panel>
-      <PanelHeader title="Attention Queue" count={total} href="/ops/follow-ups" />
-      {items.length ? (
+    <OpsPanel>
+      <PanelHeader title="Attention Queue" count={filtered.length} />
+      <div className="border-line grid gap-2 border-t p-3 sm:grid-cols-2 xl:grid-cols-[minmax(13rem,1fr)_10rem_10rem_10rem]">
+        <label className="border-line focus-within:border-line-strong flex h-9 items-center gap-2 rounded-[var(--ops-radius-sm)] border bg-white px-3">
+          <Search className="text-ink-muted size-4" aria-hidden="true" />
+          <span className="sr-only">Search attention queue</span>
+          <input
+            value={query}
+            onChange={(event) => setQuery(event.target.value)}
+            placeholder="Search..."
+            className="min-w-0 flex-1 bg-transparent text-sm outline-none"
+          />
+        </label>
+        <label>
+          <span className="sr-only">Filter by client</span>
+          <select
+            value={client}
+            onChange={(event) => setClient(event.target.value)}
+            className="border-line h-9 w-full rounded-[var(--ops-radius-sm)] border bg-white px-3 text-sm"
+          >
+            <option>All clients</option>
+            {clients.map((value) => (
+              <option key={value}>{value}</option>
+            ))}
+          </select>
+        </label>
+        <label>
+          <span className="sr-only">Filter by item type</span>
+          <select
+            value={type}
+            onChange={(event) => setType(event.target.value)}
+            className="border-line h-9 w-full rounded-[var(--ops-radius-sm)] border bg-white px-3 text-sm"
+          >
+            <option>All types</option>
+            {types.map((value) => (
+              <option key={value}>{value}</option>
+            ))}
+          </select>
+        </label>
+        <label>
+          <span className="sr-only">Filter by stage</span>
+          <select
+            value={stage}
+            onChange={(event) => setStage(event.target.value)}
+            className="border-line h-9 w-full rounded-[var(--ops-radius-sm)] border bg-white px-3 text-sm"
+          >
+            <option>All stages</option>
+            {stages.map((value) => (
+              <option key={value}>{value}</option>
+            ))}
+          </select>
+        </label>
+      </div>
+      {filtered.length ? (
         <>
           <div className="bg-surface-soft text-ink-muted hidden grid-cols-[minmax(11rem,1.25fr)_minmax(8rem,.7fr)_minmax(8rem,.75fr)_minmax(12rem,1.5fr)_6rem_8.5rem_1rem] px-4 py-2 text-[11px] xl:grid">
             <span>Client</span>
@@ -163,29 +243,32 @@ function AttentionQueue({ items, total }: { items: DashboardAttentionItem[]; tot
             <span />
           </div>
           <div>
-            {items.map((item) => (
+            {filtered.map((item) => (
               <AttentionRow key={item.id} item={item} />
             ))}
           </div>
         </>
       ) : (
         <p className="border-line text-ink-muted border-t px-4 py-8 text-center text-sm">
-          Nothing needs immediate attention.
+          {items.length
+            ? "No queue items match these filters."
+            : "Nothing needs immediate attention."}
         </p>
       )}
-    </Panel>
+    </OpsPanel>
   );
 }
 
 function EngagementPipeline({ items }: { items: DashboardPipelineItem[] }) {
   return (
-    <Panel>
+    <OpsPanel>
       <PanelHeader title="Engagement Pipeline" />
       <div className="border-line grid grid-cols-2 border-t sm:grid-cols-4 xl:grid-cols-11">
         {items.map((item) => (
           <Link
             key={item.label}
             href={item.href}
+            title={`Open ${item.label} records`}
             className="border-line hover:bg-surface-soft flex min-h-20 flex-col items-center justify-center gap-1 border-r border-b px-2 text-center transition-colors last:border-r-0 xl:border-b-0"
           >
             <span className="bg-surface-soft flex size-9 items-center justify-center rounded-full text-sm font-semibold">
@@ -195,7 +278,7 @@ function EngagementPipeline({ items }: { items: DashboardPipelineItem[] }) {
           </Link>
         ))}
       </div>
-    </Panel>
+    </OpsPanel>
   );
 }
 
@@ -210,7 +293,7 @@ function Definition({ label, value }: { label: string; value: React.ReactNode })
 
 function ActiveRecord({ record }: { record: DashboardActiveRecord | null }) {
   return (
-    <Panel className="min-w-0 xl:col-span-5">
+    <OpsPanel className="min-w-0 xl:col-span-5">
       <PanelHeader title="Active Record" href={record?.href} />
       {record ? (
         <div className="border-line border-t p-4">
@@ -244,13 +327,13 @@ function ActiveRecord({ record }: { record: DashboardActiveRecord | null }) {
           No active project yet.
         </p>
       )}
-    </Panel>
+    </OpsPanel>
   );
 }
 
 function UpcomingFollowUps({ items }: { items: DashboardFollowUpItem[] }) {
   return (
-    <Panel className="min-w-0 xl:col-span-4">
+    <OpsPanel className="min-w-0 xl:col-span-4">
       <PanelHeader title="Upcoming Follow-ups" href="/ops/follow-ups" />
       <div className="border-line border-t px-3">
         {items.length ? (
@@ -275,7 +358,7 @@ function UpcomingFollowUps({ items }: { items: DashboardFollowUpItem[] }) {
           <p className="text-ink-muted py-8 text-center text-sm">No upcoming follow-ups.</p>
         )}
       </div>
-    </Panel>
+    </OpsPanel>
   );
 }
 
@@ -314,7 +397,7 @@ function ActivityLine({ item }: { item: DashboardActivityItem }) {
 
 function RecentActivity({ items }: { items: DashboardActivityItem[] }) {
   return (
-    <Panel className="min-w-0 xl:col-span-3">
+    <OpsPanel className="min-w-0 xl:col-span-3">
       <PanelHeader title="Recent Activity" />
       <div className="border-line relative border-t px-3">
         {items.length ? (
@@ -323,16 +406,22 @@ function RecentActivity({ items }: { items: DashboardActivityItem[] }) {
           <p className="text-ink-muted py-8 text-center text-sm">No recent activity.</p>
         )}
       </div>
-    </Panel>
+    </OpsPanel>
   );
 }
 
-export function DashboardOverview({ dashboard }: { dashboard: DashboardViewModel }) {
+export function DashboardOverview({
+  dashboard,
+  greeting,
+}: {
+  dashboard: DashboardViewModel;
+  greeting: string;
+}) {
   return (
     <div className="flex min-w-0 flex-col gap-5">
       <div className="flex flex-wrap items-start justify-between gap-4">
         <div>
-          <h1 className="text-3xl font-medium tracking-tight">OPS Command Center</h1>
+          <h1 className="text-3xl font-semibold tracking-tight">{greeting}</h1>
           <p className="text-ink-muted mt-1.5 text-sm">
             Attention-led internal operations for enquiries, projects, follow-ups and payment
             status.
@@ -378,7 +467,7 @@ export function DashboardOverview({ dashboard }: { dashboard: DashboardViewModel
         />
       </div>
 
-      <AttentionQueue items={dashboard.attention} total={dashboard.attentionTotal} />
+      <AttentionQueue items={dashboard.attention} />
       <EngagementPipeline items={dashboard.pipeline} />
       <div className="grid min-w-0 gap-3 xl:grid-cols-12">
         <ActiveRecord record={dashboard.activeRecord} />

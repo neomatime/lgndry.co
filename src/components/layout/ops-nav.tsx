@@ -36,9 +36,9 @@ const NAV_ITEMS: NavItem[] = [
 ];
 
 const itemClasses =
-  "flex shrink-0 items-center gap-3 px-3 py-2.5 text-sm whitespace-nowrap transition-colors";
+  "flex shrink-0 items-center gap-3 rounded-[var(--ops-radius-sm)] px-3 py-2.5 text-sm whitespace-nowrap transition-[background-color,color] duration-[var(--ops-motion-fast)]";
 
-export function OpsNav() {
+export function OpsNav({ collapsed = false }: { collapsed?: boolean }) {
   const pathname = usePathname();
 
   return (
@@ -52,10 +52,11 @@ export function OpsNav() {
             <span
               key={href}
               aria-disabled="true"
+              title={collapsed ? label : undefined}
               className={cn(itemClasses, "text-ink-muted/60 cursor-not-allowed")}
             >
               <Icon className="size-[18px]" aria-hidden="true" />
-              {label}
+              <span className={cn(collapsed && "lg:sr-only")}>{label}</span>
               <span className="ml-auto hidden text-[0.6rem] tracking-wider uppercase lg:inline">
                 Soon
               </span>
@@ -68,10 +69,17 @@ export function OpsNav() {
             key={href}
             href={href}
             aria-current={active ? "page" : undefined}
-            className={cn(itemClasses, active ? "bg-line/70 font-medium" : "hover:bg-line/40")}
+            title={collapsed ? label : undefined}
+            className={cn(
+              itemClasses,
+              collapsed && "lg:justify-center lg:px-0",
+              active
+                ? "bg-line/70 font-semibold shadow-[inset_0_0_0_1px_rgb(207_205_199_/_35%)]"
+                : "hover:bg-line/40",
+            )}
           >
             <Icon className="size-[18px]" aria-hidden="true" />
-            {label}
+            <span className={cn(collapsed && "lg:sr-only")}>{label}</span>
           </Link>
         );
       })}

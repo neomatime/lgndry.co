@@ -1250,3 +1250,26 @@ This sub-project requires no migration and adds no write surface. Communication 
 individual Enquiry, Client, Project, Follow-up and commercial detail pages remain separate future
 integration work. Team reassignment, exports, bulk actions and server-side dashboard filtering also
 remain deferred.
+
+## Phase 6, slice 1 - Premium OPS experience foundation
+
+The approved Command Center screenshot now defines the shared application shell rather than a
+dashboard-only style. The shell owns a persistent collapsible sidebar, stable sticky top bar,
+restrained route-content transitions and a structural loading state. Shared neutral radius, shadow
+and motion variables extend the existing monochrome tokens; reduced-motion users receive no page or
+skeleton animation.
+
+Global search is an authenticated application capability. `Ctrl/Cmd + K` opens a keyboard-friendly
+palette that searches real Clients, Enquiries, Projects, Invoices and Follow-ups through an
+admin-gated route. Search reuses the established server fetchers and a pure result shaper, links to
+existing detail routes, fails closed when any source is unavailable and never returns fabricated
+records. Quick actions are limited to creation routes that already exist.
+
+The Command Center greeting uses the authenticated profile and Africa/Johannesburg time. Its
+Attention Queue now supports working text, client, item-type and stage filters while preserving the
+deterministic cross-module queue. Metric cards and pipeline stages remain linked to their real
+modules, and all visual changes preserve monochrome icons and the existing neutral palette.
+
+No migration or dependency is required. Notification data, saved filter views, report models,
+historical trend comparisons, document search, team workload and automation configuration remain
+future vertical slices; the shell deliberately does not display non-functional controls for them.

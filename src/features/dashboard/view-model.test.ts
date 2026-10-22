@@ -1,8 +1,22 @@
 import { describe, expect, it } from "vitest";
 import type { DashboardSourceData } from "@/features/dashboard/types";
-import { buildDashboardViewModel, formatDashboardMoney } from "@/features/dashboard/view-model";
+import {
+  buildDashboardViewModel,
+  dashboardGreeting,
+  formatDashboardMoney,
+} from "@/features/dashboard/view-model";
 
 const NOW = new Date("2026-10-22T08:00:00+02:00");
+
+describe("dashboardGreeting", () => {
+  it.each([
+    ["2026-10-22T07:00:00+02:00", "Good morning, Neo"],
+    ["2026-10-22T13:00:00+02:00", "Good afternoon, Neo"],
+    ["2026-10-22T19:00:00+02:00", "Good evening, Neo"],
+  ])("uses Johannesburg time for %s", (date, expected) => {
+    expect(dashboardGreeting("Neo Matime", new Date(date))).toBe(expected);
+  });
+});
 
 function source(overrides: Partial<DashboardSourceData> = {}): DashboardSourceData {
   return {

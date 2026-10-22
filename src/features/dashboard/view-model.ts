@@ -31,6 +31,20 @@ function dashboardDate(now: Date) {
   }).format(now);
 }
 
+export function dashboardGreeting(name: string, now: Date) {
+  const hourPart = new Intl.DateTimeFormat("en-ZA", {
+    timeZone: "Africa/Johannesburg",
+    hour: "numeric",
+    hourCycle: "h23",
+  })
+    .formatToParts(now)
+    .find((part) => part.type === "hour")?.value;
+  const hour = Number(hourPart ?? 12);
+  const timeOfDay = hour < 12 ? "morning" : hour < 17 ? "afternoon" : "evening";
+  const preferredName = name.trim().split(/\s+/)[0] || "Admin";
+  return `Good ${timeOfDay}, ${preferredName}`;
+}
+
 function dueLabel(date: string, today: string) {
   if (!date) return "No date";
   if (date === today) return "Today";
