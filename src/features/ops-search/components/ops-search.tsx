@@ -62,11 +62,6 @@ export function OpsSearch() {
   useEffect(() => {
     if (!open) return;
     inputRef.current?.focus();
-    const previousOverflow = document.body.style.overflow;
-    document.body.style.overflow = "hidden";
-    return () => {
-      document.body.style.overflow = previousOverflow;
-    };
   }, [open]);
 
   useEffect(() => {
@@ -129,11 +124,11 @@ export function OpsSearch() {
   };
 
   return (
-    <>
+    <div className="relative w-full max-w-2xl">
       <button
         type="button"
         onClick={() => setOpen(true)}
-        className="border-line text-ink-muted hover:border-line-strong hover:text-ink flex h-9 w-full max-w-2xl items-center gap-2 rounded-[var(--ops-radius-sm)] border bg-white px-3 text-left text-sm shadow-[inset_0_1px_2px_rgb(17_17_16_/_3%)] transition-colors duration-[var(--ops-motion-fast)]"
+        className="border-line text-ink-muted hover:border-line-strong hover:text-ink flex h-9 w-full items-center gap-2 rounded-[var(--ops-radius-sm)] border bg-white px-3 text-left text-sm shadow-[inset_0_1px_2px_rgb(17_17_16_/_3%)] transition-colors duration-[var(--ops-motion-fast)]"
         aria-label="Search Command Center"
       >
         <Search className="size-4 shrink-0" aria-hidden="true" />
@@ -146,18 +141,18 @@ export function OpsSearch() {
       </button>
 
       {open ? (
-        <div className="fixed inset-0 z-50 flex items-start justify-center px-4 pt-[10vh] sm:pt-[14vh]">
+        <>
           <button
             type="button"
-            className="absolute inset-0 cursor-default bg-black/20"
+            data-testid="ops-search-dismiss-layer"
+            className="fixed inset-0 z-40 cursor-default bg-transparent"
             aria-label="Close search"
             onClick={() => setOpen(false)}
           />
           <div
             role="dialog"
-            aria-modal="true"
             aria-label="Search Command Center"
-            className="border-line relative z-10 w-full max-w-2xl overflow-hidden rounded-[var(--ops-radius)] border bg-white shadow-[0_24px_70px_rgb(17_17_16_/_18%)]"
+            className="border-line absolute top-[calc(100%+0.5rem)] left-0 z-50 w-full overflow-hidden rounded-[var(--ops-radius)] border bg-white shadow-[var(--ops-shadow-raised)]"
           >
             <div className="border-line flex items-center gap-3 border-b px-4">
               <Search className="text-ink-muted size-5 shrink-0" aria-hidden="true" />
@@ -268,8 +263,8 @@ export function OpsSearch() {
               )}
             </div>
           </div>
-        </div>
+        </>
       ) : null}
-    </>
+    </div>
   );
 }

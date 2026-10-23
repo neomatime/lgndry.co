@@ -21,6 +21,8 @@ describe("OpsSearch", () => {
       "/ops/projects/new",
     );
     expect(screen.queryByRole("link", { name: "New enquiry" })).not.toBeInTheDocument();
+    expect(screen.getByTestId("ops-search-dismiss-layer")).toHaveClass("bg-transparent");
+    expect(screen.getByRole("dialog", { name: "Search Command Center" })).toHaveClass("absolute");
   });
 
   it("closes with Escape", () => {
