@@ -2,6 +2,7 @@
 
 import {
   CalendarCheck,
+  CalendarRange,
   FileText,
   Folder,
   House,
@@ -35,6 +36,12 @@ const NAV_GROUPS: NavGroup[] = [
     label: "Work",
     items: [
       { label: "Enquiries", href: "/ops/enquiries", icon: Mail, available: true },
+      {
+        label: "Bookings & Partnerships",
+        href: "/ops/engagements",
+        icon: CalendarRange,
+        available: true,
+      },
       { label: "Projects", href: "/ops/projects", icon: Folder, available: true },
       { label: "Clients", href: "/ops/clients", icon: Users, available: true },
       { label: "Inbox", href: "/ops/inbox", icon: Inbox, available: true },

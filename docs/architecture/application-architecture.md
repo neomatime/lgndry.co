@@ -1356,3 +1356,30 @@ alternative and restores it when a draft is reopened. Existing drafts are left u
 Numeric values in shared stat cards and Command Center metric cards now use a short count-up motion,
 with final values shown immediately for reduced-motion users. No database migration, new dependency or
 provider change was required.
+
+## Phase 6, slice 6 - Bookings, partnerships and the internal calendar
+
+The legacy public booking and brand-partnership forms now feed one operational CRM module rather than
+remaining disconnected website records. `Bookings & Partnerships` sits in the Work navigation group
+and provides separate request queues plus one LGNDRY.Co month calendar. The calendar is an internal
+operator view, not a portal for LGNDRY.Co's clients, and displays both tentative requested dates and
+deposit-confirmed sessions with visible text labels as well as distinct border treatments.
+
+Public submissions move through narrow transactional `SECURITY DEFINER` RPCs. They validate bounded
+structured payloads, reuse a matching active client/contact by email, create the request and activity
+entry atomically, and expose no direct anonymous table writes. Admin edits and status transitions use
+separate admin-gated RPCs with pinned empty search paths and optimistic version locking. Legacy booking
+status `Enquiry` is backfilled to `New`; historical rows and existing table identities remain intact.
+
+Booking workflow is New, Reviewing, Quote Sent, Awaiting Deposit, Confirmed, Completed or Cancelled.
+Partnership workflow is New, Reviewing, Qualified, Proposal Sent, Active, Closed or Declined. The
+detail surfaces expose the structured brief, linked client/contact, owner, schedule and editable
+operational fields. A record is assigned to the first operator who edits or changes its status; public
+website submissions remain unassigned until an authenticated operator takes action.
+
+The commercial documents module remains the source of truth for quotes and deposit invoices. This
+slice aligns booking states with that workflow but does not yet add an automatic foreign-key bridge
+from a quote payment to a legacy booking row, external calendar synchronization, drag-and-drop
+scheduling, team availability, exports or bulk actions. The migration is prepared and application
+tests pass, but it must be applied to the shared production Supabase project before this code is
+deployed because the new pages read the added columns and relationships.

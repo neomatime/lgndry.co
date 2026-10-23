@@ -2,12 +2,7 @@
 
 import { z } from "zod";
 import { createSupabaseServerClient } from "@/lib/db/server";
-import {
-  activityMessage,
-  bookingRecords,
-  contactLead,
-  partnershipRecords,
-} from "@/features/lead-capture/records";
+import { activityMessage, contactLead } from "@/features/lead-capture/records";
 import {
   bookingSchema,
   contactLeadSchema,
@@ -66,10 +61,19 @@ export async function submitBooking(payload: unknown): Promise<LeadResult> {
   if (input.hp_website) return { ok: true };
 
   const supabase = await createSupabaseServerClient();
-  const { client, booking, activity } = bookingRecords(input, crypto.randomUUID());
-  if (!(await insertRow(supabase, "clients", client))) return FAILED;
-  if (!(await insertRow(supabase, "bookings", booking))) return FAILED;
-  await logActivity(supabase, activity);
+  const { error } = await supabase.rpc("submit_booking_request", {
+    p_request: {
+      ...input,
+      services: input.services
+        .split(",")
+        .map((value) => value.trim())
+        .filter(Boolean),
+    },
+  });
+  if (error) {
+    console.error("lead-capture: booking submission failed:", error.message);
+    return FAILED;
+  }
   return { ok: true };
 }
 
@@ -79,9 +83,18 @@ export async function submitPartnership(payload: unknown): Promise<LeadResult> {
   if (input.hp_website) return { ok: true };
 
   const supabase = await createSupabaseServerClient();
-  const { client, partnership, activity } = partnershipRecords(input, crypto.randomUUID());
-  if (!(await insertRow(supabase, "clients", client))) return FAILED;
-  if (!(await insertRow(supabase, "partnerships", partnership))) return FAILED;
-  await logActivity(supabase, activity);
+  const { error } = await supabase.rpc("submit_partnership_request", {
+    p_request: {
+      ...input,
+      focus_areas: input.focus
+        .split(",")
+        .map((value) => value.trim())
+        .filter(Boolean),
+    },
+  });
+  if (error) {
+    console.error("lead-capture: partnership submission failed:", error.message);
+    return FAILED;
+  }
   return { ok: true };
 }

@@ -16,6 +16,8 @@ import {
 type Insert = { table: string; row: Record<string, unknown> };
 const inserts: Insert[] = [];
 let failTable: string | null = null;
+const rpcs: { name: string; args: Record<string, unknown> }[] = [];
+let failRpc: string | null = null;
 
 vi.mock("@/lib/db/server", () => ({
   createSupabaseServerClient: async () => ({
@@ -25,6 +27,10 @@ vi.mock("@/lib/db/server", () => ({
         return { error: failTable === table ? { message: "boom" } : null };
       },
     }),
+    rpc: async (name: string, args: Record<string, unknown>) => {
+      rpcs.push({ name, args });
+      return { data: "record-id", error: failRpc === name ? { message: "boom" } : null };
+    },
   }),
 }));
 
@@ -33,7 +39,9 @@ const { submitBooking, submitContactLead, submitPartnership } =
 
 beforeEach(() => {
   inserts.length = 0;
+  rpcs.length = 0;
   failTable = null;
+  failRpc = null;
   vi.spyOn(console, "error").mockImplementation(() => {});
 });
 
@@ -187,16 +195,31 @@ describe("server actions", () => {
     expect(inserts[0]?.row).toMatchObject({ status: "Lead", email: "thandi@example.com" });
   });
 
-  it("booking: saves the client, then the booking, then activity — in that order", async () => {
+  it("booking: submits one transactional CRM request", async () => {
     expect(await submitBooking(booking)).toEqual({ ok: true });
-    expect(inserts.map((i) => i.table)).toEqual(["clients", "bookings", "ops_activity_log"]);
-    const clientId = (inserts[0]?.row as { id: string }).id;
-    expect((inserts[1]?.row as { client: string }).client).toBe(clientId);
+    expect(rpcs).toHaveLength(1);
+    expect(rpcs[0]).toMatchObject({
+      name: "submit_booking_request",
+      args: {
+        p_request: {
+          client_email: "thandi@example.com",
+          services: ["Portraiture", "Brand Photography"],
+        },
+      },
+    });
   });
 
-  it("partnership: saves the client, then the application, then activity", async () => {
+  it("partnership: submits one transactional CRM request", async () => {
     expect(await submitPartnership(partnership)).toEqual({ ok: true });
-    expect(inserts.map((i) => i.table)).toEqual(["clients", "partnerships", "ops_activity_log"]);
+    expect(rpcs[0]).toMatchObject({
+      name: "submit_partnership_request",
+      args: {
+        p_request: {
+          company: "Bushveld Lodge",
+          focus_areas: ["Ongoing Photography", "Brand Storytelling"],
+        },
+      },
+    });
   });
 
   it("rejects invalid input without touching the database", async () => {
@@ -218,16 +241,11 @@ describe("server actions", () => {
     expect(inserts).toHaveLength(0);
   });
 
-  it("reports failure if the client can't be saved, and writes nothing further", async () => {
-    failTable = "clients";
+  it("reports failure when the transactional booking RPC fails", async () => {
+    failRpc = "submit_booking_request";
     const result = await submitBooking(booking);
     expect(result.ok).toBe(false);
-    expect(inserts.map((i) => i.table)).toEqual(["clients"]);
-  });
-
-  it("reports failure if the booking row can't be saved", async () => {
-    failTable = "bookings";
-    expect((await submitBooking(booking)).ok).toBe(false);
+    expect(rpcs.map((call) => call.name)).toEqual(["submit_booking_request"]);
   });
 
   it("does not fail the submission just because the activity log failed", async () => {

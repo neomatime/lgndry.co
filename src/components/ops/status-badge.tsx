@@ -1,16 +1,14 @@
 import { cn } from "@/lib/utils/cn";
-import type { EnquiryStatus } from "@/features/enquiries/types";
-
-const TERMINAL: ReadonlySet<EnquiryStatus> = new Set(["Completed", "Closed"]);
+const TERMINAL = new Set(["Completed", "Closed", "Cancelled", "Declined"]);
 
 /**
  * The design system is intentionally monochrome (ink/ink-muted/surface/line)
  * -- no colored tokens exist anywhere in this codebase, so status is
  * distinguished by weight, not hue: New (unactioned) gets the same filled
  * treatment as a primary Button; every in-progress status gets a neutral
- * filled pill; the two terminal statuses get a quieter outline.
+ * filled pill; terminal statuses get a quieter outline.
  */
-export function StatusBadge({ status }: { status: EnquiryStatus }) {
+export function StatusBadge({ status }: { status: string }) {
   const classes =
     status === "New"
       ? "bg-ink text-white"

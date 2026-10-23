@@ -26,6 +26,7 @@ describe("OpsNav", () => {
     expect(Array.from(labels).map((item) => item.textContent?.replace("Soon", "").trim())).toEqual([
       "Command Center",
       "Enquiries",
+      "Bookings & Partnerships",
       "Projects",
       "Clients",
       "Inbox",
@@ -46,9 +47,9 @@ describe("OpsNav", () => {
     );
     const link = screen.getByRole("link", { name: "Follow-ups" });
     expect(link).toHaveAttribute("href", "/ops/follow-ups");
-    expect(items.indexOf(link)).toBe(5);
-    expect(items[4]?.textContent).toContain("Inbox");
-    expect(items[6]?.textContent).toContain("Invoices");
+    expect(items.indexOf(link)).toBe(6);
+    expect(items[5]?.textContent).toContain("Inbox");
+    expect(items[7]?.textContent).toContain("Invoices");
     expect(screen.queryByText("Follow-ups")?.closest("span[aria-disabled='true']")).toBeNull();
   });
 
@@ -80,6 +81,19 @@ describe("OpsNav", () => {
     navigation.pathname = "/ops/clients/client-id";
     render(<OpsNav />);
     expect(screen.getByRole("link", { name: "Follow-ups" })).not.toHaveAttribute("aria-current");
+  });
+
+  it.each([
+    "/ops/engagements",
+    "/ops/engagements/bookings/booking-id",
+    "/ops/engagements/partnerships/partnership-id",
+  ])("marks Bookings & Partnerships current on %s", (pathname) => {
+    navigation.pathname = pathname;
+    render(<OpsNav />);
+    expect(screen.getByRole("link", { name: "Bookings & Partnerships" })).toHaveAttribute(
+      "aria-current",
+      "page",
+    );
   });
 
   it.each(["/ops/projects", "/ops/projects/new", "/ops/projects/project-id/edit"])(
