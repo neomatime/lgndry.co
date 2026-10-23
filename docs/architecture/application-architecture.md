@@ -1360,7 +1360,7 @@ provider change was required.
 ## Phase 6, slice 6 - Bookings, partnerships and the internal calendar
 
 The legacy public booking and brand-partnership forms now feed one operational CRM module rather than
-remaining disconnected website records. `Bookings & Partnerships` sits in the Work navigation group
+remaining disconnected website records. `Bookings` sits in the Work navigation group
 and provides separate request queues plus one LGNDRY.Co month calendar. The calendar is an internal
 operator view, not a portal for LGNDRY.Co's clients, and displays both tentative requested dates and
 deposit-confirmed sessions with visible text labels as well as distinct border treatments.

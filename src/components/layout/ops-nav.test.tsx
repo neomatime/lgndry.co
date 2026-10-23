@@ -26,7 +26,7 @@ describe("OpsNav", () => {
     expect(Array.from(labels).map((item) => item.textContent?.replace("Soon", "").trim())).toEqual([
       "Command Center",
       "Enquiries",
-      "Bookings & Partnerships",
+      "Bookings",
       "Projects",
       "Clients",
       "Inbox",
@@ -87,13 +87,10 @@ describe("OpsNav", () => {
     "/ops/engagements",
     "/ops/engagements/bookings/booking-id",
     "/ops/engagements/partnerships/partnership-id",
-  ])("marks Bookings & Partnerships current on %s", (pathname) => {
+  ])("marks Bookings current on %s", (pathname) => {
     navigation.pathname = pathname;
     render(<OpsNav />);
-    expect(screen.getByRole("link", { name: "Bookings & Partnerships" })).toHaveAttribute(
-      "aria-current",
-      "page",
-    );
+    expect(screen.getByRole("link", { name: "Bookings" })).toHaveAttribute("aria-current", "page");
   });
 
   it.each(["/ops/projects", "/ops/projects/new", "/ops/projects/project-id/edit"])(

@@ -246,7 +246,7 @@ export function EngagementsWorkspace({ data, today }: { data: EngagementData; to
   return (
     <div className="flex flex-col gap-5">
       <div className="border-line flex flex-wrap items-center justify-between gap-3 border-b">
-        <div role="tablist" aria-label="Bookings and partnerships views" className="flex gap-1">
+        <div role="tablist" aria-label="Bookings views" className="flex gap-1">
           {(["bookings", "partnerships", "calendar"] as const).map((item) => (
             <button
               key={item}

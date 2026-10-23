@@ -37,7 +37,7 @@ export default async function PartnershipDetailPage({ params }: Props) {
     <div className="flex flex-col gap-8">
       <div className="text-ink-muted flex gap-1 text-sm">
         <Link href="/ops/engagements" className="underline">
-          Bookings & Partnerships
+          Bookings
         </Link>
         <span>/</span>
         <span>{partnership.id.slice(0, 8).toUpperCase()}</span>

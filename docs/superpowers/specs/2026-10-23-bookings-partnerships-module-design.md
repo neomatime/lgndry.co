@@ -1,4 +1,4 @@
-# Bookings & Partnerships Module Design
+# Bookings Module Design
 
 ## Purpose
 
@@ -6,7 +6,7 @@ Bring the public booking and brand-partnership forms into the authenticated OPS 
 
 ## Information architecture
 
-- Add one `Bookings & Partnerships` item to the Work section of the OPS sidebar, after Enquiries.
+- Add one `Bookings` item to the Work section of the OPS sidebar, after Enquiries.
 - Route the module at `/ops/engagements`.
 - Provide three views in one module: Booking Requests, Partnerships, and Calendar.
 - Booking and partnership rows link to dedicated detail pages with edit and status controls.

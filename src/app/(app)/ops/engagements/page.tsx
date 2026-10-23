@@ -7,7 +7,7 @@ import { EngagementsWorkspace } from "@/features/engagements/components/engageme
 import { fetchEngagements } from "@/features/engagements/fetch-engagements";
 import { requireOpsUser } from "@/lib/auth/guards";
 
-export const metadata: Metadata = { title: "Bookings & Partnerships" };
+export const metadata: Metadata = { title: "Bookings" };
 
 function todayInJohannesburg() {
   const parts = new Intl.DateTimeFormat("en-CA", {
@@ -27,10 +27,10 @@ export default async function EngagementsPage() {
     return (
       <div className="flex flex-col gap-8">
         <PageHeader
-          title="Bookings & Partnerships"
+          title="Bookings"
           description="Manage booking requests, brand partnerships and the studio calendar."
         />
-        <EmptyState title="Bookings and partnerships are temporarily unavailable">
+        <EmptyState title="Bookings are temporarily unavailable">
           Something went wrong loading this page. Try refreshing in a moment.
         </EmptyState>
       </div>
@@ -48,7 +48,7 @@ export default async function EngagementsPage() {
   return (
     <div className="flex flex-col gap-8">
       <PageHeader
-        title="Bookings & Partnerships"
+        title="Bookings"
         description="Manage session requests, brand relationships and LGNDRY.Co's working calendar."
       />
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">

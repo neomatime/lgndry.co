@@ -37,7 +37,7 @@ const NAV_GROUPS: NavGroup[] = [
     items: [
       { label: "Enquiries", href: "/ops/enquiries", icon: Mail, available: true },
       {
-        label: "Bookings & Partnerships",
+        label: "Bookings",
         href: "/ops/engagements",
         icon: CalendarRange,
         available: true,
