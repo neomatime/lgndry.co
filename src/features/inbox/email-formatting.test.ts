@@ -34,15 +34,24 @@ describe("Inbox email formatting", () => {
       name: "Neo Matime",
       phone: "+27 10 555 0187",
       website: "https://www.lgndry-co.co.za",
+      bannerUrl: "https://www.lgndry-co.co.za/ops-email-banner.png",
     });
     expect(appendSignature("Hello", signature)).toContain("--\nKind regards,\nNeo Matime");
+    expect(signature).toContain(
+      "![LGNDRY.Co email banner](https://www.lgndry-co.co.za/ops-email-banner.png)",
+    );
+    expect(emailMarkupToHtml(signature)).toContain(
+      '<img src="https://www.lgndry-co.co.za/ops-email-banner.png"',
+    );
+    expect(emailMarkupToPlainText(signature)).not.toContain("ops-email-banner.png");
     expect(
       appendSignature(appendSignature("Hello", signature), signature).match(/Kind regards/g),
     ).toHaveLength(1);
   });
 
   it("restores a formatted draft without leaking HTML into the editor", () => {
-    const source = "**Hello** _there_\n- First item\n- Second item\n[Open](https://example.com)";
+    const source =
+      "**Hello** _there_\n- First item\n- Second item\n[Open](https://example.com)\n![Banner](https://example.com/banner.png)";
     expect(emailHtmlToMarkup(emailMarkupToHtml(source))).toBe(source);
   });
 });

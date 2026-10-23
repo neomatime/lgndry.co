@@ -16,6 +16,7 @@ import {
 } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
 import { OpsPanel, OpsPanelHeader } from "@/components/ops/ops-panel";
+import { AnimatedNumber } from "@/components/ui/animated-number";
 import type {
   AttentionKind,
   DashboardActiveRecord,
@@ -85,7 +86,9 @@ function MetricCard({
       <span className="min-w-0 flex-1">
         <span className="block text-sm font-medium">{label}</span>
         <span className="mt-1 flex flex-wrap items-baseline gap-x-3 gap-y-1">
-          <span className="text-2xl font-semibold">{value}</span>
+          <span className="text-2xl font-semibold">
+            {typeof value === "number" ? <AnimatedNumber value={value} /> : value}
+          </span>
           <span className="text-ink-muted text-xs">{detail}</span>
         </span>
       </span>

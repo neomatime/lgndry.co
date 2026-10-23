@@ -3,6 +3,7 @@ type SignatureDetails = {
   companyName?: string;
   phone?: string;
   website?: string;
+  bannerUrl?: string;
 };
 
 function escapeHtml(value: string) {
@@ -42,6 +43,14 @@ export function emailMarkupToHtml(value: string) {
   };
 
   for (const line of lines) {
+    const image = line.match(/^!\[([^\]\n]*)\]\((https?:\/\/[^\s)]+)\)$/);
+    if (image) {
+      closeList();
+      output.push(
+        `<img src="${escapeHtml(image[2] ?? "")}" alt="${escapeHtml(image[1] ?? "")}" style="display:block;width:100%;max-width:1084px;height:auto;margin-top:16px;border:0">`,
+      );
+      continue;
+    }
     const bullet = line.match(/^\s*-\s+(.+)$/);
     const numbered = line.match(/^\s*\d+\.\s+(.+)$/);
     const nextList = bullet ? "ul" : numbered ? "ol" : null;
@@ -70,6 +79,7 @@ export function emailMarkupToHtml(value: string) {
 
 export function emailMarkupToPlainText(value: string) {
   return value
+    .replace(/^!\[[^\]\n]*\]\(https?:\/\/[^\s)]+\)\s*$/gm, "")
     .replace(/\[([^\]\n]+)\]\(((?:https?:\/\/|mailto:)[^)\s]+)\)/g, "$1 ($2)")
     .replace(/\*\*([^*\n]+)\*\*/g, "$1")
     .replace(/\[u\]([^\n]+)\[\/u\]/g, "$1")
@@ -103,6 +113,11 @@ export function emailHtmlToMarkup(value: string) {
 
   return value
     .replace(
+      /<img\s+src="(https?:\/\/[^"]+)"\s+alt="([^"]*)"[^>]*>/gi,
+      (_match, src: string, alt: string) =>
+        `![${decodeEmailEntities(alt)}](${decodeEmailEntities(src)})`,
+    )
+    .replace(
       /<ul[^>]*>([\s\S]*?)<\/ul>/gi,
       (_match, items: string) =>
         `${Array.from(items.matchAll(/<li[^>]*>([\s\S]*?)<\/li>/gi))
@@ -131,8 +146,17 @@ export function buildEmailSignature({
   companyName = "LGNDRY.Co",
   phone,
   website,
+  bannerUrl,
 }: SignatureDetails) {
-  return ["Kind regards,", name.trim(), companyName.trim(), phone?.trim(), website?.trim()]
+  return [
+    "Kind regards,",
+    name.trim(),
+    companyName.trim(),
+    phone?.trim(),
+    website?.trim(),
+    bannerUrl?.trim() ? "" : undefined,
+    bannerUrl?.trim() ? `![LGNDRY.Co email banner](${bannerUrl.trim()})` : undefined,
+  ]
     .filter(Boolean)
     .join("\n");
 }

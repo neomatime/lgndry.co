@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
-import { useMemo, useRef, useState, useTransition } from "react";
+import { useEffect, useMemo, useRef, useState, useTransition } from "react";
 import {
   Archive,
   ArrowLeft,
@@ -20,6 +20,8 @@ import {
   Menu,
   MoreHorizontal,
   Paperclip,
+  PanelLeftClose,
+  PanelLeftOpen,
   Pencil,
   RefreshCw,
   Reply,
@@ -68,6 +70,8 @@ const FOLDERS: Array<{ id: InboxFolder; label: string; icon: typeof Inbox }> = [
 ];
 
 const FOLDER_IDS = new Set<InboxFolder>(FOLDERS.map((folder) => folder.id));
+const MAILBOX_RAIL_KEY = "lgndry.ops.inbox-folders-collapsed";
+export const INBOX_AUTO_SYNC_INTERVAL_MS = 60_000;
 
 function inboxFolder(value: string | null): InboxFolder {
   return value && FOLDER_IDS.has(value as InboxFolder) ? (value as InboxFolder) : "inbox";
@@ -121,7 +125,7 @@ function bytes(value: number) {
 
 function MessageBody({ message }: { message: EmailMessage }) {
   if (message.bodyHtml) {
-    const source = `<!doctype html><html><head><meta name="color-scheme" content="light"><style>body{margin:0;color:#171717;background:#fff;font:14px/1.65 Arial,sans-serif;overflow-wrap:anywhere}img{max-width:100%;height:auto}a{color:#171717}</style></head><body>${message.bodyHtml}</body></html>`;
+    const source = `<!doctype html><html><head><meta name="color-scheme" content="light"><style>html,body{scrollbar-width:none}::-webkit-scrollbar{display:none;width:0;height:0}body{margin:0;color:#171717;background:#fff;font:14px/1.65 Arial,sans-serif;overflow-wrap:anywhere}img{max-width:100%;height:auto}a{color:#171717}</style></head><body>${message.bodyHtml}</body></html>`;
     return (
       <iframe
         title={`Message from ${message.fromName ?? message.fromEmail ?? "sender"}`}
@@ -469,8 +473,10 @@ export function InboxShell({
   const [compose, setCompose] = useState<ComposeState | null>(null);
   const [notice, setNotice] = useState("");
   const [linksOpen, setLinksOpen] = useState(false);
+  const [foldersCollapsed, setFoldersCollapsed] = useState(false);
   const [mobilePane, setMobilePane] = useState<"folders" | "list" | "message">("list");
   const [pending, startTransition] = useTransition();
+  const autoSyncing = useRef(false);
   const counts = useMemo(() => inboxCounts(data.threads), [data.threads]);
   const visibleThreads = useMemo(
     () => filterThreads(data.threads, folder, query),
@@ -478,6 +484,52 @@ export function InboxShell({
   );
   const selected =
     visibleThreads.find((thread) => thread.id === selectedId) ?? visibleThreads[0] ?? null;
+
+  useEffect(() => {
+    const frame = window.requestAnimationFrame(() => {
+      setFoldersCollapsed(window.localStorage.getItem(MAILBOX_RAIL_KEY) === "true");
+    });
+    return () => window.cancelAnimationFrame(frame);
+  }, []);
+
+  useEffect(() => {
+    let active = true;
+    const synchronize = async () => {
+      if (document.visibilityState === "hidden" || autoSyncing.current) return;
+      autoSyncing.current = true;
+      try {
+        const state = await syncInbox();
+        if (!active) return;
+        if (state.status === "success") {
+          if (/^[1-9]\d* new email/.test(state.message ?? "")) setNotice(state.message ?? "");
+          router.refresh();
+        }
+      } catch (error) {
+        console.error("Inbox auto-sync failed", error);
+      } finally {
+        autoSyncing.current = false;
+      }
+    };
+    const onVisibilityChange = () => {
+      if (document.visibilityState === "visible") void synchronize();
+    };
+    void synchronize();
+    const interval = window.setInterval(synchronize, INBOX_AUTO_SYNC_INTERVAL_MS);
+    document.addEventListener("visibilitychange", onVisibilityChange);
+    return () => {
+      active = false;
+      window.clearInterval(interval);
+      document.removeEventListener("visibilitychange", onVisibilityChange);
+    };
+  }, [router]);
+
+  function toggleFoldersCollapsed() {
+    setFoldersCollapsed((collapsed) => {
+      const next = !collapsed;
+      window.localStorage.setItem(MAILBOX_RAIL_KEY, String(next));
+      return next;
+    });
+  }
 
   function updateRoute(nextFolder: InboxFolder, threadId?: string | null) {
     const params = new URLSearchParams(searchParams.toString());
@@ -583,7 +635,16 @@ export function InboxShell({
           <button
             type="button"
             disabled={pending}
-            onClick={() => startTransition(async () => refreshWith(await syncInbox()))}
+            onClick={() =>
+              startTransition(async () => {
+                const state = await syncInbox();
+                setNotice(
+                  state.message ??
+                    (state.status === "success" ? "Mailbox synchronized." : "Sync failed."),
+                );
+                if (state.status === "success") router.refresh();
+              })
+            }
             className="border-line flex h-10 items-center gap-2 border px-4 text-sm disabled:opacity-50"
           >
             <RefreshCw className={`size-4 ${pending ? "animate-spin" : ""}`} aria-hidden="true" />
@@ -615,12 +676,35 @@ export function InboxShell({
         </div>
       ) : null}
 
-      <div className="border-line grid min-h-0 flex-1 overflow-hidden border bg-white lg:grid-cols-[180px_310px_minmax(420px,1fr)] 2xl:grid-cols-[180px_310px_minmax(420px,1fr)_290px]">
+      <div
+        className={`border-line grid min-h-0 flex-1 overflow-hidden border bg-white transition-[grid-template-columns] duration-[var(--ops-motion-standard)] ${
+          foldersCollapsed
+            ? "lg:grid-cols-[52px_310px_minmax(420px,1fr)] 2xl:grid-cols-[52px_310px_minmax(420px,1fr)_290px]"
+            : "lg:grid-cols-[180px_310px_minmax(420px,1fr)] 2xl:grid-cols-[180px_310px_minmax(420px,1fr)_290px]"
+        }`}
+      >
         <aside
           className={`${mobilePane === "folders" ? "flex" : "hidden"} border-line min-h-0 flex-col border-r lg:flex`}
         >
-          <div className="border-line flex h-14 shrink-0 items-center justify-between border-b px-4">
-            <span className="text-sm font-semibold">Mailboxes</span>
+          <div
+            className={`border-line flex h-14 shrink-0 items-center border-b ${foldersCollapsed ? "justify-center px-1" : "justify-between px-4"}`}
+          >
+            <span className={foldersCollapsed ? "lg:sr-only" : "text-sm font-semibold"}>
+              Mailboxes
+            </span>
+            <button
+              type="button"
+              onClick={toggleFoldersCollapsed}
+              className="hidden size-8 items-center justify-center lg:flex"
+              title={foldersCollapsed ? "Expand mailboxes" : "Collapse mailboxes"}
+              aria-label={foldersCollapsed ? "Expand mailboxes" : "Collapse mailboxes"}
+            >
+              {foldersCollapsed ? (
+                <PanelLeftOpen className="size-4" aria-hidden="true" />
+              ) : (
+                <PanelLeftClose className="size-4" aria-hidden="true" />
+              )}
+            </button>
             <button
               type="button"
               className="lg:hidden"
@@ -645,22 +729,29 @@ export function InboxShell({
                     setMobilePane("list");
                     updateRoute(item.id, null);
                   }}
-                  className={`flex h-10 w-full items-center gap-3 px-3 text-sm ${folder === item.id ? "bg-surface-soft font-medium" : "text-ink-muted hover:text-ink"}`}
+                  title={foldersCollapsed ? `${item.label}: ${counts[item.id]}` : undefined}
+                  className={`flex h-10 w-full items-center gap-3 text-sm ${foldersCollapsed ? "justify-center px-1" : "px-3"} ${folder === item.id ? "bg-surface-soft font-medium" : "text-ink-muted hover:text-ink"}`}
                 >
                   <Icon className="size-4" aria-hidden="true" />
-                  <span className="flex-1 text-left">{item.label}</span>
-                  <span className="text-xs tabular-nums">{counts[item.id]}</span>
+                  <span className={foldersCollapsed ? "lg:sr-only" : "flex-1 text-left"}>
+                    {item.label}
+                  </span>
+                  <span className={foldersCollapsed ? "lg:sr-only" : "text-xs tabular-nums"}>
+                    {counts[item.id]}
+                  </span>
                 </button>
               );
             })}
           </nav>
-          <div className="border-line text-ink-muted shrink-0 border-t p-4 text-xs leading-5">
+          <div
+            className={`border-line text-ink-muted shrink-0 border-t p-4 text-xs leading-5 ${foldersCollapsed ? "lg:hidden" : ""}`}
+          >
             <p>Connected mailbox</p>
             <p className="text-ink mt-1 break-all">neomokgwadi@lgndry-co.co.za</p>
             <p className="mt-2">
               {data.lastSyncedAt
                 ? `Synced ${formatInboxTimestamp(data.lastSyncedAt, now)}`
-                : "Ready to sync"}
+                : "Auto-sync active"}
             </p>
           </div>
         </aside>

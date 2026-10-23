@@ -1333,3 +1333,26 @@ nonessential animation removed for reduced-motion users. The login surface delib
 its light warm-neutral treatment even when the authenticated OPS workspace is using dark mode.
 
 No database migration, auth-provider change or new dependency was required.
+
+## Phase 6, slice 5 - Final navigation and Inbox refinements
+
+The application keeps every scroll region functional while concealing native scrollbar chrome across
+the shell, data views and sandboxed email bodies. The Inbox remains a bounded multi-pane workspace;
+its mailbox folder rail can now collapse independently on desktop and remembers that preference in
+local storage. The main sidebar preserves the approved item order while grouping navigation into
+Overview, Work, Finance and Workspace sections for faster scanning.
+
+The open Inbox synchronizes Titan immediately, every 60 seconds while the page is visible and again
+when the tab returns to the foreground. Sync calls are guarded against overlap, background failures do
+not interrupt composing, and the manual Sync control remains available. This is application-active
+polling rather than an unattended mailbox daemon: when nobody has the Inbox open, the existing Edge
+Function still requires an external scheduled invocation for continuous off-screen ingestion.
+
+Every newly composed message and reply receives the LGNDRY.Co contact banner through the existing
+safe formatting pipeline. The supplied banner is a local public asset referenced from the production
+website; the formatter emits only a validated HTTPS image token, strips it from the plain-text
+alternative and restores it when a draft is reopened. Existing drafts are left unchanged.
+
+Numeric values in shared stat cards and Command Center metric cards now use a short count-up motion,
+with final values shown immediately for reduced-motion users. No database migration, new dependency or
+provider change was required.

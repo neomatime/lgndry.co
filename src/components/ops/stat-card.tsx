@@ -1,4 +1,5 @@
 import type { LucideIcon } from "lucide-react";
+import { AnimatedNumber } from "@/components/ui/animated-number";
 
 export function StatCard({
   icon: Icon,
@@ -16,7 +17,9 @@ export function StatCard({
       </span>
       <div>
         <p className="text-ink-muted text-sm">{label}</p>
-        <div className="text-2xl font-medium">{value}</div>
+        <div className="text-2xl font-medium">
+          {typeof value === "number" ? <AnimatedNumber value={value} /> : value}
+        </div>
       </div>
     </div>
   );

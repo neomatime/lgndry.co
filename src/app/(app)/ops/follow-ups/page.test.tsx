@@ -1,4 +1,4 @@
-import { render, screen } from "@testing-library/react";
+import { render, screen, waitFor } from "@testing-library/react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import FollowUpsPage from "@/app/(app)/ops/follow-ups/page";
 import type { FollowUpListItem } from "@/features/follow-ups/types";
@@ -135,10 +135,12 @@ describe("FollowUpsPage", () => {
       row({ id: "8", status: "Cancelled", dueDate: "2026-09-30" }),
     ]);
     render(await FollowUpsPage());
-    expect(stat("Due Today")).toBe("1");
-    expect(stat("Overdue")).toBe("2");
-    expect(stat("Due This Week")).toBe("2");
-    expect(stat("Completed This Week")).toBe("1");
+    await waitFor(() => {
+      expect(stat("Due Today")).toBe("1");
+      expect(stat("Overdue")).toBe("2");
+      expect(stat("Due This Week")).toBe("2");
+      expect(stat("Completed This Week")).toBe("1");
+    });
     // Plain counts: no trend deltas.
     expect(screen.queryByText(/yesterday|high priority|across/i)).not.toBeInTheDocument();
   });
@@ -155,7 +157,7 @@ describe("FollowUpsPage", () => {
       now: NOW.toISOString(),
       currentUserId: "admin",
     });
-    expect(stat("Overdue")).toBe("1");
+    await waitFor(() => expect(stat("Overdue")).toBe("1"));
   });
 
   it("passes the signed-in user to the table for Mine scope", async () => {

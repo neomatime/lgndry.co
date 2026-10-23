@@ -1,7 +1,8 @@
-import { fireEvent, render, screen } from "@testing-library/react";
+import { fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import type { InboxData, InboxThread } from "@/features/inbox/types";
 import { InboxShell } from "@/features/inbox/components/inbox-shell";
+import { syncInbox } from "@/features/inbox/actions";
 
 const refresh = vi.fn();
 const replace = vi.fn();
@@ -95,6 +96,12 @@ describe("InboxShell", () => {
   beforeEach(() => {
     refresh.mockReset();
     replace.mockReset();
+    vi.mocked(syncInbox).mockReset();
+    vi.mocked(syncInbox).mockResolvedValue({
+      status: "success",
+      message: "0 new emails synchronized.",
+    });
+    window.localStorage.clear();
   });
 
   it("renders the reference layout's folders, thread, conversation and context", () => {
@@ -125,6 +132,19 @@ describe("InboxShell", () => {
     expect(screen.getByTestId("inbox-thread-scroll")).toHaveClass("overflow-y-auto");
     expect(screen.getByTestId("inbox-conversation-scroll")).toHaveClass("overflow-y-auto");
     expect(screen.getByTestId("inbox-context-scroll")).toHaveClass("overflow-y-auto");
+  });
+
+  it("collapses and restores the mailbox rail", () => {
+    render(shell());
+    fireEvent.click(screen.getByRole("button", { name: "Collapse mailboxes" }));
+    expect(screen.getByRole("button", { name: "Expand mailboxes" })).toBeInTheDocument();
+    expect(window.localStorage.getItem("lgndry.ops.inbox-folders-collapsed")).toBe("true");
+  });
+
+  it("synchronizes automatically when the Inbox opens", async () => {
+    render(shell());
+    await waitFor(() => expect(syncInbox).toHaveBeenCalled());
+    expect(refresh).toHaveBeenCalled();
   });
 
   it("keeps thread selection in the URL", () => {

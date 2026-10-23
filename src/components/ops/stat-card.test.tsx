@@ -4,10 +4,10 @@ import { describe, expect, it } from "vitest";
 import { StatCard } from "@/components/ops/stat-card";
 
 describe("StatCard", () => {
-  it("renders the label and a numeric value", () => {
+  it("renders the label and counts up to a numeric value", async () => {
     render(<StatCard icon={Mail} label="New Enquiries" value={8} />);
     expect(screen.getByText("New Enquiries")).toBeInTheDocument();
-    expect(screen.getByText("8")).toBeInTheDocument();
+    expect(await screen.findByText("8")).toBeInTheDocument();
   });
 
   it("renders any node as the value, not just a number", () => {

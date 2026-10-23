@@ -19,11 +19,13 @@ export default async function InboxPage() {
     );
   }
   const settings = settingsResult.status === "ok" ? settingsResult.settings : null;
+  const websiteUrl = settings?.websiteUrl || "https://www.lgndry-co.co.za";
   const signature = buildEmailSignature({
     name: user.name,
     companyName: settings?.senderName || "LGNDRY.Co",
     phone: settings?.companyPhone,
-    website: settings?.websiteUrl,
+    website: websiteUrl,
+    bannerUrl: new URL("/ops-email-banner.png", websiteUrl).toString(),
   });
   return <InboxShell data={data} now={new Date().toISOString()} signature={signature} />;
 }

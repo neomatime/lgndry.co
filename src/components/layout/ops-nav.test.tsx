@@ -11,6 +11,13 @@ beforeEach(() => {
 });
 
 describe("OpsNav", () => {
+  it("segments the sidebar into operational categories", () => {
+    render(<OpsNav />);
+    for (const category of ["Overview", "Work", "Finance", "Workspace"]) {
+      expect(screen.getByText(category)).toBeInTheDocument();
+    }
+  });
+
   it("renders Projects and Clients as available links in the mandated order", () => {
     render(<OpsNav />);
     const labels = screen
