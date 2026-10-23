@@ -10,6 +10,7 @@ import { getPublicEnv } from "@/lib/env";
 export async function updateSession(request: NextRequest) {
   let response = NextResponse.next({ request });
   const env = getPublicEnv();
+  const sessionOnly = request.cookies.get("lgndry.ops.session-only")?.value === "1";
 
   const supabase = createServerClient(
     env.NEXT_PUBLIC_SUPABASE_URL,
@@ -25,7 +26,14 @@ export async function updateSession(request: NextRequest) {
           }
           response = NextResponse.next({ request });
           for (const { name, value, options } of cookiesToSet) {
-            response.cookies.set(name, value, options);
+            if (sessionOnly) {
+              const sessionOptions = { ...options };
+              delete sessionOptions.expires;
+              delete sessionOptions.maxAge;
+              response.cookies.set(name, value, sessionOptions);
+            } else {
+              response.cookies.set(name, value, options);
+            }
           }
         },
       },

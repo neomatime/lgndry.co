@@ -81,6 +81,36 @@ html.dark {
   }
 }
 
+@keyframes auth-visual-enter {
+  from {
+    transform: scale(1.012);
+  }
+
+  to {
+    transform: scale(1);
+  }
+}
+
+@keyframes auth-content-enter {
+  from {
+    transform: translateY(8px);
+  }
+
+  to {
+    transform: translateY(0);
+  }
+}
+
+@keyframes auth-feedback-enter {
+  from {
+    transform: translateY(-3px);
+  }
+
+  to {
+    transform: translateY(0);
+  }
+}
+
 @layer utilities {
   .dark .bg-white {
     background-color: var(--color-surface);
@@ -110,6 +140,33 @@ html.dark {
   .ops-skeleton {
     animation: ops-skeleton-pulse 1.6s ease-in-out infinite;
   }
+
+  .auth-login-shell {
+    --color-ink: #171714;
+    --color-ink-muted: #706e68;
+    --color-surface: #ffffff;
+    --color-surface-soft: #f4f2ed;
+    --color-line: #dedbd4;
+    --color-line-strong: #c9c5bd;
+    color: var(--color-ink);
+    color-scheme: light;
+  }
+
+  .dark .auth-login-shell .text-white {
+    color: #ffffff;
+  }
+
+  .auth-login-visual > img {
+    animation: auth-visual-enter 700ms var(--ops-ease) both;
+  }
+
+  .auth-login-content {
+    animation: auth-content-enter 520ms var(--ops-ease) 90ms both;
+  }
+
+  .auth-feedback {
+    animation: auth-feedback-enter 200ms var(--ops-ease) both;
+  }
 }
 
 @media (prefers-reduced-motion: reduce) {
@@ -120,7 +177,15 @@ html.dark {
   }
 
   .ops-page-enter,
-  .ops-skeleton {
+  .ops-skeleton,
+  .auth-login-visual > img,
+  .auth-login-content,
+  .auth-feedback,
+  .auth-login-shell .animate-spin {
     animation: none !important;
+  }
+
+  .auth-login-shell * {
+    transition-duration: 0.01ms !important;
   }
 }

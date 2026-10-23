@@ -33,6 +33,17 @@ describe("signInSchema", () => {
   it("accepts an email and password and trims the email", () => {
     const parsed = signInSchema.parse({ email: "  dan@lgndry-co.co.za ", password: "x" });
     expect(parsed.email).toBe("dan@lgndry-co.co.za");
+    expect(parsed.keepSignedIn).toBe(false);
+  });
+
+  it("accepts an explicit persistent-session preference", () => {
+    expect(
+      signInSchema.parse({
+        email: "dan@lgndry-co.co.za",
+        password: "x",
+        keepSignedIn: true,
+      }).keepSignedIn,
+    ).toBe(true);
   });
 
   it("rejects a malformed email or an empty password", () => {

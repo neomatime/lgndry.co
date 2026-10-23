@@ -1311,3 +1311,25 @@ replies receive an editable signature built from the authenticated operator and 
 contact settings; the composer can reinsert it without creating duplicates. No migration, new
 dependency or provider change was required. Scheduled send, undo send, templates, attachment removal
 from an existing draft and provider-side contact autocomplete remain later work.
+
+## Phase 6, slice 4 - Premium OPS sign-in experience
+
+The OPS sign-in route now follows the approved split-screen reference: an immersive LGNDRY.Co image
+and editorial statement lead the composition, while the existing authenticated sign-in flow sits in
+a warm, restrained panel with explicit hierarchy, accessible labels and stable responsive behavior.
+The supplied landscape photograph is stored as a local optimized application asset so the login
+experience does not depend on a third-party image host.
+
+The form retains Supabase password authentication, the existing admin-access check and sanitized
+post-login redirect. It adds password visibility, field-level validation, an inline generic auth
+failure, a stable loading state and a functional link to the existing password-recovery flow. The
+email value remains in place after an unsuccessful attempt, while duplicate submissions are disabled.
+
+"Keep me signed in" is now a real session preference. Persistent Supabase cookie behavior remains the
+default when selected; otherwise authentication and refresh cookies are written without expiry and
+therefore end with the browser session. A private marker cookie keeps subsequent middleware refreshes
+consistent with that choice. Motion uses only short CSS transitions and entrance movement, with all
+nonessential animation removed for reduced-motion users. The login surface deliberately remains in
+its light warm-neutral treatment even when the authenticated OPS workspace is using dark mode.
+
+No database migration, auth-provider change or new dependency was required.
