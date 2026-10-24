@@ -1350,10 +1350,10 @@ polling rather than an unattended mailbox daemon: when nobody has the Inbox open
 Function still requires an external scheduled invocation for continuous off-screen ingestion.
 
 Every newly composed message and reply receives the LGNDRY.Co contact banner through the existing
-safe formatting pipeline. The supplied banner is a local public asset referenced from the production
-website; the formatter emits only a validated HTTPS image token, strips it from the plain-text
-alternative and removes it from the editable body when a draft is reopened. Existing legacy drafts
-are left unchanged.
+safe formatting pipeline. The supplied banner is a local public asset referenced from the active
+Command Center deployment origin rather than the separately hosted marketing website; the formatter
+emits only a validated HTTPS image token, strips it from the plain-text alternative and removes it
+from the editable body when a draft is reopened. Existing legacy drafts are left unchanged.
 
 The Titan synchronizer now uses the Edge runtime's native TLS socket support rather than Node's
 `imapflow` compatibility layer, which stalled until the Edge request timed out. It supports both
@@ -1362,7 +1362,9 @@ health checks and rescans a short recent window to recover from stale mailbox UI
 failures are visible in the Inbox instead of being swallowed by automatic polling. The live endpoint
 reached Titan's regional host successfully on 24 October 2026, but Titan rejected the stored mailbox
 credential; third-party access and the `IMAP_PASSWORD` Supabase secret must be refreshed before a
-successful live ingestion smoke test can be completed.
+successful live ingestion smoke test can be completed. Non-2xx Edge Function response bodies are
+decoded by the server action so this authentication guidance reaches the Inbox notice instead of the
+Supabase SDK's generic function error.
 
 Numeric values in shared stat cards and Command Center metric cards now use a short count-up motion,
 with final values shown immediately for reduced-motion users. No database migration, new dependency or

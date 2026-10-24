@@ -1,8 +1,10 @@
 import type { Metadata } from "next";
+import { headers } from "next/headers";
 import { EmptyState } from "@/components/feedback/empty-state";
 import { InboxShell } from "@/features/inbox/components/inbox-shell";
 import { buildEmailSignature } from "@/features/inbox/email-formatting";
 import { fetchInbox } from "@/features/inbox/fetch-inbox";
+import { resolveInboxAssetOrigin } from "@/features/inbox/runtime";
 import { fetchOpsSettings } from "@/features/settings/fetch-ops-settings";
 import { requireOpsUser } from "@/lib/auth/guards";
 
@@ -20,8 +22,16 @@ export default async function InboxPage() {
   }
   const settings = settingsResult.status === "ok" ? settingsResult.settings : null;
   const websiteUrl = settings?.websiteUrl || "https://www.lgndry-co.co.za";
+  const assetOrigin = resolveInboxAssetOrigin(
+    await headers(),
+    {
+      VERCEL_PROJECT_PRODUCTION_URL: process.env.VERCEL_PROJECT_PRODUCTION_URL,
+      VERCEL_URL: process.env.VERCEL_URL,
+    },
+    websiteUrl,
+  );
   const signature = buildEmailSignature({
-    bannerUrl: new URL("/ops-email-banner.png", websiteUrl).toString(),
+    bannerUrl: new URL("/ops-email-banner.png", assetOrigin).toString(),
   });
   return <InboxShell data={data} now={new Date().toISOString()} signature={signature} />;
 }

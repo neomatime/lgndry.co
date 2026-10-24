@@ -10,6 +10,7 @@ import {
 } from "@/features/inbox/schemas";
 import type { InboxActionState, InboxUploadState } from "@/features/inbox/types";
 import { emailMarkupToHtml, emailMarkupToPlainText } from "@/features/inbox/email-formatting";
+import { inboxSyncErrorMessage, readEdgeFunctionError } from "@/features/inbox/runtime";
 import { requireOpsUser } from "@/lib/auth/guards";
 import { createSupabaseServerClient } from "@/lib/db/server";
 
@@ -180,13 +181,11 @@ export async function syncInbox(): Promise<InboxActionState> {
   const supabase = await createSupabaseServerClient();
   const response = await supabase.functions.invoke("sync-titan-inbox", { body: {} });
   if (response.error || response.data?.error) {
-    const detail = String(response.data?.error ?? response.error?.message ?? "");
+    const detail = await readEdgeFunctionError(response.data, response.error);
     console.error("Inbox sync failed", detail);
     return {
       status: "error",
-      message: /AUTHENTICATIONFAILED|AccountNotFound|AuthenticationError/i.test(detail)
-        ? "Titan rejected the mailbox sign-in. Check third-party access and refresh the stored IMAP password."
-        : "The mailbox could not be synchronized just now.",
+      message: inboxSyncErrorMessage(detail),
     };
   }
   revalidatePath("/ops/inbox");
