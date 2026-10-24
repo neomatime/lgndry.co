@@ -1,8 +1,4 @@
 type SignatureDetails = {
-  name: string;
-  companyName?: string;
-  phone?: string;
-  website?: string;
   bannerUrl?: string;
 };
 
@@ -141,28 +137,21 @@ export function emailHtmlToMarkup(value: string) {
     .trimEnd();
 }
 
-export function buildEmailSignature({
-  name,
-  companyName = "LGNDRY.Co",
-  phone,
-  website,
-  bannerUrl,
-}: SignatureDetails) {
-  return [
-    "Kind regards,",
-    name.trim(),
-    companyName.trim(),
-    phone?.trim(),
-    website?.trim(),
-    bannerUrl?.trim() ? "" : undefined,
-    bannerUrl?.trim() ? `![LGNDRY.Co email banner](${bannerUrl.trim()})` : undefined,
-  ]
-    .filter(Boolean)
-    .join("\n");
+export function buildEmailSignature({ bannerUrl }: SignatureDetails) {
+  return bannerUrl?.trim() ? `![LGNDRY.Co email banner](${bannerUrl.trim()})` : "";
 }
 
 export function appendSignature(body: string, signature: string) {
   const cleanSignature = signature.trim();
   if (!cleanSignature || body.includes(cleanSignature)) return body;
-  return `${body.trimEnd()}${body.trim() ? "\n\n" : ""}--\n${cleanSignature}`;
+  return `${body.trimEnd()}${body.trim() ? "\n\n" : ""}${cleanSignature}`;
+}
+
+export function removeSignature(body: string, signature: string) {
+  const cleanSignature = signature.trim();
+  if (!cleanSignature) return body;
+  const trimmedBody = body.trimEnd();
+  if (trimmedBody === cleanSignature) return "";
+  const suffix = `\n\n${cleanSignature}`;
+  return trimmedBody.endsWith(suffix) ? trimmedBody.slice(0, -suffix.length) : body;
 }

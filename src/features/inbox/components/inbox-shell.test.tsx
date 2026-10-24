@@ -2,7 +2,7 @@ import { fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import type { InboxData, InboxThread } from "@/features/inbox/types";
 import { InboxShell } from "@/features/inbox/components/inbox-shell";
-import { syncInbox } from "@/features/inbox/actions";
+import { saveEmailDraft, syncInbox } from "@/features/inbox/actions";
 
 const refresh = vi.fn();
 const replace = vi.fn();
@@ -88,7 +88,7 @@ const shell = (threads = data()) => (
   <InboxShell
     data={threads}
     now="2026-10-21T10:00:00Z"
-    signature={"Kind regards,\nNeo Matime\nLGNDRY.Co"}
+    signature={"![LGNDRY.Co email banner](https://www.lgndry-co.co.za/ops-email-banner.png)"}
   />
 );
 
@@ -101,6 +101,7 @@ describe("InboxShell", () => {
       status: "success",
       message: "0 new emails synchronized.",
     });
+    vi.mocked(saveEmailDraft).mockResolvedValue({ status: "success" });
     window.localStorage.clear();
   });
 
@@ -121,8 +122,28 @@ describe("InboxShell", () => {
     expect(screen.getByRole("button", { name: "Save draft" })).toBeInTheDocument();
     expect(screen.getByRole("button", { name: "Bold" })).toBeInTheDocument();
     expect(screen.getByRole("button", { name: "Insert link" })).toBeInTheDocument();
-    expect((screen.getByLabelText("Message") as HTMLTextAreaElement).value).toContain(
-      "Kind regards,\nNeo Matime",
+    expect((screen.getByLabelText("Message") as HTMLTextAreaElement).value).toBe("");
+    expect(screen.getByLabelText("Email banner").innerHTML).toContain("ops-email-banner.png");
+  });
+
+  it("appends the visual banner when saving without exposing it in the editor", async () => {
+    render(shell());
+    fireEvent.click(screen.getByRole("button", { name: /Compose/ }));
+    fireEvent.change(screen.getByPlaceholderText("client@example.com"), {
+      target: { value: "client@example.com" },
+    });
+    fireEvent.change(screen.getByLabelText("Message"), { target: { value: "Hello" } });
+    fireEvent.change(screen.getByText("Subject").parentElement!.querySelector("input")!, {
+      target: { value: "Project update" },
+    });
+    fireEvent.click(screen.getByRole("button", { name: "Save draft" }));
+    await waitFor(() =>
+      expect(saveEmailDraft).toHaveBeenCalledWith(
+        expect.objectContaining({
+          body: "Hello\n\n![LGNDRY.Co email banner](https://www.lgndry-co.co.za/ops-email-banner.png)",
+          intent: "draft",
+        }),
+      ),
     );
   });
 

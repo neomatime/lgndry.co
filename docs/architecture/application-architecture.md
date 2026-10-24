@@ -1307,10 +1307,11 @@ the feature does not accept arbitrary author HTML. Drafts retain their editable 
 
 The existing direct-to-Storage attachment pipeline remains the source of truth and now exposes
 per-file upload progress plus attachments already present on reopened drafts. New messages and
-replies receive an editable signature built from the authenticated operator and current workspace
-contact settings; the composer can reinsert it without creating duplicates. No migration, new
-dependency or provider change was required. Scheduled send, undo send, templates, attachment removal
-from an existing draft and provider-side contact autocomplete remain later work.
+replies receive the workspace email banner as a rendered, non-editable signature below the message
+body. It is appended to the stored and sent HTML only when the draft is serialized, so the editor no
+longer exposes signature text or Markdown. No migration, new dependency or provider change was
+required. Scheduled send, undo send, templates, attachment removal from an existing draft and
+provider-side contact autocomplete remain later work.
 
 ## Phase 6, slice 4 - Premium OPS sign-in experience
 
@@ -1351,7 +1352,17 @@ Function still requires an external scheduled invocation for continuous off-scre
 Every newly composed message and reply receives the LGNDRY.Co contact banner through the existing
 safe formatting pipeline. The supplied banner is a local public asset referenced from the production
 website; the formatter emits only a validated HTTPS image token, strips it from the plain-text
-alternative and restores it when a draft is reopened. Existing drafts are left unchanged.
+alternative and removes it from the editable body when a draft is reopened. Existing legacy drafts
+are left unchanged.
+
+The Titan synchronizer now uses the Edge runtime's native TLS socket support rather than Node's
+`imapflow` compatibility layer, which stalled until the Edge request timed out. It supports both
+Titan's standard and regional IMAP hosts, bounds every socket operation, allows trusted service-role
+health checks and rescans a short recent window to recover from stale mailbox UIDs. Authentication
+failures are visible in the Inbox instead of being swallowed by automatic polling. The live endpoint
+reached Titan's regional host successfully on 24 October 2026, but Titan rejected the stored mailbox
+credential; third-party access and the `IMAP_PASSWORD` Supabase secret must be refreshed before a
+successful live ingestion smoke test can be completed.
 
 Numeric values in shared stat cards and Command Center metric cards now use a short count-up motion,
 with final values shown immediately for reduced-motion users. No database migration, new dependency or

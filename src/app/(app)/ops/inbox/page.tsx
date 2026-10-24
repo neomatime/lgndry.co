@@ -9,7 +9,7 @@ import { requireOpsUser } from "@/lib/auth/guards";
 export const metadata: Metadata = { title: "Inbox" };
 
 export default async function InboxPage() {
-  const user = await requireOpsUser();
+  await requireOpsUser();
   const [data, settingsResult] = await Promise.all([fetchInbox(), fetchOpsSettings()]);
   if (!data) {
     return (
@@ -21,10 +21,6 @@ export default async function InboxPage() {
   const settings = settingsResult.status === "ok" ? settingsResult.settings : null;
   const websiteUrl = settings?.websiteUrl || "https://www.lgndry-co.co.za";
   const signature = buildEmailSignature({
-    name: user.name,
-    companyName: settings?.senderName || "LGNDRY.Co",
-    phone: settings?.companyPhone,
-    website: websiteUrl,
     bannerUrl: new URL("/ops-email-banner.png", websiteUrl).toString(),
   });
   return <InboxShell data={data} now={new Date().toISOString()} signature={signature} />;

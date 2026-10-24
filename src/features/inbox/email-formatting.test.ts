@@ -5,6 +5,7 @@ import {
   emailHtmlToMarkup,
   emailMarkupToHtml,
   emailMarkupToPlainText,
+  removeSignature,
 } from "@/features/inbox/email-formatting";
 
 describe("Inbox email formatting", () => {
@@ -26,27 +27,27 @@ describe("Inbox email formatting", () => {
     expect(html).not.toContain('href="javascript:');
   });
 
-  it("creates readable plain text and a non-duplicating signature", () => {
+  it("creates a banner-only, non-duplicating signature", () => {
     expect(emailMarkupToPlainText("**Hello** [site](https://example.com)")).toBe(
       "Hello site (https://example.com)",
     );
     const signature = buildEmailSignature({
-      name: "Neo Matime",
-      phone: "+27 10 555 0187",
-      website: "https://www.lgndry-co.co.za",
       bannerUrl: "https://www.lgndry-co.co.za/ops-email-banner.png",
     });
-    expect(appendSignature("Hello", signature)).toContain("--\nKind regards,\nNeo Matime");
-    expect(signature).toContain(
+    expect(appendSignature("Hello", signature)).toBe(
+      "Hello\n\n![LGNDRY.Co email banner](https://www.lgndry-co.co.za/ops-email-banner.png)",
+    );
+    expect(signature).toBe(
       "![LGNDRY.Co email banner](https://www.lgndry-co.co.za/ops-email-banner.png)",
     );
     expect(emailMarkupToHtml(signature)).toContain(
       '<img src="https://www.lgndry-co.co.za/ops-email-banner.png"',
     );
     expect(emailMarkupToPlainText(signature)).not.toContain("ops-email-banner.png");
-    expect(
-      appendSignature(appendSignature("Hello", signature), signature).match(/Kind regards/g),
-    ).toHaveLength(1);
+    expect(appendSignature(appendSignature("Hello", signature), signature)).toBe(
+      appendSignature("Hello", signature),
+    );
+    expect(removeSignature(appendSignature("Hello", signature), signature)).toBe("Hello");
   });
 
   it("restores a formatted draft without leaking HTML into the editor", () => {

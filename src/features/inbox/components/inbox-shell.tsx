@@ -54,6 +54,7 @@ import {
   appendSignature,
   emailHtmlToMarkup,
   emailMarkupToHtml,
+  removeSignature,
 } from "@/features/inbox/email-formatting";
 import { filterThreads, formatInboxTimestamp, inboxCounts } from "@/features/inbox/view-model";
 import { startSignedUpload } from "@/features/start-a-project/signed-upload";
@@ -165,7 +166,11 @@ function ComposePane({
   const editorRef = useRef<HTMLTextAreaElement>(null);
 
   async function submit(intent: "draft" | "send") {
-    const state = await saveEmailDraft({ ...draft, intent });
+    const state = await saveEmailDraft({
+      ...draft,
+      body: appendSignature(draft.body, signature),
+      intent,
+    });
     onSaved(state);
   }
 
@@ -177,7 +182,7 @@ function ComposePane({
     try {
       for (const file of Array.from(files)) {
         const prepared = await prepareEmailAttachmentUpload({
-          draft: current,
+          draft: { ...current, body: appendSignature(current.body, signature) },
           file: { name: file.name, type: file.type, size: file.size },
         });
         if (prepared.status !== "success") throw new Error(prepared.message);
@@ -337,14 +342,6 @@ function ComposePane({
                 <Icon className="size-4" aria-hidden="true" />
               </button>
             ))}
-            <span className="bg-line mx-1 h-5 w-px" aria-hidden="true" />
-            <button
-              type="button"
-              onClick={() => setDraft({ ...draft, body: appendSignature(draft.body, signature) })}
-              className="hover:bg-surface h-8 px-2 text-xs font-medium"
-            >
-              Signature
-            </button>
             <button
               type="button"
               onClick={() => setPreview((value) => !value)}
@@ -357,19 +354,28 @@ function ComposePane({
             <div
               className="min-h-72 p-4 text-sm leading-7 [&_a]:underline [&_ol]:list-decimal [&_ol]:pl-5 [&_p]:mb-3 [&_ul]:list-disc [&_ul]:pl-5"
               aria-label="Message preview"
-              dangerouslySetInnerHTML={{ __html: emailMarkupToHtml(draft.body) }}
+              dangerouslySetInnerHTML={{
+                __html: emailMarkupToHtml(appendSignature(draft.body, signature)),
+              }}
             />
           ) : (
-            <textarea
-              ref={editorRef}
-              aria-label="Message"
-              spellCheck
-              value={draft.body}
-              onChange={(event) => setDraft({ ...draft, body: event.target.value })}
-              placeholder="Write your message..."
-              className="min-h-72 w-full resize-none bg-transparent p-4 text-sm leading-7 outline-none"
-              required
-            />
+            <>
+              <textarea
+                ref={editorRef}
+                aria-label="Message"
+                spellCheck
+                value={draft.body}
+                onChange={(event) => setDraft({ ...draft, body: event.target.value })}
+                placeholder="Write your message..."
+                className="min-h-56 w-full resize-none bg-transparent p-4 text-sm leading-7 outline-none"
+                required
+              />
+              <div
+                className="border-line border-t p-4 [&_img]:h-auto [&_img]:w-full [&_img]:max-w-[680px]"
+                aria-label="Email banner"
+                dangerouslySetInnerHTML={{ __html: emailMarkupToHtml(signature) }}
+              />
+            </>
           )}
         </div>
         <div className="border-line mt-4 border-t pt-3">
@@ -503,6 +509,8 @@ export function InboxShell({
         if (state.status === "success") {
           if (/^[1-9]\d* new email/.test(state.message ?? "")) setNotice(state.message ?? "");
           router.refresh();
+        } else if (state.message) {
+          setNotice(state.message);
         }
       } catch (error) {
         console.error("Inbox auto-sync failed", error);
@@ -578,7 +586,7 @@ export function InboxShell({
       cc: "",
       bcc: "",
       subject: /^re:/i.test(thread.subject) ? thread.subject : `Re: ${thread.subject}`,
-      body: appendSignature("", signature),
+      body: "",
       attachments: [],
     });
   }
@@ -593,7 +601,10 @@ export function InboxShell({
       cc: message.cc,
       bcc: message.bcc,
       subject: message.subject,
-      body: message.bodyHtml ? emailHtmlToMarkup(message.bodyHtml) : message.body,
+      body: removeSignature(
+        message.bodyHtml ? emailHtmlToMarkup(message.bodyHtml) : message.body,
+        signature,
+      ),
       attachments: message.attachments.map((item) => ({
         id: item.id,
         fileName: item.fileName,
@@ -653,7 +664,7 @@ export function InboxShell({
           <button
             type="button"
             onClick={() => {
-              setCompose({ ...EMPTY_COMPOSE, body: appendSignature("", signature) });
+              setCompose({ ...EMPTY_COMPOSE });
               setMobilePane("message");
             }}
             className="bg-ink flex h-10 items-center gap-2 px-5 text-sm font-medium text-white"

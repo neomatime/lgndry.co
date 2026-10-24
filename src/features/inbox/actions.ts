@@ -180,8 +180,14 @@ export async function syncInbox(): Promise<InboxActionState> {
   const supabase = await createSupabaseServerClient();
   const response = await supabase.functions.invoke("sync-titan-inbox", { body: {} });
   if (response.error || response.data?.error) {
-    console.error("Inbox sync failed", response.error?.message ?? response.data?.error);
-    return { status: "error", message: "The mailbox could not be synchronized just now." };
+    const detail = String(response.data?.error ?? response.error?.message ?? "");
+    console.error("Inbox sync failed", detail);
+    return {
+      status: "error",
+      message: /AUTHENTICATIONFAILED|AccountNotFound|AuthenticationError/i.test(detail)
+        ? "Titan rejected the mailbox sign-in. Check third-party access and refresh the stored IMAP password."
+        : "The mailbox could not be synchronized just now.",
+    };
   }
   revalidatePath("/ops/inbox");
   const count = Number(response.data?.synced ?? 0);
