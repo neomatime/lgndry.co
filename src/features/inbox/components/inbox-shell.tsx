@@ -125,14 +125,43 @@ function bytes(value: number) {
 }
 
 function MessageBody({ message }: { message: EmailMessage }) {
+  const observerRef = useRef<ResizeObserver | null>(null);
+
+  useEffect(
+    () => () => {
+      observerRef.current?.disconnect();
+    },
+    [message.bodyHtml],
+  );
+
   if (message.bodyHtml) {
     const source = `<!doctype html><html><head><meta name="color-scheme" content="light"><style>html,body{scrollbar-width:none}::-webkit-scrollbar{display:none;width:0;height:0}body{margin:0;color:#171717;background:#fff;font:14px/1.65 Arial,sans-serif;overflow-wrap:anywhere}img{max-width:100%;height:auto}a{color:#171717}</style></head><body>${message.bodyHtml}</body></html>`;
     return (
       <iframe
         title={`Message from ${message.fromName ?? message.fromEmail ?? "sender"}`}
-        sandbox=""
+        sandbox="allow-same-origin"
         srcDoc={source}
-        className="min-h-44 w-full border-0 bg-white"
+        className="h-44 min-h-44 w-full border-0 bg-white"
+        onLoad={(event) => {
+          const frame = event.currentTarget;
+          const document = frame.contentDocument;
+          if (!document) return;
+
+          const resize = () => {
+            frame.style.height = `${Math.max(
+              176,
+              document.body.scrollHeight,
+              document.documentElement.scrollHeight,
+            )}px`;
+          };
+
+          observerRef.current?.disconnect();
+          resize();
+          if (typeof ResizeObserver !== "undefined") {
+            observerRef.current = new ResizeObserver(resize);
+            observerRef.current.observe(document.body);
+          }
+        }}
       />
     );
   }

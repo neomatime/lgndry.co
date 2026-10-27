@@ -155,6 +155,33 @@ describe("InboxShell", () => {
     expect(screen.getByTestId("inbox-context-scroll")).toHaveClass("overflow-y-auto");
   });
 
+  it("expands an HTML message to its full content height", () => {
+    render(
+      shell(
+        data([
+          thread({
+            messages: [
+              {
+                ...thread().messages[0]!,
+                bodyHtml: '<p>Hello</p><img src="https://example.com/banner.png" alt="Banner">',
+              },
+            ],
+          }),
+        ]),
+      ),
+    );
+    const frame = screen.getByTitle("Message from James Mitchell");
+    Object.defineProperty(frame, "contentDocument", {
+      value: {
+        body: { scrollHeight: 720 },
+        documentElement: { scrollHeight: 700 },
+      },
+    });
+    fireEvent.load(frame);
+    expect(frame).toHaveStyle({ height: "720px" });
+    expect(frame).toHaveAttribute("sandbox", "allow-same-origin");
+  });
+
   it("collapses and restores the mailbox rail", () => {
     render(shell());
     fireEvent.click(screen.getByRole("button", { name: "Collapse mailboxes" }));
