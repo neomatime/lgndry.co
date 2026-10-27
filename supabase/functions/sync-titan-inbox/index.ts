@@ -1,3 +1,4 @@
+import { Buffer } from "node:buffer";
 import { simpleParser } from "npm:mailparser@3";
 import { createClient } from "npm:@supabase/supabase-js@2";
 
@@ -339,7 +340,7 @@ Deno.serve(async (request) => {
     for (const uid of uids) {
       const source = await client.fetchSource(uid);
       if (!source) continue;
-      const parsed = await simpleParser(source);
+      const parsed = await simpleParser(Buffer.from(source));
 
       const fromEmail = parsed.from?.value?.[0]?.address || "";
       const fromHeader = parsed.from?.text || "";
